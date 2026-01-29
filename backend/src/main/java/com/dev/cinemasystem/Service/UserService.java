@@ -74,6 +74,15 @@ public class UserService {
         return userMapper.toUserResponseFromUser(user);
     }
 
+    public UserResponse getUserByEmail(String email){
+        User user = userRepository.findByEmail(email).orElseThrow(()->{
+            log.error("User with email {} not found", email);
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        });
+        log.info("Fetched user with email {}", email);
+        return userMapper.toUserResponseFromUser(user);
+    }
+
     public UserResponse getUserByUsername(String username){
         User user = userRepository.findByUsername(username).orElseThrow(()->{
             log.error("User with username {} not found", username);
@@ -90,6 +99,7 @@ public class UserService {
         });
         log.info("Fetched user with id {} username {}", userId, user.getUsername());
         userMapper.updateUserInfo( user, request);
+        user.setUpdateAt(LocalDate.now());
         return userMapper.toUserResponseFromUser(userRepository.save(user));
     }
 
@@ -99,6 +109,7 @@ public class UserService {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         });
         user.setStatus(Status.deleted);
+        user.setUpdateAt(LocalDate.now());
         userRepository.save(user);
         log.info("Deleted user with id {}", userId);
         return true;

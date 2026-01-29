@@ -18,7 +18,6 @@ public class UserResponse {
     String phoneNumber;
     LocalDate dateOfBirth;
     String sex;
-    String address;
     String email;
     String status;
 

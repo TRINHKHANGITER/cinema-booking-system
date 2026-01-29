@@ -37,8 +37,6 @@ public class User {
     @Column(length = 10)
     GioiTinh sex;
 
-    @Column(columnDefinition = "TEXT")
-    String address;
 
     @Column(nullable = false)
     String password;

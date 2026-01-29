@@ -41,6 +41,17 @@ public class UserController {
                 .build();
     }
 
+
+    @GetMapping("/email/{email}")
+    ApiResponse<UserResponse> getUserById(@PathVariable String email){
+        return ApiResponse.<UserResponse>builder()
+                .message("User retrieved successfully")
+                .result(userService.getUserByEmail(email))
+                .build();
+    }
+
+
+
     @PatchMapping("/{userId}")
     ApiResponse<UserResponse> updateUserById(@PathVariable Integer userId, @RequestBody @Valid UserUpdateRequest request) {
         return ApiResponse.<UserResponse>builder().

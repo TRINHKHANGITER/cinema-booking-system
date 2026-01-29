@@ -30,8 +30,6 @@ public class UserCreationRequest {
     @Pattern( regexp = "^(male|female|other)$", message ="SEX_INVALID")
     String sex;
 
-    String address;
-
     @NotBlank(message = "EMAIL_BLANK")
     @Email(message = "EMAIL_INVALID")
     String email;
