@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.dev.cinemasystem.dto.Request.UserCreationRequest;
-import com.dev.cinemasystem.Entity.User;
 import com.dev.cinemasystem.Service.UserService;
 
 

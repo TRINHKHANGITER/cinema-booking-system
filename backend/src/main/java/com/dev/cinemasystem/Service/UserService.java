@@ -22,7 +22,7 @@ public class UserService {
 
 
     public UserResponse createUser(UserCreationRequest request){
-        if(userRepository.e)
+//        if(userRepository.e)
         User user = userMapper.toUserFromUserCreateRequest(request);
         log.info("Creating user with email: {}", user.getEmail());
         user.setRole("CUSTOMER");

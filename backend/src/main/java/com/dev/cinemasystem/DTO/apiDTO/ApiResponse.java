@@ -15,7 +15,6 @@ public class ApiResponse<T> {
 
     @Builder.Default
     String code = "SUCCESS";
-    
     String message;
     T result;
 }
