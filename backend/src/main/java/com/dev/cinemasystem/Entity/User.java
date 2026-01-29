@@ -1,5 +1,8 @@
 package com.dev.cinemasystem.Entity;
 
+import com.dev.cinemasystem.enums.GioiTinh;
+import com.dev.cinemasystem.enums.Role;
+import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,13 +28,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 15)
     String phoneNumber;
 
-    @Column(unique = true, length = 20)
-    String identityCode;
+    @Column(unique = true)
+    String username;
 
     LocalDate dateOfBirth;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 10)
-    String sex; // MALE / FEMALE / OTHER
+    GioiTinh sex;
 
     @Column(columnDefinition = "TEXT")
     String address;
@@ -42,9 +46,19 @@ public class User {
     @Column(nullable = false, unique = true)
     String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    String role; // ADMIN / USER / STAFF
+    Role role;
 
     @Column(nullable = false)
-    String status; // ACTIVE / INACTIVE / BLOCKED
+    LocalDate createAt;
+
+    @Column(nullable = false)
+    LocalDate updateAt;
+
+
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    Status status;
 }

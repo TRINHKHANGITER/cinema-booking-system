@@ -1,22 +1,25 @@
-package com.dev.cinemasystem.dto.Request;
+package com.dev.cinemasystem.dto.userDto;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
+public class UserResponse {
+
+    Integer userId;
     String fullName;
+    String username;
     String phoneNumber;
-    String identityCode;
     LocalDate dateOfBirth;
     String sex;
     String address;
+    String email;
+    String status;
 
 }

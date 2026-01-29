@@ -1,19 +1,18 @@
 package com.dev.cinemasystem.Controller;
 
 
-import com.dev.cinemasystem.dto.Response.UserResponse;
+import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.dev.cinemasystem.dto.Request.UserCreationRequest;
+import org.springframework.web.bind.annotation.*;
+import com.dev.cinemasystem.dto.userDto.UserCreationRequest;
 import com.dev.cinemasystem.Service.UserService;
 
 
@@ -34,5 +33,40 @@ public class UserController {
                 .build();
     }
 
+    @GetMapping("/{userId}")
+    ApiResponse<UserResponse> getUserById(@PathVariable Integer userId){
+        return ApiResponse.<UserResponse>builder()
+                .message("User retrieved successfully")
+                .result(userService.getUserById(userId))
+                .build();
+    }
 
+    @PatchMapping("/{userId}")
+    ApiResponse<UserResponse> updateUserById(@PathVariable Integer userId, @RequestBody @Valid UserUpdateRequest request) {
+        return ApiResponse.<UserResponse>builder().
+                message("User updated successfully")
+                .result(userService.updateUserById(userId, request))
+                .build();
+
+    }
+
+    @DeleteMapping("/{userId}")
+    ApiResponse<Boolean> deleteUserById(@PathVariable Integer userId) {
+        userService.deleteUserById(userId);
+        return ApiResponse.<Boolean>builder()
+                .message("User deleted successfully")
+                .build();
+    }
+
+    @GetMapping("all")
+    ApiResponse<PagingDto<UserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "1") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status
+    ) {
+        return ApiResponse.<PagingDto<UserResponse>>builder()
+                .message("Users retrieved successfully")
+                .result(userService.getAllUsers(pageNumber, pageSize, status))
+                .build();
+    }
 }
