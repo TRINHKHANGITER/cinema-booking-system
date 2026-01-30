@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Address {
+public class Address {    //https://provinces.open-api.vn/
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

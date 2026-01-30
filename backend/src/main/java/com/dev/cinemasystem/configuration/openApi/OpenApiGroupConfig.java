@@ -14,5 +14,13 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/user/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi cinemaGroup() {
+        return GroupedOpenApi.builder()
+                .group("cinema")
+                .pathsToMatch("/cinema/**")
+                .build();
+    }
 }
 

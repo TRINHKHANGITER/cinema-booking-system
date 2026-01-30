@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface WardRepository extends JpaRepository<Ward, Integer> {
     Optional<Ward> findByName(String name);
     Optional<Ward> findByCode(Integer code);
+    boolean existsByCode(Integer code);
 }

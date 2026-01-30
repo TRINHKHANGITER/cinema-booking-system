@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse> handlingRuntimeException(Exception  exception){
         ApiResponse apiResponse = new ApiResponse();
-
+        log.error("Unhandled exception caught: ", exception);
         apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
         apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
 
@@ -37,6 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception){
         String enumKey = exception.getFieldError().getDefaultMessage();
+        log.error("exception=========", exception);
         log.info("=========" +enumKey);
         ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
 
