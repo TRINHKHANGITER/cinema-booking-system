@@ -1,7 +1,5 @@
 package com.dev.cinemasystem.dto.roomTypeDTO;
 
-import com.dev.cinemasystem.enums.Status;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,11 +8,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoomTypeResponse {
-    Integer roomTypeId;
+public class RoomTypeUpdateRequest {
 
     String roomTypeName;
 
     String description;
-    Status status;
+
 }

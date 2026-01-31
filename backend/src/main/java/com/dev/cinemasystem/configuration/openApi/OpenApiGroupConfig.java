@@ -24,10 +24,18 @@ public class OpenApiGroupConfig {
     }
 
     @Bean
-    public GroupedOpenApi adminGroup() {
+    public GroupedOpenApi roomGroup() {
         return GroupedOpenApi.builder()
                 .group("room")
                 .pathsToMatch("/room/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi roomTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("room-type")
+                .pathsToMatch("/room-type/**")
                 .build();
     }
 }

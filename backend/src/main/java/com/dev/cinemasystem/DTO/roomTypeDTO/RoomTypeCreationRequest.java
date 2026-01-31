@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.dto.roomTypeDTO;
 
-import com.dev.cinemasystem.enums.Status;
-
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,11 +9,12 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoomTypeResponse {
-    Integer roomTypeId;
+public class RoomTypeCreationRequest {
 
+    @NotBlank(message = "ROOM_TYPE_NAME_BLANK")
     String roomTypeName;
 
+    @NotBlank(message = "DESCRIPTION_BLANK")
     String description;
-    Status status;
+
 }

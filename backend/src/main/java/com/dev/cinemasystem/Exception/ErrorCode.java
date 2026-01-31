@@ -50,9 +50,9 @@ public enum ErrorCode {
 
     ROOM_TYPE_NOT_FOUND("ROOM_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Room type not found"),
 
-
-
-
+    ROOM_TYPE_NAME_EXISTS("ROOM_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Room type name already exists"),
+    ROOM_TYPE_NAME_BLANK("ROOM_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Room type name is required"),
+    DESCRIPTION_BLANK("DESCRIPTION_BLANK", HttpStatus.BAD_REQUEST, "Description is required"),
     WARD_NOT_FOUND("WARD_NOT_FOUND", HttpStatus.NOT_FOUND, "Ward not found"),
     CINEMA_ALREADY_EXISTS("CINEMA_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
