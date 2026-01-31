@@ -1,0 +1,26 @@
+package com.dev.cinemasystem.configuration.openApi;
+
+
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiGroupConfig {
+    @Bean
+    public GroupedOpenApi userGroup() {
+        return GroupedOpenApi.builder()
+                .group("user")
+                .pathsToMatch("/user/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi cinemaGroup() {
+        return GroupedOpenApi.builder()
+                .group("cinema")
+                .pathsToMatch("/cinema/**")
+                .build();
+    }
+}
+
