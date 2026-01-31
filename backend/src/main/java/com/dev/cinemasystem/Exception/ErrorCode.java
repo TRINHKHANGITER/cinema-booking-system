@@ -37,8 +37,10 @@ public enum ErrorCode {
     CINEMA_ADDRESS_EXISTS("CINEMA_ADDRESS_EXISTS", HttpStatus.BAD_REQUEST, "Cinema at this address already exists"),
     CINEMA_NOT_FOUND("CINEMA_NOT_FOUND", HttpStatus.NOT_FOUND, "Cinema not found"),
 
-
+    CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS("CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     PROVINCE_NOT_FOUND("PROVINCE_NOT_FOUND", HttpStatus.NOT_FOUND, "Province not found"),
+
+    WARD_NOT_FOUND("WARD_NOT_FOUND", HttpStatus.NOT_FOUND, "Ward not found"),
     CINEMA_ALREADY_EXISTS("CINEMA_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
     ;
