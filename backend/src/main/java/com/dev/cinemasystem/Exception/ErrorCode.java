@@ -39,7 +39,20 @@ public enum ErrorCode {
 
     CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS("CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     PROVINCE_NOT_FOUND("PROVINCE_NOT_FOUND", HttpStatus.NOT_FOUND, "Province not found"),
+    ROOM_NOT_FOUND("ROOM_NOT_FOUND", HttpStatus.NOT_FOUND, "Room not found"),
+    ROOM_TYPE_BLANK("ROOM_TYPE_BLANK", HttpStatus.BAD_REQUEST, "Room type is required"),
+    ROOM_NAME_BLANK("ROOM_NAME_BLANK", HttpStatus.BAD_REQUEST, "Room name is required"),
+    CAPACITY_BLANK("CAPACITY_BLANK", HttpStatus.BAD_REQUEST, "Capacity is required"),
+    CINEMA_BLANK("CINEMA_BLANK", HttpStatus.BAD_REQUEST, "Cinema is required"),
+    CAPACITY_INVALID("CAPACITY_INVALID", HttpStatus.BAD_REQUEST, "Capacity must be at least 1"),
+    ROOM_TYPE_ID_INVALID("ROOM_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "Room type ID must be at least 1"),
+    CINEMA_ID_INVALID("CINEMA_ID_INVALID", HttpStatus.BAD_REQUEST, "Cinema ID must be at least 1"),
 
+    ROOM_TYPE_NOT_FOUND("ROOM_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Room type not found"),
+
+    ROOM_TYPE_NAME_EXISTS("ROOM_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Room type name already exists"),
+    ROOM_TYPE_NAME_BLANK("ROOM_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Room type name is required"),
+    DESCRIPTION_BLANK("DESCRIPTION_BLANK", HttpStatus.BAD_REQUEST, "Description is required"),
     WARD_NOT_FOUND("WARD_NOT_FOUND", HttpStatus.NOT_FOUND, "Ward not found"),
     CINEMA_ALREADY_EXISTS("CINEMA_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")

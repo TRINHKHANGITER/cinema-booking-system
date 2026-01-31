@@ -22,5 +22,21 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/cinema/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi roomGroup() {
+        return GroupedOpenApi.builder()
+                .group("room")
+                .pathsToMatch("/room/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi roomTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("room-type")
+                .pathsToMatch("/room-type/**")
+                .build();
+    }
 }
 

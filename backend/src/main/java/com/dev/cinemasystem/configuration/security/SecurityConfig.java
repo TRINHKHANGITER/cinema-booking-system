@@ -21,6 +21,8 @@ public class SecurityConfig {
 
             "/user/**",
             "/cinema/**",
+            "/room/**",
+            "/room-type/**",
 
             "/swagger-ui/**",
             "/swagger-ui.html",
