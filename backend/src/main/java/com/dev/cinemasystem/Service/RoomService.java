@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Service;
 
 
-import com.dev.cinemasystem.Entity.room.Room;
+import com.dev.cinemasystem.Entity.Room;
 import com.dev.cinemasystem.Exception.AppException;
 import com.dev.cinemasystem.Exception.ErrorCode;
 import com.dev.cinemasystem.Mapper.RoomMapper;

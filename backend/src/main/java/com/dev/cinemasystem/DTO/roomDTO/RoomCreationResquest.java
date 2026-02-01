@@ -1,10 +1,6 @@
 package com.dev.cinemasystem.dto.roomDTO;
 
 
-import com.dev.cinemasystem.Entity.Cinema;
-import com.dev.cinemasystem.Entity.room.RoomType;
-import com.dev.cinemasystem.enums.Status;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

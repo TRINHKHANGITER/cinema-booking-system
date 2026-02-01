@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Mapper;
 
-import com.dev.cinemasystem.Entity.room.Room;
+import com.dev.cinemasystem.Entity.Room;
 import com.dev.cinemasystem.dto.roomDTO.RoomCreationResquest;
 import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
 import org.mapstruct.Mapper;

@@ -38,5 +38,21 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/room-type/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi seatGroup() {
+        return GroupedOpenApi.builder()
+                .group("seat")
+                .pathsToMatch("/seat/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi seatTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("seat-type")
+                .pathsToMatch("/seat-type/**")
+                .build();
+    }
 }
 

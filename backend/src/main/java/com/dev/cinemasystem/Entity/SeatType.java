@@ -1,4 +1,4 @@
-package com.dev.cinemasystem.Entity.room;
+package com.dev.cinemasystem.Entity;
 
 
 import com.dev.cinemasystem.enums.Status;
@@ -7,20 +7,20 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "room_type")
+@Table(name = "seat_type")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoomType {
+public class SeatType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "room_type_id")
-    Integer roomTypeId;
+    @Column(name = "seat_type_id")
+    Integer seatTypeId;
 
     @Column(nullable = false, unique = true)
-    String roomTypeName;
+    String seatTypeName;
 
     String description;
 

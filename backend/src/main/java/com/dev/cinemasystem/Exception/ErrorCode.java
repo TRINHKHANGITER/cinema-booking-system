@@ -55,6 +55,21 @@ public enum ErrorCode {
     DESCRIPTION_BLANK("DESCRIPTION_BLANK", HttpStatus.BAD_REQUEST, "Description is required"),
     WARD_NOT_FOUND("WARD_NOT_FOUND", HttpStatus.NOT_FOUND, "Ward not found"),
     CINEMA_ALREADY_EXISTS("CINEMA_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
+
+    ROW_BLANK("ROW_BLANK", HttpStatus.BAD_REQUEST, "seatRow is required"),
+    ROW_INVALID("ROW_INVALID", HttpStatus.BAD_REQUEST, "seatRow must be at least 1"),
+    COLUMN_INVALID("COLUMN_INVALID", HttpStatus.BAD_REQUEST, "Column must be at least 1"),
+    SEAT_TYPE_ID_INVALID("SEAT_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "Seat type ID must be at least 1"),
+    SEAT_TYPE_BLANK("SEAT_TYPE_BLANK", HttpStatus.BAD_REQUEST, "Seat type is required"),
+    ROOM_ID_INVALID("ROOM_ID_INVALID", HttpStatus.BAD_REQUEST, "Room ID must be at least 1"),
+    ROOM_BLANK("ROOM_BLANK", HttpStatus.BAD_REQUEST, "Room is required"),
+    SEAT_TYPE_NAME_BLANK("SEAT_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Seat type name is required"),
+    SEAT_TYPE_NOT_FOUND("SEAT_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Seat type not found"),
+    SEAT_TYPE_NAME_EXISTS("SEAT_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Seat type name already exists"),
+    SEAT_NOT_FOUND("SEAT_NOT_FOUND", HttpStatus.NOT_FOUND, "Seat not found"),
+    SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Seat already exists in room at given seatRow and seatColumn"),
+
+
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
     ;
 

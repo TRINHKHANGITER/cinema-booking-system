@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.Mapper;
 
-import com.dev.cinemasystem.Entity.room.RoomType;
-import com.dev.cinemasystem.dto.roomDTO.RoomCreationResquest;
+import com.dev.cinemasystem.Entity.RoomType;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeCreationRequest;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeResponse;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeUpdateRequest;
