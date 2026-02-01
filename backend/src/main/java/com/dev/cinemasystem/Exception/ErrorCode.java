@@ -70,6 +70,18 @@ public enum ErrorCode {
     SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Seat already exists in room at given seatRow and seatColumn"),
 
 
+    MOVIE_TYPE_NAME_BLANK("MOVIE_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Movie type name is required"),
+    MOVIE_TYPE_NOT_FOUND("MOVIE_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Movie type not found"),
+    MOVIE_TYPE_NAME_EXISTS("MOVIE_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Movie type name already exists"),
+    MOVIE_NOT_FOUND("MOVIE_NOT_FOUND", HttpStatus.NOT_FOUND, "Movie not found"),
+    MOVIE_NAME_BLANK("MOVIE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Movie name is required"),
+    VIDEO_TRAILER_BLANK("VIDEO_TRAILER_BLANK", HttpStatus.BAD_REQUEST, "Video trailer is required"),
+    DURATION_MINUTES_INVALID("DURATION_MINUTES_INVALID", HttpStatus.BAD_REQUEST, "Duration minutes must be at least 1"),
+    MOVIE_TYPE_ID_INVALID("MOVIE_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "Movie type ID must be at least 1"),
+    DURATION_MINUTES_BLANK("DURATION_MINUTES_BLANK", HttpStatus.BAD_REQUEST, "Duration minutes is required"),
+    MOVIE_TYPE_ID_BLANK("MOVIE_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Movie type ID is required"),
+
+
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
     ;
 

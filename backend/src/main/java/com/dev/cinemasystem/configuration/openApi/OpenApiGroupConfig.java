@@ -54,5 +54,21 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/seat-type/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi movieGroup() {
+        return GroupedOpenApi.builder()
+                .group("movie")
+                .pathsToMatch("/movie/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi movieTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("movie-type")
+                .pathsToMatch("/movie-type/**")
+                .build();
+    }
 }
 
