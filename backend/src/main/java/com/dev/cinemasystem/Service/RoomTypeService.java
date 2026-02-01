@@ -1,14 +1,12 @@
 package com.dev.cinemasystem.Service;
 
 
-import com.dev.cinemasystem.Entity.room.RoomType;
+import com.dev.cinemasystem.Entity.RoomType;
 import com.dev.cinemasystem.Exception.AppException;
 import com.dev.cinemasystem.Exception.ErrorCode;
 import com.dev.cinemasystem.Mapper.RoomTypeMapper;
 import com.dev.cinemasystem.Repository.RoomTypeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
-import com.dev.cinemasystem.dto.roomDTO.RoomCreationResquest;
-import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeCreationRequest;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeResponse;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeUpdateRequest;

@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Repository;
 
-import com.dev.cinemasystem.Entity.room.Room;
+import com.dev.cinemasystem.Entity.Room;
 import com.dev.cinemasystem.enums.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

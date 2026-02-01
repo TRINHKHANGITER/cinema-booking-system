@@ -1,7 +1,6 @@
-package com.dev.cinemasystem.Entity.room;
+package com.dev.cinemasystem.Entity;
 
 
-import com.dev.cinemasystem.Entity.Cinema;
 import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
