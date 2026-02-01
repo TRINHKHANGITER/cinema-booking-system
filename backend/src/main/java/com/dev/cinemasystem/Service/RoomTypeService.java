@@ -50,6 +50,10 @@ public class RoomTypeService {
             log.error("Room type creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
+        if(roomTypeRepository.findByRoomTypeName(request.getRoomTypeName()) != null){
+            log.error("Room type name {} already exists", request.getRoomTypeName());
+            throw new AppException(ErrorCode.ROOM_TYPE_NAME_EXISTS);
+        }
         var roomType = roomTypeMapper.toRoomTypeFromRoomCreationRequest(request);
         roomType.setStatus(Status.active);
         log.info("Creating room type with name: {}", roomType.getRoomTypeName());

@@ -50,6 +50,10 @@ public class SeatTypeService {
             log.error("Seat type creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
+        if(seatTypeRepository.findBySeatTypeName(request.getSeatTypeName()) != null){
+            log.error("Seat type name {} already exists", request.getSeatTypeName());
+            throw new AppException(ErrorCode.SEAT_TYPE_NAME_EXISTS);
+        }
         var seatType = seatTypeMapper.toSeatTypeFromSeatCreationRequest(request);
         seatType.setStatus(Status.active);
         log.info("Creating seat type with name: {}", seatType.getSeatTypeName());
