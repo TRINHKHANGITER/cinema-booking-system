@@ -7,6 +7,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieDTO.MovieCreationResquest;
 import com.dev.cinemasystem.dto.movieDTO.MovieResponse;
 import com.dev.cinemasystem.enums.Status;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,7 +25,7 @@ public class MovieController {
 
 
     @GetMapping("/{movieId}")
-    public ApiResponse<MovieResponse> getMovieById(@PathVariable Integer movieId    ) {
+    public ApiResponse<MovieResponse> getMovieById(@PathVariable @Valid Integer movieId    ) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie retrieved successfully")
                 .result(movieService.getMovieById(movieId))
@@ -32,7 +33,7 @@ public class MovieController {
     }
 
     @PostMapping
-    public ApiResponse<MovieResponse> createMovie(@RequestBody MovieCreationResquest request) {
+    public ApiResponse<MovieResponse> createMovie(@RequestBody @Valid MovieCreationResquest request) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie created successfully")
                 .result(movieService.createMovie(request))
@@ -55,7 +56,7 @@ public class MovieController {
     }
 
     @PatchMapping("/{movieId}")
-    public ApiResponse<MovieResponse> updateMovie(@PathVariable Integer movieId, @RequestBody MovieCreationResquest request) {
+    public ApiResponse<MovieResponse> updateMovie(@PathVariable Integer movieId, @RequestBody @Valid MovieCreationResquest request) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie updated successfully")
                 .result(movieService.updateMovie(movieId, request))

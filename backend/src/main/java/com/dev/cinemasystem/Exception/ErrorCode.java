@@ -82,6 +82,15 @@ public enum ErrorCode {
     MOVIE_TYPE_ID_BLANK("MOVIE_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Movie type ID is required"),
 
 
+    TICKET_TYPE_NAME_BLANK("TICKET_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Ticket type name is required"),
+    TICKET_TYPE_NOT_FOUND("TICKET_TYPE_NOT_FOUND",  HttpStatus.NOT_FOUND, "Ticket type not found"),
+    TICKET_TYPE_NAME_EXISTS("TICKET_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Ticket type name already exists"),
+    TICKET_NOT_FOUND("TICKET_NOT_FOUND", HttpStatus.NOT_FOUND, "Ticket not found"),
+
+
+
+
+
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
     ;
 

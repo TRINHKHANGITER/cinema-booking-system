@@ -27,6 +27,8 @@ public class SecurityConfig {
             "/seat-type/**",
             "/movie/**",
             "/movie-type/**",
+            "/ticket/**",
+            "/ticket-type/**",
 
 
             "/swagger-ui/**",

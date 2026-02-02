@@ -70,5 +70,23 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/movie-type/**")
                 .build();
     }
+
+
+
+    @Bean
+    public GroupedOpenApi ticketGroup() {
+        return GroupedOpenApi.builder()
+                .group("ticket")
+                .pathsToMatch("/ticket/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi ticketTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("ticket-type")
+                .pathsToMatch("/ticket-type/**")
+                .build();
+    }
 }
 
