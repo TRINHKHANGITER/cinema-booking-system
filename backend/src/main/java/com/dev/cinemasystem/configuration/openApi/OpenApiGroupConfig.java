@@ -74,6 +74,15 @@ public class OpenApiGroupConfig {
 
 
     @Bean
+    public GroupedOpenApi priceTicketGroup() {
+        return GroupedOpenApi.builder()
+                .group("price-ticket")
+                .pathsToMatch("/price-ticket/**")
+                .build();
+    }
+
+
+    @Bean
     public GroupedOpenApi ticketGroup() {
         return GroupedOpenApi.builder()
                 .group("ticket")
