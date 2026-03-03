@@ -3,6 +3,7 @@ package com.dev.cinemasystem.configuration.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
+
             "/auth/**",
             "/login/**",
 
@@ -30,12 +32,11 @@ public class SecurityConfig {
             "/ticket/**",
             "/ticket-type/**",
             "/price-ticket/**",
+            "/show-time/**",
 
-
-
+            // Swagger
             "/swagger-ui/**",
             "/swagger-ui.html",
-
             "/v3/api-docs/**",
             "/api-docs/**"
     };
@@ -44,15 +45,25 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+
+                        // 👇 fix chắc chắn cho swagger (Spring Boot 3)
+                        .requestMatchers(HttpMethod.GET,
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
-
                 )
-                .httpBasic(httpBasic -> httpBasic.disable())   // tắt popup basic
-                .formLogin(form -> form.disable()) ;          // tắt login page
 
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable());
 
         return http.build();
     }

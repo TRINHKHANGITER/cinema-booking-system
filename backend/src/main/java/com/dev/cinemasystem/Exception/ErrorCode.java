@@ -96,7 +96,8 @@ public enum ErrorCode {
     PRICE_TICKET_EXISTS("PRICE_TICKET_EXISTS", HttpStatus.BAD_REQUEST, "Price ticket already exists for given combination"),
 
 
-
+    SHOWTIME_ALREADY_EXISTS("SHOWTIME_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Showtime already exists for the given movie, room, and start time"),
+    TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Time is hh:mm:ss or hh:mm"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
     ;
 
