@@ -16,6 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final CustomJwtDecoder customJwtDecoder;
+
+
     private static final String[] PUBLIC_ENDPOINTS = {
 
             "/auth/**",
@@ -61,9 +64,12 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.decoder(customJwtDecoder))
+                )
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable());
+                .formLogin(form -> form.disable())
+                ;
 
         return http.build();
     }

@@ -17,7 +17,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
-import com.dev.cinemasystem.dto.wardDTO.WardDto;
+import com.dev.cinemasystem.dto.wardDTO.WardDTO;
 import com.dev.cinemasystem.enums.Status;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -122,7 +122,7 @@ public class CinemaService {
                 provinceRepository.save(province);
             }
 
-            List<WardDto> wardDtos = provinceApiDto.getWards();
+            List<WardDTO> wardDtos = provinceApiDto.getWards();
             int indexOfWard = wardDtos.indexOf(
                     wardDtos.stream()
                             .filter(wardDto -> wardDto.getCode().equals(resquest.getAddress().getWardCode()))
@@ -133,7 +133,7 @@ public class CinemaService {
                 log.error("Ward with code {} not found in province {}", resquest.getAddress().getWardCode(), province.getName());
                 throw new AppException(ErrorCode.INVALID_REQUEST);
             }
-            WardDto wardDto = wardDtos.get(indexOfWard);
+            WardDTO wardDto = wardDtos.get(indexOfWard);
             Ward ward = Ward.builder()
                     .code(wardDto.getCode())
                     .name(wardDto.getName())
@@ -212,7 +212,7 @@ public class CinemaService {
             throw new AppException(ErrorCode.PROVINCE_NOT_FOUND);
         }
 
-        WardDto wardDto = provinceApi.getWards().stream()
+        WardDTO wardDto = provinceApi.getWards().stream()
                 .filter(w -> w.getCode().equals(wardCode))
                 .findFirst()
                 .orElse(null);

@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.dto.addressDTO;
 
 import com.dev.cinemasystem.dto.ProvinceDTO.ProvinceDto;
-import com.dev.cinemasystem.dto.wardDTO.WardDto;
+import com.dev.cinemasystem.dto.wardDTO.WardDTO;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

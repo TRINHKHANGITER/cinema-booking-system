@@ -106,5 +106,14 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/show-time/**")
                 .build();
     }
+
+
+    @Bean
+    public GroupedOpenApi authGroup() {
+        return GroupedOpenApi.builder()
+                .group("auth")
+                .pathsToMatch("/auth/**")
+                .build();
+    }
 }
 

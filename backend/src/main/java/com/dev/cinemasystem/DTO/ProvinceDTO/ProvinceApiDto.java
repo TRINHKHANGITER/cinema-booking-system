@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.dto.ProvinceDTO;
 
 
-import com.dev.cinemasystem.dto.wardDTO.WardDto;
+import com.dev.cinemasystem.dto.wardDTO.WardDTO;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,5 +15,5 @@ import java.util.List;
 public class ProvinceApiDto {
     Integer code;
     String name;
-    List<WardDto> wards;
+    List<WardDTO> wards;
 }

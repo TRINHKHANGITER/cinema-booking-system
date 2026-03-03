@@ -2,7 +2,7 @@ package com.dev.cinemasystem.Service;
 
 import com.dev.cinemasystem.dto.ProvinceDTO.ProvinceApiDto;
 import com.dev.cinemasystem.dto.ProvinceDTO.ProvinceDto;
-import com.dev.cinemasystem.dto.wardDTO.WardDto;
+import com.dev.cinemasystem.dto.wardDTO.WardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -37,7 +37,7 @@ public class VietnamAddressApiService {
     }
 
     //  Nếu chỉ muốn wards
-    public List<WardDto> getWardsByProvince(Integer provinceCode) {
+    public List<WardDTO> getWardsByProvince(Integer provinceCode) {
         ProvinceApiDto province = getProvinceWithWards(provinceCode);
         return province.getWards();
     }

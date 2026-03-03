@@ -98,7 +98,14 @@ public enum ErrorCode {
 
     SHOWTIME_ALREADY_EXISTS("SHOWTIME_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Showtime already exists for the given movie, room, and start time"),
     TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Time is hh:mm:ss or hh:mm"),
-    INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid")
+    INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid"),
+
+
+    PASSWORD_NOT_BLANK("PASSWORD_NOT_BLANK", HttpStatus.BAD_REQUEST, "Password is required"),
+    EMAIL_OR_USERNAME_NOT_BLANK("EMAIL_OR_USERNAME_NOT_BLANK", HttpStatus.BAD_REQUEST, "Email or username is required"),
+
+
+
     ;
 
 
