@@ -54,5 +54,57 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/seat-type/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi movieGroup() {
+        return GroupedOpenApi.builder()
+                .group("movie")
+                .pathsToMatch("/movie/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi movieTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("movie-type")
+                .pathsToMatch("/movie-type/**")
+                .build();
+    }
+
+
+
+    @Bean
+    public GroupedOpenApi priceTicketGroup() {
+        return GroupedOpenApi.builder()
+                .group("price-ticket")
+                .pathsToMatch("/price-ticket/**")
+                .build();
+    }
+
+
+    @Bean
+    public GroupedOpenApi ticketGroup() {
+        return GroupedOpenApi.builder()
+                .group("ticket")
+                .pathsToMatch("/ticket/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi ticketTypeGroup() {
+        return GroupedOpenApi.builder()
+                .group("ticket-type")
+                .pathsToMatch("/ticket-type/**")
+                .build();
+    }
+
+
+    @Bean
+    public GroupedOpenApi showTimeGroup() {
+        return GroupedOpenApi.builder()
+                .group("show-time")
+                .pathsToMatch("/show-time/**")
+                .build();
+    }
 }
 
