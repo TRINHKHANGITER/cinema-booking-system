@@ -10,28 +10,35 @@ import com.dev.cinemasystem.Repository.MovieTypeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieDTO.MovieCreationResquest;
 import com.dev.cinemasystem.dto.movieDTO.MovieResponse;
+import com.dev.cinemasystem.dto.movieDTO.MovieUpdateResquest;
 import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.utils.FileStoreUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class MovieService {
 
-    MovieRepository movieRepository;
-    MovieMapper movieMapper;
-    MovieTypeRepository movieTypeRepository;
+    final MovieRepository movieRepository;
+    final MovieMapper movieMapper;
+    final MovieTypeRepository movieTypeRepository;
 
+    @Value("${storage.image-dir}")
+    String imageDir;
 
 
 
@@ -45,22 +52,30 @@ public class MovieService {
         return movieMapper.toMovieResponse(movie);
     }
 
-    public  MovieResponse createMovie(MovieCreationResquest request){
-        if(request == null){
-            log.error("Movie creation request is null");
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
 
-        var movieType = movieTypeRepository.findById(request.getMovieTypeId()).orElseThrow(() -> {
-            log.error("Movie type with id {} not found", request.getMovieTypeId());
-            return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
-        });
+    public MovieResponse createMovie(MovieCreationResquest request){
+        if (request == null) throw new AppException(ErrorCode.INVALID_REQUEST);
+
+        var movieType = movieTypeRepository.findById(request.getMovieTypeId())
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND));
+
+        if (request.getVideoTrailer() == null || request.getVideoTrailer().isEmpty())
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        if (request.getImage() == null || request.getImage().isEmpty())
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+
+
+        String imageName   = FileStoreUtil.saveKeepingNameWithSuffix(request.getImage(),  Paths.get(imageDir));
 
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
         movie.setStatus(Status.active);
+
+        // lưu tên file vào entity
+        movie.setImage(imageName);
+
         movieRepository.save(movie);
-        return movieMapper.toMovieResponse(movieRepository.save(movie));
+        return movieMapper.toMovieResponse(movie);
     }
 
     public PagingDto<MovieResponse> getAllmovies( Integer movieTypeId, Status status, Integer page, Integer size){
@@ -95,7 +110,7 @@ public class MovieService {
                 .build();
     }
 
-    public MovieResponse  updateMovie(Integer movieId, MovieCreationResquest request){
+    public MovieResponse  updateMovie(Integer movieId, MovieUpdateResquest request){
         var movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> {
                     log.error("Movie with id {} not found", movieId);
@@ -107,6 +122,11 @@ public class MovieService {
             return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
         });
         movieMapper.updateMovieInfo( movie, request);
+        if(request.getImage() != null && !request.getImage().isEmpty()){
+            FileStoreUtil.deleteIfExists(Paths.get(imageDir), movie.getImage());
+            String imageName   = FileStoreUtil.saveKeepingNameWithSuffix(request.getImage(),  Paths.get(imageDir));
+            movie.setImage(imageName);
+        }
         movie.setMovieType(movieType);
         log.info("Updating movie with id: {}", movieId);
         return movieMapper.toMovieResponse(movieRepository.save(movie));

@@ -100,7 +100,8 @@ public enum ErrorCode {
     TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Time is hh:mm:ss or hh:mm"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid"),
 
-
+    FILE_UPLOAD_FAILED("FILE_UPLOAD_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, "File upload failed"),
+    IMAGE_BLANK("IMAGE_BLANK", HttpStatus.BAD_REQUEST, "Image is required"),
     PASSWORD_NOT_BLANK("PASSWORD_NOT_BLANK", HttpStatus.BAD_REQUEST, "Password is required"),
     EMAIL_OR_USERNAME_NOT_BLANK("EMAIL_OR_USERNAME_NOT_BLANK", HttpStatus.BAD_REQUEST, "Email or username is required"),
 
