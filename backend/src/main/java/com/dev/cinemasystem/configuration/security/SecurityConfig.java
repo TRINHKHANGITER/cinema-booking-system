@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 
-                        // 👇 fix chắc chắn cho swagger (Spring Boot 3)
+                        //  fix chắc chắn cho swagger (Spring Boot 3)
                         .requestMatchers(HttpMethod.GET,
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**"
