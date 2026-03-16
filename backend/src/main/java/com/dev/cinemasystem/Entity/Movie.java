@@ -25,6 +25,8 @@ public class Movie {
 
     String videoTrailer;
 
+    String image;
+
     Integer durationMinutes;
 
     @Column(nullable = false)

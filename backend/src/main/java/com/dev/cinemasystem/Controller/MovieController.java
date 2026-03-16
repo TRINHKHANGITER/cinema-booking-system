@@ -6,12 +6,14 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieDTO.MovieCreationResquest;
 import com.dev.cinemasystem.dto.movieDTO.MovieResponse;
+import com.dev.cinemasystem.dto.movieDTO.MovieUpdateResquest;
 import com.dev.cinemasystem.enums.Status;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -32,8 +34,9 @@ public class MovieController {
                 .build();
     }
 
-    @PostMapping
-    public ApiResponse<MovieResponse> createMovie(@RequestBody @Valid MovieCreationResquest request) {
+
+    @PostMapping(value = "/movie", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<MovieResponse> createMovie(@Valid @ModelAttribute MovieCreationResquest request) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie created successfully")
                 .result(movieService.createMovie(request))
@@ -55,8 +58,9 @@ public class MovieController {
                 .build();
     }
 
-    @PatchMapping("/{movieId}")
-    public ApiResponse<MovieResponse> updateMovie(@PathVariable Integer movieId, @RequestBody @Valid MovieCreationResquest request) {
+    @PatchMapping(value = "/{movieId}",  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<MovieResponse> updateMovie(@PathVariable Integer movieId,
+                                                  @Valid @ModelAttribute MovieUpdateResquest request) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie updated successfully")
                 .result(movieService.updateMovie(movieId, request))

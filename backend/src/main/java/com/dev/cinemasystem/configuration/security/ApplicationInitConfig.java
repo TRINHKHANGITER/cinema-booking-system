@@ -20,7 +20,8 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class ApplicationInitConfig {
+public class
+ApplicationInitConfig {
 
     PasswordEncoder passwordEncoder;
 

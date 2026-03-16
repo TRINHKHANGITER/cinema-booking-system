@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Data
@@ -21,6 +22,8 @@ public class MovieUpdateResquest {
     String description;
 
     String videoTrailer;
+
+    MultipartFile image;
 
     @Min(value = 1, message = "DURATION_MINUTES_INVALID")
     Integer durationMinutes;
