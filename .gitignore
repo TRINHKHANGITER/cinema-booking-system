@@ -35,3 +35,6 @@ build/
 **/resource/application.properties
 **/resource/application.yml
 **/resource/**
+
+**package-lock.json
+**/node_modules/
