@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Entity;
 
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.RoomStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,7 +25,7 @@ public class Room {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    Status status;
+    RoomStatus status;
 
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -40,3 +40,5 @@ public class Room {
 
 
 }
+
+

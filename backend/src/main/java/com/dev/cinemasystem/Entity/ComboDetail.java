@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ComboDetailStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -37,5 +37,7 @@ public class ComboDetail {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Status status;
+    ComboDetailStatus status;
 }
+
+

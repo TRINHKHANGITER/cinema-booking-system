@@ -10,7 +10,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatTypeDTO.SeatTypeCreationRequest;
 import com.dev.cinemasystem.dto.seatTypeDTO.SeatTypeResponse;
 import com.dev.cinemasystem.dto.seatTypeDTO.SeatTypeUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.SeatTypeStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -55,12 +55,12 @@ public class SeatTypeService {
             throw new AppException(ErrorCode.SEAT_TYPE_NAME_EXISTS);
         }
         var seatType = seatTypeMapper.toSeatTypeFromSeatCreationRequest(request);
-        seatType.setStatus(Status.ACTIVE);
+        seatType.setStatus(SeatTypeStatus.ACTIVE);
         log.info("Creating seat type with name: {}", seatType.getSeatTypeName());
         return seatTypeMapper.toSeatTypeResponse(seatTypeRepository.save(seatType));
     }
 
-    public PagingDto<SeatTypeResponse> getAllSeatTypes( Status status, Integer page, Integer size){
+    public PagingDto<SeatTypeResponse> getAllSeatTypes( SeatTypeStatus status, Integer page, Integer size){
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
@@ -117,7 +117,7 @@ public class SeatTypeService {
                     log.error("seatTypeId with id {} not found", seatTypeId);
                     return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
-        seat.setStatus(Status.INACTIVE);
+        seat.setStatus(SeatTypeStatus.INACTIVE);
         seatTypeRepository.save(seat);
         log.info("Deleted seat with id: {}", seatTypeId);
         return true;
@@ -125,3 +125,4 @@ public class SeatTypeService {
 
 
 }
+

@@ -2,7 +2,7 @@ package com.dev.cinemasystem.Entity;
 
 import com.dev.cinemasystem.enums.GioiTinh;
 import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -63,5 +63,7 @@ public class User {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    Status status;
+    UserStatus status;
 }
+
+

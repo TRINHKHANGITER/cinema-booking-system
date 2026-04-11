@@ -1,5 +1,7 @@
 package com.dev.cinemasystem.Entity;
 
+import com.dev.cinemasystem.enums.ProvinceStatus;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -22,5 +24,7 @@ public class Province {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    com.dev.cinemasystem.enums.Status status;
+    ProvinceStatus status;
 }
+
+

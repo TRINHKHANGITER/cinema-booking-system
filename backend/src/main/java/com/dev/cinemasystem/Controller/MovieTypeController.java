@@ -7,7 +7,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeCreationRequest;
 import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
 import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.MovieTypeStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +42,7 @@ public class MovieTypeController {
 
     @GetMapping("/all")
     public ApiResponse<PagingDto<MovieTypeResponse>> getAllMovies(
-            @RequestParam (required = false)Status status,
+            @RequestParam (required = false)MovieTypeStatus status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
 
@@ -73,3 +73,4 @@ public class MovieTypeController {
     }
 
 }
+

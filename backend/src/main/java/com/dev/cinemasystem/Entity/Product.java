@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -31,9 +31,11 @@ public class Product {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Status status;
+    ProductStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_type_id", nullable = false)
     ProductType productType;
 }
+
+

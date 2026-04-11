@@ -11,7 +11,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.CinemaStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -40,7 +40,7 @@ public class CinemaService {
         return cinemaMapper.toResponse(cinema);
     }
 
-    public PagingDto<CinemaResponse> getAllCinemas(Integer provinceId, Status status, int page, int size) {
+    public PagingDto<CinemaResponse> getAllCinemas(Integer provinceId, CinemaStatus status, int page, int size) {
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
@@ -93,7 +93,7 @@ public class CinemaService {
                 .province(province)
                 .addressText(request.getAddress())
                 .description(request.getDescription())
-                .status(Status.ACTIVE)
+                .status(CinemaStatus.ACTIVE)
                 .build();
 
         cinemaRepository.save(cinema);
@@ -127,9 +127,10 @@ public class CinemaService {
     public boolean deleteCinemaById(Integer cinemaId) {
         var cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
-        cinema.setStatus(Status.INACTIVE);
+        cinema.setStatus(CinemaStatus.INACTIVE);
         cinemaRepository.save(cinema);
         log.info("Deleted cinema with id: {}", cinemaId);
         return true;
     }
 }
+

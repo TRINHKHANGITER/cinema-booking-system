@@ -6,7 +6,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.CinemaStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,7 +34,7 @@ public class CinemaController {
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Status status
+            @RequestParam(required = false) CinemaStatus status
     ) {
         return ApiResponse.<PagingDto<CinemaResponse>>builder()
                 .message("Cinemas retrieved successfully")
@@ -66,3 +66,4 @@ public class CinemaController {
                 .build();
     }
 }
+

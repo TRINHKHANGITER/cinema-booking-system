@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.dto.showTimeDTO;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,6 +21,7 @@ public class ShowTimeResponse {
     LocalDateTime sellEndTime;
     Integer roomId;
     Integer movieId;
-    Status status;
+    ShowTimeStatus status;
 
 }
+

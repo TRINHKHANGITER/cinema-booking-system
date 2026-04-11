@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.dto.movieDTO;
 
 import com.dev.cinemasystem.Entity.MovieType;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.MovieStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -48,6 +48,7 @@ public class MovieResponse {
 
     Integer movieTypeId;
 
-    Status status;
+    MovieStatus status;
 
 }
+

@@ -7,7 +7,7 @@ import com.dev.cinemasystem.Mapper.PriceTicketMapper;
 import com.dev.cinemasystem.Repository.*;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.PriceTicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -74,7 +74,7 @@ public class PriceTicketService {
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
         }
         var priceTicketType = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
-        priceTicketType.setStatus(Status.ACTIVE);
+        priceTicketType.setStatus(PriceTicketStatus.ACTIVE);
         priceTicketType.setRoomType(roomType);
         priceTicketType.setSeatType(seatType);
         priceTicketType.setTicketType(ticketType);
@@ -140,7 +140,7 @@ public class PriceTicketService {
                     log.error("PriceTicket with id {} not found", priceTicketId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        priceTicket.setStatus(Status.INACTIVE);
+        priceTicket.setStatus(PriceTicketStatus.INACTIVE);
         priceTicketRepository.save(priceTicket);
         log.info("Deleted priceTicket with id: {}", priceTicketId);
         return true;
@@ -148,3 +148,4 @@ public class PriceTicketService {
 
 
 }
+

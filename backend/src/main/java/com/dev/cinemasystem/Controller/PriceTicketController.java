@@ -6,7 +6,6 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
-import com.dev.cinemasystem.enums.Status;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -60,3 +59,4 @@ public class PriceTicketController {
     }
 
 }
+

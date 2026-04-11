@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ProductTypeStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -27,5 +27,7 @@ public class ProductType {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Status status;
+    ProductTypeStatus status;
 }
+
+

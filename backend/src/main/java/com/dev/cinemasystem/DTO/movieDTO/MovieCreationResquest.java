@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.dto.movieDTO;
 
 
-import com.dev.cinemasystem.enums.Status;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -56,3 +55,4 @@ public class MovieCreationResquest {
     String actors;
 
 }
+

@@ -11,7 +11,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieDTO.MovieCreationResquest;
 import com.dev.cinemasystem.dto.movieDTO.MovieResponse;
 import com.dev.cinemasystem.dto.movieDTO.MovieUpdateResquest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.MovieStatus;
 import com.dev.cinemasystem.utils.FileStoreUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -79,9 +79,9 @@ public class MovieService {
 
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
-        movie.setStatus(Status.DRAFT);
+        movie.setStatus(MovieStatus.DRAFT);
 
-        // lưu tên file vào entity
+        // lÆ°u tÃªn file vÃ o entity
         movie.setImage(imageName);
         if(movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()){
             movie.setImageLandscape(imageName);
@@ -100,7 +100,7 @@ public class MovieService {
         return movieMapper.toMovieResponse(movie);
     }
 
-    public PagingDto<MovieResponse> getAllmovies( Integer movieTypeId, Status status, Integer page, Integer size){
+    public PagingDto<MovieResponse> getAllmovies( Integer movieTypeId, MovieStatus status, Integer page, Integer size){
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
@@ -172,7 +172,7 @@ public class MovieService {
                     log.error("Movie with id {} not found", movieId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        movie.setStatus(Status.HIDDEN);
+        movie.setStatus(MovieStatus.HIDDEN);
         movieRepository.save(movie);
         log.info("Deleted movie with id: {}", movieId);
         return true;
@@ -180,3 +180,4 @@ public class MovieService {
 
 
 }
+

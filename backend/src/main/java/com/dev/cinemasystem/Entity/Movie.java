@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Entity;
 
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.MovieStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -84,9 +84,11 @@ public class Movie {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    Status status;
+    MovieStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_type_id",nullable = false)
     MovieType movieType;
 }
+
+

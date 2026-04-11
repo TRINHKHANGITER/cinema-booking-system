@@ -4,7 +4,7 @@ package com.dev.cinemasystem.configuration.security;
 import com.dev.cinemasystem.Entity.User;
 import com.dev.cinemasystem.Repository.UserRepository;
 import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,7 +34,7 @@ ApplicationInitConfig {
                         .email("admin@gmail.com")
                         .fullName("System Administrator")
                         .phoneNumber("0123456789")
-                        .status(Status.ACTIVE)
+                        .status(UserStatus.ACTIVE)
                         .build();
                 userRepository.save(user);
                 log.info("admin has been created with default password : admin");
@@ -48,7 +48,7 @@ ApplicationInitConfig {
                         .email("user123@gmail.com")
                         .fullName("user123")
                         .phoneNumber("012345678910")
-                        .status(Status.ACTIVE)
+                        .status(UserStatus.ACTIVE)
                         .build();
                 userRepository.save(user);
                 log.info(" user123 has been created with default password : user123 ");
@@ -62,3 +62,4 @@ ApplicationInitConfig {
     }
 
 }
+

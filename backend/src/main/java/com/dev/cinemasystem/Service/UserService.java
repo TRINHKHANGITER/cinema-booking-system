@@ -8,7 +8,7 @@ import com.dev.cinemasystem.dto.userDto.UserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
 import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -55,7 +55,7 @@ public class UserService {
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
-                .status(Status.ACTIVE)
+                .status(UserStatus.ACTIVE)
                 .build();
         userRepository.save(user);
         log.info("Creating user with email: {}", user.getEmail());
@@ -105,7 +105,7 @@ public class UserService {
             log.error("User with id {} not found", userId);
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         });
-        user.setStatus(Status.DELETED);
+        user.setStatus(UserStatus.DELETED);
         userRepository.save(user);
         log.info("Deleted user with id {}", userId);
         return true;
@@ -128,9 +128,9 @@ public class UserService {
         if (status == null || status.isBlank()) {
             userPage = userRepository.findAll(pageable);
         } else {
-            Status parsedStatus;
+            UserStatus parsedStatus;
             try {
-                parsedStatus = Status.valueOf(status.trim().toUpperCase(Locale.ROOT));
+                parsedStatus = UserStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException ex) {
                 throw new AppException(ErrorCode.INVALID_REQUEST);
             }
@@ -155,3 +155,4 @@ public class UserService {
 
 
 }
+

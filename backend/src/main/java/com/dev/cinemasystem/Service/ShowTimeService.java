@@ -12,7 +12,7 @@ import com.dev.cinemasystem.Repository.SeatRepository;
 import com.dev.cinemasystem.Repository.ShowTimeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.utils.ParseTime;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -88,7 +88,7 @@ public class ShowTimeService {
         var showTime = showTimeMapper.toShowTimeFromShowTimeCreationRequest(request);
         showTime.setRoom(room);
         showTime.setMovie(movie);
-        showTime.setStatus(Status.SCHEDULED);
+        showTime.setStatus(ShowTimeStatus.SCHEDULED);
         log.info("Creating showTime for movie id {} in room id {} at time {}", request.getMovieId(), request.getRoomId(), request.getStartTime());
         return showTimeMapper.toShowTimeResponse(showTimeRepository.save(showTime));
     }
@@ -151,7 +151,7 @@ public class ShowTimeService {
                     log.error("ShowTime with id {} not found", showTimeId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        showTime.setStatus(Status.CANCELLED);
+        showTime.setStatus(ShowTimeStatus.CANCELLED);
         showTimeRepository.save(showTime);
         log.info("Deleted showTime with id: {}", showTimeId);
         return true;
@@ -181,3 +181,4 @@ public class ShowTimeService {
                 .build();
     }
 }
+

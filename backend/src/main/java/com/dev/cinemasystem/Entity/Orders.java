@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -57,5 +57,7 @@ public class Orders {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Status status;
+    OrderStatus status;
 }
+
+

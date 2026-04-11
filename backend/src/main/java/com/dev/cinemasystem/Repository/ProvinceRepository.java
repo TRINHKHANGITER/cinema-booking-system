@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Repository;
 
 import com.dev.cinemasystem.Entity.Province;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ProvinceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,5 +14,6 @@ public interface ProvinceRepository extends JpaRepository<Province, Integer> {
 
     boolean existsByProvinceName(String provinceName);
 
-    List<Province> findAllByStatus(Status status);
+    List<Province> findAllByStatus(ProvinceStatus status);
 }
+

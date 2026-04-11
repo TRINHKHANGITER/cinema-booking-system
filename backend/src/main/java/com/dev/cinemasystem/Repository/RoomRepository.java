@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Repository;
 
 import com.dev.cinemasystem.Entity.Room;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.RoomStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,14 +14,15 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
 
     Page<Room> findAllByCinema_CinemaIdAndRoomType_RoomTypeIdAndStatus(
-            Integer cinemaId, Integer roomTypeId, Status status, Pageable pageable);
+            Integer cinemaId, Integer roomTypeId, RoomStatus status, Pageable pageable);
 
     Page<Room> findAllByCinema_CinemaIdAndStatus(
-            Integer cinemaId, Status status, Pageable pageable);
+            Integer cinemaId, RoomStatus status, Pageable pageable);
 
     Page<Room> findAllByRoomType_RoomTypeIdAndStatus(
-            Integer roomTypeId, Status status, Pageable pageable);
+            Integer roomTypeId, RoomStatus status, Pageable pageable);
 
-    Page<Room> findAllByStatus(Status status, Pageable pageable);
+    Page<Room> findAllByStatus(RoomStatus status, Pageable pageable);
 }
+
 

@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.CinemaStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,5 +16,6 @@ public class CinemaResponse {
     String provinceName;
     String address;
     String description;
-    Status status;
+    CinemaStatus status;
 }
+

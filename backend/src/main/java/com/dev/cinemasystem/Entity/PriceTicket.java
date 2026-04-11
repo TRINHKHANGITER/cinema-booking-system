@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Entity;
 
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.PriceTicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -24,7 +24,7 @@ public class PriceTicket {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    Status status;
+    PriceTicketStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_type_id",nullable = false)
@@ -39,3 +39,5 @@ public class PriceTicket {
     TicketType ticketType;
 
 }
+
+

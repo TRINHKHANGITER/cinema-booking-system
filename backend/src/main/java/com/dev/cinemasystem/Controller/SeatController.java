@@ -6,7 +6,7 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.SeatStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -43,7 +43,7 @@ public class SeatController {
     public ApiResponse<PagingDto<SeatResponse>> getAllSeats(
             @RequestParam (required = false) Integer cinemaId,
             @RequestParam (required = false) Integer seatTypeId,
-            @RequestParam (required = false)Status status,
+            @RequestParam (required = false)SeatStatus status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
 
@@ -74,3 +74,4 @@ public class SeatController {
     }
 
 }
+

@@ -6,7 +6,7 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.roomDTO.RoomCreationResquest;
 import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.RoomStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -43,7 +43,7 @@ public class RoomController {
     public ApiResponse<PagingDto<RoomResponse>> getAllRooms(
             @RequestParam (required = false) Integer cinemaId,
             @RequestParam (required = false) Integer roomTypeId,
-            @RequestParam (required = false)Status status,
+            @RequestParam (required = false)RoomStatus status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
 
@@ -74,3 +74,4 @@ public class RoomController {
     }
 
 }
+

@@ -2,7 +2,7 @@ package com.dev.cinemasystem.Repository;
 
 import com.dev.cinemasystem.Entity.ShowTime;
 import com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,13 +16,12 @@ import java.time.LocalTime;
 
 public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
-    Page<ShowTime> findAllByStatus(Status status, Pageable pageable);
+    Page<ShowTime> findAllByStatus(ShowTimeStatus status, Pageable pageable);
 
     @Query("""
         select (count(st) > 0) from ShowTime st
         where st.room.roomId = :roomId
-          and st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
-          and st.status <> com.dev.cinemasystem.enums.Status.DELETED
+          and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
           and st.startTime < :endTime
           and st.endTime   > :startTime
     """)
@@ -36,8 +35,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
         select count(st) from ShowTime st
         where st.showTimeId <> :showTimeId
           and st.room.roomId = :roomId
-          and st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
-          and st.status <> com.dev.cinemasystem.enums.Status.DELETED
+          and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
           and st.startTime < :endTime
           and st.endTime   > :startTime
     """)
@@ -64,8 +62,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join st.room r
     join r.roomType rt
     join r.cinema c
-    where st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
-      and st.status <> com.dev.cinemasystem.enums.Status.DELETED
+    where st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
       and (:keyword is null or lower(m.movieName) like lower(concat('%', :keyword, '%')))
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
@@ -89,5 +86,6 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     );
 
 }
+
 
 
