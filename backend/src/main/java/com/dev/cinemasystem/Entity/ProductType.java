@@ -6,35 +6,26 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "cinema")
+@Table(name = "product_type")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Cinema {
+public class ProductType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer cinemaId;
+    @Column(name = "product_type_id")
+    Integer productTypeId;
 
+    @Column(nullable = false, unique = true, length = 100)
+    String productTypeName;
 
-    @Column(unique = true)
-    String cinemaName;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "province_id", nullable = false)
-    Province province;
-
-    @Column(name = "address", length = 300)
-    String addressText;
-
-
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     String description;
 
-
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     Status status;
 }

@@ -1,10 +1,6 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
-
-import com.dev.cinemasystem.Entity.Address;
-import com.dev.cinemasystem.dto.addressDTO.AddressDto;
 import com.dev.cinemasystem.enums.Status;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,8 +12,9 @@ import lombok.experimental.FieldDefaults;
 public class CinemaResponse {
     Integer cinemaId;
     String cinemaName;
-    AddressDto address;
+    Integer provinceId;
+    String provinceName;
+    String address;
     String description;
     Status status;
-
 }

@@ -1,8 +1,8 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
-
-import com.dev.cinemasystem.dto.addressDTO.AddressCreationDto;
-import com.dev.cinemasystem.enums.Status;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,8 +12,15 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CinemaCreationRequest {
+    @NotBlank(message = "CINEMA_BLANK")
     String cinemaName;
-    AddressCreationDto address;
-    String description;
 
+    @NotNull(message = "PROVINCE_ID_BLANK")
+    @Min(value = 1, message = "PROVINCE_ID_INVALID")
+    Integer provinceId;
+
+    @NotBlank(message = "ADDRESS_BLANK")
+    String address;
+
+    String description;
 }

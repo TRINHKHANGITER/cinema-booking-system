@@ -1,13 +1,8 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.GioiTinh;
-import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "province")
@@ -19,7 +14,13 @@ import java.time.LocalDate;
 public class Province {
 
     @Id
-    Integer code;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Integer provinceId;
+
+    @Column(nullable = false, unique = true, length = 100)
+    String provinceName;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    String name;
+    com.dev.cinemasystem.enums.Status status;
 }

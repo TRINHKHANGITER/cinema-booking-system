@@ -30,6 +30,9 @@ public enum ErrorCode {
     USERNAME_BLANK("USERNAME_BLANK", HttpStatus.BAD_REQUEST, "Username is required"),
 
     ADDRESS_NOT_FOUND("ADDRESS_NOT_FOUND", HttpStatus.NOT_FOUND, "Address not found"),
+    ADDRESS_BLANK("ADDRESS_BLANK", HttpStatus.BAD_REQUEST, "Address is required"),
+    PROVINCE_ID_BLANK("PROVINCE_ID_BLANK", HttpStatus.BAD_REQUEST, "Province ID is required"),
+    PROVINCE_ID_INVALID("PROVINCE_ID_INVALID", HttpStatus.BAD_REQUEST, "Province ID must be at least 1"),
 
     INVALID_PAGE_NUMBER("INVALID_PAGE_NUMBER", HttpStatus.BAD_REQUEST, "Page number must be greater than or equal to 1"),
     INVALID_PAGE_SIZE("INVALID_PAGE_SIZE", HttpStatus.BAD_REQUEST, "Page size must be between 1 and 10"),

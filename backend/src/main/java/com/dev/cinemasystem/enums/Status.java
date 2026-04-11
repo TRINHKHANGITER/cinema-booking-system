@@ -29,7 +29,22 @@ public enum Status {
     SELLING,
     STOPPED,
     COMPLETED,
-    CANCELLED
+    CANCELLED,
+    AVAILABLE,
+    UNAVAILABLE,
+    DISCONTINUED,
+    CREATED,
+    HOLDING,
+    AWAITING_PAYMENT,
+    PAID,
+    EXPIRED,
+    REFUNDED,
+    PENDING,
+    SUCCESS,
+    FAILED,
+    HELD,
+    BOOKED,
+    CHECKED_IN
 
 }
 

@@ -1,18 +1,18 @@
 package com.dev.cinemasystem.Repository;
 
-
 import com.dev.cinemasystem.Entity.Province;
-import com.dev.cinemasystem.Entity.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.dev.cinemasystem.enums.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ProvinceRepository extends JpaRepository<Province, Integer> {
-    Optional<Province> findByName(String name);
-    Optional<Province> findByCode(Integer code);
-    boolean existsByCode(Integer code);
+    Optional<Province> findByProvinceName(String provinceName);
+
+    boolean existsByProvinceName(String provinceName);
+
+    List<Province> findAllByStatus(Status status);
 }
