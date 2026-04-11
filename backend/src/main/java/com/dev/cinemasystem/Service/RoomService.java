@@ -64,7 +64,7 @@ public class RoomService {
         var room = roomMapper.toRoomFromRoomCreationRequest(request);
         room.setCinema(cinema);
         room.setRoomType(roomType);
-        room.setStatus(Status.active);
+        room.setStatus(Status.ACTIVE);
         roomRepository.save(room);
         log.info("Creating room with name: {}", room.getRoomName());
         return roomMapper.toRoomResponse(roomRepository.save(room));
@@ -130,7 +130,7 @@ public class RoomService {
                     log.error("Room with id {} not found", roomId);
                     return new AppException(ErrorCode.ROOM_NOT_FOUND);
                 });
-        room.setStatus(Status.deleted);
+        room.setStatus(Status.INACTIVE);
         roomRepository.save(room);
         log.info("Deleted room with id: {}", roomId);
         return true;

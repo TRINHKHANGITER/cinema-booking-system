@@ -7,9 +7,15 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum GioiTinh {
+    // legacy
     male,
     female,
-    other
+    other,
+
+    // designed
+    MALE,
+    FEMALE,
+    OTHER
 
 }
 

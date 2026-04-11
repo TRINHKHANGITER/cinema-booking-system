@@ -5,9 +5,10 @@ import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "show_time")
@@ -24,13 +25,22 @@ public class ShowTime {
 
 
     @Column(nullable = false)
-    LocalDate releaseDate;
+    LocalDateTime startTime;
 
     @Column(nullable = false)
-    LocalTime startTime;
+    LocalDateTime endTime;
 
+    LocalDateTime sellStartTime;
+
+    LocalDateTime sellEndTime;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    LocalDateTime createdAt;
+
+    @UpdateTimestamp
     @Column(nullable = false)
-    LocalTime endTime;
+    LocalDateTime updatedAt;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

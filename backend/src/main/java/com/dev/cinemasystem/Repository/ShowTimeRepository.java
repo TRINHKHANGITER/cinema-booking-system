@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 
@@ -19,38 +20,32 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     @Query("""
         select (count(st) > 0) from ShowTime st
-        where st.movie.movieId = :movieId
-          and st.room.roomId = :roomId
-          and st.status = :status
-          and st.releaseDate = :releaseDate
+        where st.room.roomId = :roomId
+          and st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
+          and st.status <> com.dev.cinemasystem.enums.Status.DELETED
           and st.startTime < :endTime
           and st.endTime   > :startTime
     """)
     boolean existsOverlappingShowTime(
-            Integer movieId,
             Integer roomId,
-            Status status,
-            LocalDate releaseDate,
-            LocalTime startTime,
-            LocalTime endTime
+            LocalDateTime startTime,
+            LocalDateTime endTime
     );
 
     @Query("""
         select count(st) from ShowTime st
-        where st.movie.movieId = :movieId
+        where st.showTimeId <> :showTimeId
           and st.room.roomId = :roomId
-          and st.status = :status
-          and st.releaseDate = :releaseDate
+          and st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
+          and st.status <> com.dev.cinemasystem.enums.Status.DELETED
           and st.startTime < :endTime
           and st.endTime   > :startTime
     """)
     int countOverlappingShowTime(
-            Integer movieId,
+            Integer showTimeId,
             Integer roomId,
-            Status status,
-            LocalDate releaseDate,
-            LocalTime startTime,
-            LocalTime endTime
+            LocalDateTime startTime,
+            LocalDateTime endTime
     );
 
 
@@ -58,7 +53,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     @Query("""
     select new com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto(
-      st.showTimeId, st.releaseDate, st.startTime, st.endTime,
+      st.showTimeId, st.startTime, st.endTime,
       m.movieId, m.movieName, mt.movieTypeName,
       c.cinemaId, c.cinemaName,
       r.roomId, r.roomName, rt.roomTypeName
@@ -69,16 +64,17 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join st.room r
     join r.roomType rt
     join r.cinema c
-    where st.status = com.dev.cinemasystem.enums.Status.active
+    where st.status <> com.dev.cinemasystem.enums.Status.CANCELLED
+      and st.status <> com.dev.cinemasystem.enums.Status.DELETED
       and (:keyword is null or lower(m.movieName) like lower(concat('%', :keyword, '%')))
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:roomTypeId is null or rt.roomTypeId = :roomTypeId)
-      and (:dateFrom is null or st.releaseDate >= :dateFrom)
-      and (:dateTo   is null or st.releaseDate <= :dateTo)
-      and (:timeFrom is null or st.startTime >= :timeFrom)
-      and (:timeTo   is null or st.startTime <= :timeTo)
-    order by st.releaseDate, st.startTime
+      and (:dateFrom is null or function('date', st.startTime) >= :dateFrom)
+      and (:dateTo   is null or function('date', st.startTime) <= :dateTo)
+      and (:timeFrom is null or function('time', st.startTime) >= :timeFrom)
+      and (:timeTo   is null or function('time', st.startTime) <= :timeTo)
+    order by st.startTime
     """)
     Page<ShowTimeSearchDto> searchShowTimes(
             @Param("keyword") String keyword,

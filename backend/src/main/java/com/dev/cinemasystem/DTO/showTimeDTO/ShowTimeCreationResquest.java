@@ -4,12 +4,10 @@ package com.dev.cinemasystem.dto.showTimeDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 
 @Data
@@ -19,22 +17,19 @@ import java.time.LocalTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ShowTimeCreationResquest {
 
-    @NotNull(message = "RELEASE_DATE_BLANK")
-    LocalDate releaseDate;
-
     @NotNull(message = "START_TIME_BLANK")
-    @Pattern(
-            regexp = "^([01]\\d|2[0-3])(:?[0-5]\\d)(:?([0-5]\\d))?$",
-            message = "TIME_INVALID"
-    )
-    String startTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime startTime;
 
     @NotNull(message = "END_TIME_BLANK")
-    @Pattern(
-            regexp = "^([01]\\d|2[0-3])(:?[0-5]\\d)(:?([0-5]\\d))?$",
-            message = "TIME_INVALID"
-    )
-    String endTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime endTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime sellStartTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime sellEndTime;
 
     @Min(value = 1, message = "ROOM_ID_INVALID")
     @NotNull(message = "ROOM_ID_BLANK")

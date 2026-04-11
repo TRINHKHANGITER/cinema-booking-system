@@ -22,8 +22,8 @@ import com.dev.cinemasystem.Entity.User;
 import com.dev.cinemasystem.Mapper.UserMapper;
 import com.dev.cinemasystem.Repository.UserRepository;
 
-import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -51,13 +51,11 @@ public class UserService {
         User user = User.builder()
              .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.customer)
+                .role(Role.USER)
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
-                .createAt(LocalDate.now())
-                .updateAt(LocalDate.now())
-                .status(Status.active)
+                .status(Status.ACTIVE)
                 .build();
         userRepository.save(user);
         log.info("Creating user with email: {}", user.getEmail());
@@ -99,7 +97,6 @@ public class UserService {
         });
         log.info("Fetched user with id {} username {}", userId, user.getUsername());
         userMapper.updateUserInfo( user, request);
-        user.setUpdateAt(LocalDate.now());
         return userMapper.toUserResponseFromUser(userRepository.save(user));
     }
 
@@ -108,8 +105,7 @@ public class UserService {
             log.error("User with id {} not found", userId);
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         });
-        user.setStatus(Status.deleted);
-        user.setUpdateAt(LocalDate.now());
+        user.setStatus(Status.DELETED);
         userRepository.save(user);
         log.info("Deleted user with id {}", userId);
         return true;
@@ -132,7 +128,13 @@ public class UserService {
         if (status == null || status.isBlank()) {
             userPage = userRepository.findAll(pageable);
         } else {
-            userPage = userRepository.findByStatus(status, pageable);
+            Status parsedStatus;
+            try {
+                parsedStatus = Status.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ex) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+            userPage = userRepository.findByStatus(parsedStatus, pageable);
         }
 
         List<UserResponse> items = userPage.getContent()

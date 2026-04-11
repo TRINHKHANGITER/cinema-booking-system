@@ -6,8 +6,11 @@ import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -28,7 +31,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 15)
     String phoneNumber;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     String username;
 
     LocalDate dateOfBirth;
@@ -38,7 +41,7 @@ public class User {
     GioiTinh sex;
 
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false, length = 255)
     String password;
 
     @Column(nullable = false, unique = true)
@@ -48,11 +51,13 @@ public class User {
     @Column(nullable = false)
     Role role;
 
-    @Column(nullable = false)
-    LocalDate createAt;
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(nullable = false)
-    LocalDate updateAt;
+    LocalDateTime updatedAt;
 
 
 

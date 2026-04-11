@@ -74,7 +74,7 @@ public class PriceTicketService {
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
         }
         var priceTicketType = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
-        priceTicketType.setStatus(Status.active);
+        priceTicketType.setStatus(Status.ACTIVE);
         priceTicketType.setRoomType(roomType);
         priceTicketType.setSeatType(seatType);
         priceTicketType.setTicketType(ticketType);
@@ -140,7 +140,7 @@ public class PriceTicketService {
                     log.error("PriceTicket with id {} not found", priceTicketId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        priceTicket.setStatus(Status.deleted);
+        priceTicket.setStatus(Status.INACTIVE);
         priceTicketRepository.save(priceTicket);
         log.info("Deleted priceTicket with id: {}", priceTicketId);
         return true;

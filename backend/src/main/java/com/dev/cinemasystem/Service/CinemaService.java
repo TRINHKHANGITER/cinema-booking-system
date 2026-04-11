@@ -101,7 +101,7 @@ public class CinemaService {
                         .cinemaName(resquest.getCinemaName())
                         .description(resquest.getDescription())
                         .address(address)
-                        .status(Status.active)
+                        .status(Status.ACTIVE)
                         .build();
                 cinemaRepository.save(cinema);
                 log.info("Created cinema with name: {}", cinema.getCinemaName());
@@ -152,7 +152,7 @@ public class CinemaService {
                     .cinemaName(resquest.getCinemaName())
                     .description(resquest.getDescription())
                     .address(address)
-                    .status(Status.active)
+                    .status(Status.ACTIVE)
                     .build();
             cinemaRepository.save(cinema);
             log.info("Created cinema with name: {}", cinema.getCinemaName());
@@ -265,7 +265,7 @@ public class CinemaService {
     public boolean deleteCinemaById(Integer cinemaId) {
         var cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
-        cinema.setStatus(Status.deleted);
+        cinema.setStatus(Status.INACTIVE);
         cinemaRepository.save(cinema);
         log.info("Deleted cinema with id: {}", cinemaId);
         return true;

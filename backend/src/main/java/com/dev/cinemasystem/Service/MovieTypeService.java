@@ -55,7 +55,7 @@ public class MovieTypeService {
             throw new AppException(ErrorCode.MOVIE_TYPE_NAME_EXISTS);
         }
         var movieType = movieTypeMapper.toMovieTypeFromMovieCreationRequest(request);
-        movieType.setStatus(Status.active);
+        movieType.setStatus(Status.ACTIVE);
         log.info("Creating movie type with name: {}", movieType.getMovieTypeName());
         return movieTypeMapper.toMovieTypeResponse(movieTypeRepository.save(movieType));
     }
@@ -117,7 +117,7 @@ public class MovieTypeService {
                     log.error("movieTypeId with id {} not found", movieTypeId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        movie.setStatus(Status.deleted);
+        movie.setStatus(Status.INACTIVE);
         movieTypeRepository.save(movie);
         log.info("Deleted movie with id: {}", movieTypeId);
         return true;

@@ -69,7 +69,7 @@ public class SeatService {
         var seat = seatMapper.toSeatFromSeatCreationRequest(request);
         seat.setRoom(room);
         seat.setSeatType(seatType);
-        seat.setStatus(Status.active);
+        seat.setStatus(Status.ACTIVE);
         seatRepository.save(seat);
         log.info("Creating seat in room id: {} with seat type id: {}", room.getRoomId(), seatType.getSeatTypeId());
         return seatMapper.toSeatResponse(seatRepository.save(seat));
@@ -142,7 +142,7 @@ public class SeatService {
                     log.error("Seat with id {} not found", seatId);
                     return new AppException(ErrorCode.ROOM_NOT_FOUND);
                 });
-        seat.setStatus(Status.deleted);
+        seat.setStatus(Status.BLOCKED);
         seatRepository.save(seat);
         log.info("Deleted seat with id: {}", seatId);
         return true;

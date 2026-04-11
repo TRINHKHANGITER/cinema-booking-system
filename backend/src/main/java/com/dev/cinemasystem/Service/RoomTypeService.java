@@ -55,7 +55,7 @@ public class RoomTypeService {
             throw new AppException(ErrorCode.ROOM_TYPE_NAME_EXISTS);
         }
         var roomType = roomTypeMapper.toRoomTypeFromRoomCreationRequest(request);
-        roomType.setStatus(Status.active);
+        roomType.setStatus(Status.ACTIVE);
         log.info("Creating room type with name: {}", roomType.getRoomTypeName());
         return roomTypeMapper.toRoomTypeResponse(roomTypeRepository.save(roomType));
     }
@@ -117,7 +117,7 @@ public class RoomTypeService {
                     log.error("roomTypeId with id {} not found", roomTypeId);
                     return new AppException(ErrorCode.ROOM_NOT_FOUND);
                 });
-        room.setStatus(Status.deleted);
+        room.setStatus(Status.INACTIVE);
         roomTypeRepository.save(room);
         log.info("Deleted room with id: {}", roomTypeId);
         return true;

@@ -55,7 +55,7 @@ public class SeatTypeService {
             throw new AppException(ErrorCode.SEAT_TYPE_NAME_EXISTS);
         }
         var seatType = seatTypeMapper.toSeatTypeFromSeatCreationRequest(request);
-        seatType.setStatus(Status.active);
+        seatType.setStatus(Status.ACTIVE);
         log.info("Creating seat type with name: {}", seatType.getSeatTypeName());
         return seatTypeMapper.toSeatTypeResponse(seatTypeRepository.save(seatType));
     }
@@ -117,7 +117,7 @@ public class SeatTypeService {
                     log.error("seatTypeId with id {} not found", seatTypeId);
                     return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
-        seat.setStatus(Status.deleted);
+        seat.setStatus(Status.INACTIVE);
         seatTypeRepository.save(seat);
         log.info("Deleted seat with id: {}", seatTypeId);
         return true;

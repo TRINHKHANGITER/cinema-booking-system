@@ -1,13 +1,9 @@
 package com.dev.cinemasystem.Entity;
 
-import com.dev.cinemasystem.enums.GioiTinh;
-import com.dev.cinemasystem.enums.Role;
 import com.dev.cinemasystem.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "cinema")
@@ -29,6 +25,12 @@ public class Cinema {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")
     Address address;
+
+    @Column(length = 100)
+    String province;
+
+    @Column(name = "address", length = 300)
+    String addressText;
 
 
     @Column(length = 1000)

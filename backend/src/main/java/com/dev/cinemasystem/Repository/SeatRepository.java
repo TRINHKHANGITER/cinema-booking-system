@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SeatRepository extends JpaRepository<Seat, Integer> {
@@ -28,5 +29,7 @@ public interface SeatRepository extends JpaRepository<Seat, Integer> {
             Integer seatTypeId, Status status, Pageable pageable);
 
     Page<Seat> findAllByStatus(Status status, Pageable pageable);
+
+    List<Seat> findAllByRoom_RoomId(Integer roomId);
 }
 

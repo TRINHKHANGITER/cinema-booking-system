@@ -1,13 +1,11 @@
 package com.dev.cinemasystem.dto.showTimeDTO;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 public record ShowTimeSearchDto (
     Integer showTimeId,
-    LocalDate releaseDate,
-    LocalTime startTime,
-    LocalTime endTime,
+    LocalDateTime startTime,
+    LocalDateTime endTime,
     Integer movieId,
     String movieName,
     String movieTypeName,

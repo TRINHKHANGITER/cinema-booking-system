@@ -55,7 +55,7 @@ public class TicketTypeService {
             throw new AppException(ErrorCode.TICKET_TYPE_NAME_EXISTS);
         }
         var ticketType = ticketTypeMapper.toTicketTypeFromTicketCreationRequest(request);
-        ticketType.setStatus(Status.active);
+        ticketType.setStatus(Status.ACTIVE);
         log.info("Creating ticket type with name: {}", ticketType.getTicketTypeName());
         return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
     }
@@ -117,7 +117,7 @@ public class TicketTypeService {
                     log.error("ticketTypeId with id {} not found", ticketTypeId);
                     return new AppException(ErrorCode.TICKET_NOT_FOUND);
                 });
-        ticket.setStatus(Status.deleted);
+        ticket.setStatus(Status.INACTIVE);
         ticketTypeRepository.save(ticket);
         log.info("Deleted ticket with id: {}", ticketTypeId);
         return true;

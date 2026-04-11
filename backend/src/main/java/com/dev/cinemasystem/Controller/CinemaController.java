@@ -38,7 +38,7 @@ public class CinemaController {
             @RequestParam (required = false) Integer cinemaId  ,
             @RequestParam (defaultValue = "1") Integer page,
             @RequestParam (defaultValue = "10") Integer size,
-            @RequestParam (defaultValue = "active") Status status
+            @RequestParam (defaultValue = "ACTIVE") Status status
     ){
         return ApiResponse.<PagingDto<CinemaResponse>>builder()
                 .message("Cinema with all details retrieved successfully")

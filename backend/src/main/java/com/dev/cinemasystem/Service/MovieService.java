@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +40,15 @@ public class MovieService {
 
     @Value("${storage.image-dir}")
     String imageDir;
+
+    private String toSlug(String value){
+        if(value == null) return null;
+        return value.trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-{2,}", "-");
+    }
 
 
 
@@ -69,10 +79,22 @@ public class MovieService {
 
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
-        movie.setStatus(Status.active);
+        movie.setStatus(Status.DRAFT);
 
         // lưu tên file vào entity
         movie.setImage(imageName);
+        if(movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()){
+            movie.setImageLandscape(imageName);
+        }
+        if(movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()){
+            movie.setImagePortrait(imageName);
+        }
+        if(movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank()){
+            movie.setTrailerUrl(movie.getVideoTrailer());
+        }
+        if(movie.getSlug() == null || movie.getSlug().isBlank()){
+            movie.setSlug(toSlug(movie.getMovieName()));
+        }
 
         movieRepository.save(movie);
         return movieMapper.toMovieResponse(movie);
@@ -126,6 +148,18 @@ public class MovieService {
             FileStoreUtil.deleteIfExists(Paths.get(imageDir), movie.getImage());
             String imageName   = FileStoreUtil.saveKeepingNameWithSuffix(request.getImage(),  Paths.get(imageDir));
             movie.setImage(imageName);
+            if(movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()){
+                movie.setImageLandscape(imageName);
+            }
+            if(movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()){
+                movie.setImagePortrait(imageName);
+            }
+        }
+        if(movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank()){
+            movie.setTrailerUrl(movie.getVideoTrailer());
+        }
+        if(movie.getSlug() == null || movie.getSlug().isBlank()){
+            movie.setSlug(toSlug(movie.getMovieName()));
         }
         movie.setMovieType(movieType);
         log.info("Updating movie with id: {}", movieId);
@@ -138,7 +172,7 @@ public class MovieService {
                     log.error("Movie with id {} not found", movieId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        movie.setStatus(Status.deleted);
+        movie.setStatus(Status.HIDDEN);
         movieRepository.save(movie);
         log.info("Deleted movie with id: {}", movieId);
         return true;

@@ -1,6 +1,12 @@
 package com.dev.cinemasystem.enums;
 
 public enum Role {
+    // legacy
     admin,
-    customer
+    customer,
+
+    // designed
+    ADMIN,
+    USER,
+    STAFF
 }
