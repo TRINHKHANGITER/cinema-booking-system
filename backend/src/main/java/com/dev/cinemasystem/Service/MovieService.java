@@ -1,6 +1,5 @@
 package com.dev.cinemasystem.Service;
 
-
 import com.dev.cinemasystem.Entity.Movie;
 import com.dev.cinemasystem.Exception.AppException;
 import com.dev.cinemasystem.Exception.ErrorCode;
@@ -22,8 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
@@ -41,8 +40,8 @@ public class MovieService {
     @Value("${storage.image-dir}")
     String imageDir;
 
-    private String toSlug(String value){
-        if(value == null) return null;
+    private String toSlug(String value) {
+        if (value == null) return null;
         return value.trim()
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")
@@ -50,9 +49,19 @@ public class MovieService {
                 .replaceAll("-{2,}", "-");
     }
 
+    private void applyUploadedImage(Movie movie, MultipartFile image, boolean overwriteExisting) {
+        if (image == null || image.isEmpty()) return;
 
+        String imageName = FileStoreUtil.saveKeepingNameWithSuffix(image, Paths.get(imageDir));
+        if (overwriteExisting || movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()) {
+            movie.setImageLandscape(imageName);
+        }
+        if (overwriteExisting || movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()) {
+            movie.setImagePortrait(imageName);
+        }
+    }
 
-    public MovieResponse getMovieById(Integer movieId){
+    public MovieResponse getMovieById(Integer movieId) {
         var movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> {
                     log.error("Movie with id {} not found", movieId);
@@ -62,37 +71,24 @@ public class MovieService {
         return movieMapper.toMovieResponse(movie);
     }
 
-
-    public MovieResponse createMovie(MovieCreationResquest request){
+    public MovieResponse createMovie(MovieCreationResquest request) {
         if (request == null) throw new AppException(ErrorCode.INVALID_REQUEST);
 
         var movieType = movieTypeRepository.findById(request.getMovieTypeId())
                 .orElseThrow(() -> new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND));
 
-        if (request.getVideoTrailer() == null || request.getVideoTrailer().isEmpty())
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-        if (request.getImage() == null || request.getImage().isEmpty())
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-
-
-        String imageName   = FileStoreUtil.saveKeepingNameWithSuffix(request.getImage(),  Paths.get(imageDir));
-
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
-        movie.setStatus(MovieStatus.DRAFT);
+        movie.setStatus(MovieStatus.ACTIVE);
 
-        // lÆ°u tÃªn file vÃ o entity
-        movie.setImage(imageName);
-        if(movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()){
-            movie.setImageLandscape(imageName);
+        applyUploadedImage(movie, request.getImage(), false);
+
+        if ((movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank())
+                && request.getVideoTrailer() != null
+                && !request.getVideoTrailer().isBlank()) {
+            movie.setTrailerUrl(request.getVideoTrailer());
         }
-        if(movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()){
-            movie.setImagePortrait(imageName);
-        }
-        if(movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank()){
-            movie.setTrailerUrl(movie.getVideoTrailer());
-        }
-        if(movie.getSlug() == null || movie.getSlug().isBlank()){
+        if (movie.getSlug() == null || movie.getSlug().isBlank()) {
             movie.setSlug(toSlug(movie.getMovieName()));
         }
 
@@ -100,30 +96,31 @@ public class MovieService {
         return movieMapper.toMovieResponse(movie);
     }
 
-    public PagingDto<MovieResponse> getAllmovies( Integer movieTypeId, MovieStatus status, Integer page, Integer size){
+    public PagingDto<MovieResponse> getAllmovies(Integer movieTypeId, MovieStatus status, Integer page, Integer size) {
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
         }
-        if (size < 1 ) {
+        if (size < 1) {
             log.error("Invalid page size: {}", size);
             throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
         }
+
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Movie> moviePage ;
-        if(status != null && movieTypeId != null){
+        Page<Movie> moviePage;
+        if (status != null && movieTypeId != null) {
             moviePage = movieRepository.findAllByStatusAndMovieType_MovieTypeId(status, movieTypeId, pageable);
-        }else if(status != null){
-            moviePage = movieRepository.findAllByStatus( status, pageable);
-        }else if(movieTypeId != null){
-            moviePage = movieRepository.findAllByMovieType_MovieTypeId( movieTypeId, pageable);
-        }else {
+        } else if (status != null) {
+            moviePage = movieRepository.findAllByStatus(status, pageable);
+        } else if (movieTypeId != null) {
+            moviePage = movieRepository.findAllByMovieType_MovieTypeId(movieTypeId, pageable);
+        } else {
             moviePage = movieRepository.findAll(pageable);
         }
 
         log.info("Fetching movies - page: {}, size: {}", page, size);
         List<MovieResponse> movieResponses = movieMapper.toMovieResponseList(moviePage.getContent());
-        return  PagingDto.<MovieResponse>builder()
+        return PagingDto.<MovieResponse>builder()
                 .items(movieResponses)
                 .currentPage(page)
                 .pageSize(size)
@@ -132,52 +129,51 @@ public class MovieService {
                 .build();
     }
 
-    public MovieResponse  updateMovie(Integer movieId, MovieUpdateResquest request){
+    public MovieResponse updateMovie(Integer movieId, MovieUpdateResquest request) {
+        if (request == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
         var movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> {
                     log.error("Movie with id {} not found", movieId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
 
-        var movieType = movieTypeRepository.findById(request.getMovieTypeId()).orElseThrow(() -> {
-            log.error("Movie type with id {} not found", request.getMovieTypeId());
-            return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
-        });
-        movieMapper.updateMovieInfo( movie, request);
-        if(request.getImage() != null && !request.getImage().isEmpty()){
-            FileStoreUtil.deleteIfExists(Paths.get(imageDir), movie.getImage());
-            String imageName   = FileStoreUtil.saveKeepingNameWithSuffix(request.getImage(),  Paths.get(imageDir));
-            movie.setImage(imageName);
-            if(movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()){
-                movie.setImageLandscape(imageName);
-            }
-            if(movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()){
-                movie.setImagePortrait(imageName);
-            }
+        movieMapper.updateMovieInfo(movie, request);
+
+        if (request.getMovieTypeId() != null) {
+            var movieType = movieTypeRepository.findById(request.getMovieTypeId()).orElseThrow(() -> {
+                log.error("Movie type with id {} not found", request.getMovieTypeId());
+                return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
+            });
+            movie.setMovieType(movieType);
         }
-        if(movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank()){
-            movie.setTrailerUrl(movie.getVideoTrailer());
+
+        applyUploadedImage(movie, request.getImage(), true);
+
+        if ((movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank())
+                && request.getVideoTrailer() != null
+                && !request.getVideoTrailer().isBlank()) {
+            movie.setTrailerUrl(request.getVideoTrailer());
         }
-        if(movie.getSlug() == null || movie.getSlug().isBlank()){
+        if (movie.getSlug() == null || movie.getSlug().isBlank()) {
             movie.setSlug(toSlug(movie.getMovieName()));
         }
-        movie.setMovieType(movieType);
+
         log.info("Updating movie with id: {}", movieId);
         return movieMapper.toMovieResponse(movieRepository.save(movie));
     }
 
-    public boolean deleteMovie(Integer movieId){
+    public boolean deleteMovie(Integer movieId) {
         var movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> {
                     log.error("Movie with id {} not found", movieId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        movie.setStatus(MovieStatus.HIDDEN);
+        movie.setStatus(MovieStatus.INACTIVE);
         movieRepository.save(movie);
         log.info("Deleted movie with id: {}", movieId);
         return true;
     }
-
-
 }
-

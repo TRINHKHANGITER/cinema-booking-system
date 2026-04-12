@@ -1,14 +1,12 @@
 package com.dev.cinemasystem.Entity;
 
-
 import com.dev.cinemasystem.enums.ShowTimeStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "show_time")
@@ -23,37 +21,24 @@ public class ShowTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer showTimeId;
 
+    @Column(nullable = false)
+    LocalDate releaseDate;
 
     @Column(nullable = false)
-    LocalDateTime startTime;
+    LocalTime startTime;
 
     @Column(nullable = false)
-    LocalDateTime endTime;
-
-    LocalDateTime sellStartTime;
-
-    LocalDateTime sellEndTime;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false)
-    LocalDateTime updatedAt;
+    LocalTime endTime;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     ShowTimeStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movie_id",nullable = false)
+    @JoinColumn(name = "movie_id", nullable = false)
     Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id",nullable = false)
+    @JoinColumn(name = "room_id", nullable = false)
     Room room;
-
 }
-
-

@@ -32,9 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 
-**/resource/application.properties
-**/resource/application.yml
-**/resource/**
+.env
+
+**/resources/application.yml
+
 
 **package-lock.json
 **/node_modules/
+**/.env

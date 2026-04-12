@@ -22,8 +22,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
         select (count(st) > 0) from ShowTime st
         where st.room.roomId = :roomId
           and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
-          and st.startTime < :endTime
-          and st.endTime   > :startTime
+          and function('timestamp', st.releaseDate, st.startTime) < :endTime
+          and function('timestamp', st.releaseDate, st.endTime)   > :startTime
     """)
     boolean existsOverlappingShowTime(
             Integer roomId,
@@ -36,8 +36,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
         where st.showTimeId <> :showTimeId
           and st.room.roomId = :roomId
           and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
-          and st.startTime < :endTime
-          and st.endTime   > :startTime
+          and function('timestamp', st.releaseDate, st.startTime) < :endTime
+          and function('timestamp', st.releaseDate, st.endTime)   > :startTime
     """)
     int countOverlappingShowTime(
             Integer showTimeId,
@@ -51,7 +51,9 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     @Query("""
     select new com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto(
-      st.showTimeId, st.startTime, st.endTime,
+      st.showTimeId,
+      function('timestamp', st.releaseDate, st.startTime),
+      function('timestamp', st.releaseDate, st.endTime),
       m.movieId, m.movieName, mt.movieTypeName,
       c.cinemaId, c.cinemaName,
       r.roomId, r.roomName, rt.roomTypeName
@@ -67,10 +69,10 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:roomTypeId is null or rt.roomTypeId = :roomTypeId)
-      and (:dateFrom is null or function('date', st.startTime) >= :dateFrom)
-      and (:dateTo   is null or function('date', st.startTime) <= :dateTo)
-      and (:timeFrom is null or function('time', st.startTime) >= :timeFrom)
-      and (:timeTo   is null or function('time', st.startTime) <= :timeTo)
+      and (:dateFrom is null or st.releaseDate >= :dateFrom)
+      and (:dateTo   is null or st.releaseDate <= :dateTo)
+      and (:timeFrom is null or st.startTime >= :timeFrom)
+      and (:timeTo   is null or st.startTime <= :timeTo)
     order by st.startTime
     """)
     Page<ShowTimeSearchDto> searchShowTimes(

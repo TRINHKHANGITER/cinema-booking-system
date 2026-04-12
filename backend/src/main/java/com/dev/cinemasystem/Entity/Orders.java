@@ -23,8 +23,6 @@ public class Orders {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer orderId;
 
-    @Column(nullable = false, unique = true, length = 50)
-    String orderCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

@@ -31,11 +31,7 @@ public class Movie {
     @Column(columnDefinition = "TEXT")
     String description;
 
-    @Column(length = 500)
-    String videoTrailer;
 
-    @Column(length = 500)
-    String image;
 
     Integer durationMinutes;
 
