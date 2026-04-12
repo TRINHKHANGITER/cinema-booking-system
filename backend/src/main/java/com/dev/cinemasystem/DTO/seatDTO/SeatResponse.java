@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.dto.seatDTO;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.SeatStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -20,5 +20,6 @@ public class SeatResponse {
     Integer seatColumn;
     Integer seatTypeId;
     Integer roomId;
-    Status status;
+    SeatStatus status;
 }
+

@@ -30,6 +30,9 @@ public enum ErrorCode {
     USERNAME_BLANK("USERNAME_BLANK", HttpStatus.BAD_REQUEST, "Username is required"),
 
     ADDRESS_NOT_FOUND("ADDRESS_NOT_FOUND", HttpStatus.NOT_FOUND, "Address not found"),
+    ADDRESS_BLANK("ADDRESS_BLANK", HttpStatus.BAD_REQUEST, "Address is required"),
+    PROVINCE_ID_BLANK("PROVINCE_ID_BLANK", HttpStatus.BAD_REQUEST, "Province ID is required"),
+    PROVINCE_ID_INVALID("PROVINCE_ID_INVALID", HttpStatus.BAD_REQUEST, "Province ID must be at least 1"),
 
     INVALID_PAGE_NUMBER("INVALID_PAGE_NUMBER", HttpStatus.BAD_REQUEST, "Page number must be greater than or equal to 1"),
     INVALID_PAGE_SIZE("INVALID_PAGE_SIZE", HttpStatus.BAD_REQUEST, "Page size must be between 1 and 10"),
@@ -97,6 +100,10 @@ public enum ErrorCode {
 
 
     SHOWTIME_ALREADY_EXISTS("SHOWTIME_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Showtime already exists for the given movie, room, and start time"),
+    START_TIME_BLANK("START_TIME_BLANK", HttpStatus.BAD_REQUEST, "Start time is required"),
+    END_TIME_BLANK("END_TIME_BLANK", HttpStatus.BAD_REQUEST, "End time is required"),
+    INVALID_SHOWTIME_RANGE("INVALID_SHOWTIME_RANGE", HttpStatus.BAD_REQUEST, "endTime must be greater than startTime"),
+    ROOM_HAS_NO_SEATS("ROOM_HAS_NO_SEATS", HttpStatus.BAD_REQUEST, "Cannot create showtime because room has no seats"),
     TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Time is hh:mm:ss or hh:mm"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid"),
 

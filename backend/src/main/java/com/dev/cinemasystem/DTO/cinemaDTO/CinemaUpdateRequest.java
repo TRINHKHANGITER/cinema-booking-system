@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
-
-import com.dev.cinemasystem.dto.addressDTO.AddressCreationDto;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,7 +11,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CinemaUpdateRequest {
     String cinemaName;
-    AddressCreationDto address;
-    String description;
 
+    @Min(value = 1, message = "PROVINCE_ID_INVALID")
+    Integer provinceId;
+
+    String address;
+
+    String description;
 }

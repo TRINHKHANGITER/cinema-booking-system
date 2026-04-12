@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.dev.cinemasystem.Entity.User;
+import com.dev.cinemasystem.enums.UserStatus;
 
 import java.util.Optional;
 
@@ -15,8 +16,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsByUsername(String username);
     Optional<User> findByUsername(String username);
-    Page<User> findByStatus(String status, Pageable pageable);
+    Page<User> findByStatus(UserStatus status, Pageable pageable);
 
     Optional<User> findByEmail(String email);
 
 }
+

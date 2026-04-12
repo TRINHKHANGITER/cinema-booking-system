@@ -8,10 +8,11 @@ import com.dev.cinemasystem.Exception.ErrorCode;
 import com.dev.cinemasystem.Mapper.ShowTimeMapper;
 import com.dev.cinemasystem.Repository.MovieRepository;
 import com.dev.cinemasystem.Repository.RoomRepository;
+import com.dev.cinemasystem.Repository.SeatRepository;
 import com.dev.cinemasystem.Repository.ShowTimeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.utils.ParseTime;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -33,8 +37,34 @@ public class ShowTimeService {
     ShowTimeRepository showTimeRepository;
     RoomRepository roomRepository;
     MovieRepository movieRepository;
+    SeatRepository seatRepository;
     ShowTimeMapper showTimeMapper;
 
+    private void validateShowTimeRange(LocalDateTime startTime, LocalDateTime endTime){
+        if(startTime == null || endTime == null || !endTime.isAfter(startTime)){
+            throw new AppException(ErrorCode.INVALID_SHOWTIME_RANGE);
+        }
+    }
+
+    private LocalDateTime combineDateTime(LocalDate date, LocalTime time) {
+        if (date == null || time == null) return null;
+        return LocalDateTime.of(date, time);
+    }
+
+    private LocalDateTime normalizeEnd(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) return end;
+        return end.isAfter(start) ? end : end.plusDays(1);
+    }
+
+    private LocalDateTime getStartDateTime(com.dev.cinemasystem.Entity.ShowTime showTime) {
+        return combineDateTime(showTime.getReleaseDate(), showTime.getStartTime());
+    }
+
+    private LocalDateTime getEndDateTime(com.dev.cinemasystem.Entity.ShowTime showTime) {
+        LocalDateTime start = getStartDateTime(showTime);
+        LocalDateTime end = combineDateTime(showTime.getReleaseDate(), showTime.getEndTime());
+        return normalizeEnd(start, end);
+    }
 
 
 
@@ -64,14 +94,25 @@ public class ShowTimeService {
             return new AppException(ErrorCode.MOVIE_NOT_FOUND);
         });
 
-        if(showTimeRepository.existsOverlappingShowTime(request.getMovieId(), request.getRoomId(), Status.active, request.getReleaseDate(), ParseTime.toLocalTime(request.getStartTime()),ParseTime.toLocalTime (request.getEndTime()) )){
+        LocalDateTime startDateTime = request.getStartTime();
+        LocalDateTime endDateTime = normalizeEnd(startDateTime, request.getEndTime());
+        validateShowTimeRange(startDateTime, endDateTime);
+
+        if(showTimeRepository.existsOverlappingShowTime(request.getRoomId(), startDateTime, endDateTime)){
             log.error("ShowTime for movie id {} in room id {} at time {} already exists", request.getMovieId(), request.getRoomId(), request.getStartTime());
             throw new AppException(ErrorCode.SHOWTIME_ALREADY_EXISTS);
         }
+
+        // Mandatory business rule (within existing tables): load all seats from this room at showtime creation time.
+        var roomSeats = seatRepository.findAllByRoom_RoomId(room.getRoomId());
+        if(roomSeats.isEmpty()){
+            throw new AppException(ErrorCode.ROOM_HAS_NO_SEATS);
+        }
+
         var showTime = showTimeMapper.toShowTimeFromShowTimeCreationRequest(request);
         showTime.setRoom(room);
         showTime.setMovie(movie);
-        showTime.setStatus(Status.active);
+        showTime.setStatus(ShowTimeStatus.SCHEDULED);
         log.info("Creating showTime for movie id {} in room id {} at time {}", request.getMovieId(), request.getRoomId(), request.getStartTime());
         return showTimeMapper.toShowTimeResponse(showTimeRepository.save(showTime));
     }
@@ -110,15 +151,18 @@ public class ShowTimeService {
         if(room != null){
             showTime.setRoom(room);
         }
+
+        LocalDateTime startDateTime = getStartDateTime(showTime);
+        LocalDateTime endDateTime = getEndDateTime(showTime);
+        validateShowTimeRange(startDateTime, endDateTime);
+
         int countOverlapping = showTimeRepository.countOverlappingShowTime(
-                showTime.getMovie().getMovieId(),
+                showTime.getShowTimeId(),
                 showTime.getRoom().getRoomId(),
-                Status.active,
-                showTime.getReleaseDate(),
-                showTime.getStartTime(),
-                showTime.getEndTime()
+                startDateTime,
+                endDateTime
         );
-        if(countOverlapping > 2){
+        if(countOverlapping > 0){
             log.error("ShowTime for movie id {} in room id {} at time {} already exists", showTime.getMovie().getMovieId(), showTime.getRoom().getRoomId(), showTime.getStartTime());
             throw new AppException(ErrorCode.SHOWTIME_ALREADY_EXISTS);
         }
@@ -133,7 +177,7 @@ public class ShowTimeService {
                     log.error("ShowTime with id {} not found", showTimeId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
-        showTime.setStatus(Status.deleted);
+        showTime.setStatus(ShowTimeStatus.CANCELLED);
         showTimeRepository.save(showTime);
         log.info("Deleted showTime with id: {}", showTimeId);
         return true;
@@ -163,3 +207,4 @@ public class ShowTimeService {
                 .build();
     }
 }
+

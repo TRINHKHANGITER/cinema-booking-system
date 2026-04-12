@@ -2,7 +2,7 @@ package com.dev.cinemasystem.Repository;
 
 import com.dev.cinemasystem.Entity.ShowTime;
 import com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,47 +10,40 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 
 public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
-    Page<ShowTime> findAllByStatus(Status status, Pageable pageable);
+    Page<ShowTime> findAllByStatus(ShowTimeStatus status, Pageable pageable);
 
     @Query("""
         select (count(st) > 0) from ShowTime st
-        where st.movie.movieId = :movieId
-          and st.room.roomId = :roomId
-          and st.status = :status
-          and st.releaseDate = :releaseDate
-          and st.startTime < :endTime
-          and st.endTime   > :startTime
+        where st.room.roomId = :roomId
+          and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
+          and function('timestamp', st.releaseDate, st.startTime) < :endTime
+          and function('timestamp', st.releaseDate, st.endTime)   > :startTime
     """)
     boolean existsOverlappingShowTime(
-            Integer movieId,
             Integer roomId,
-            Status status,
-            LocalDate releaseDate,
-            LocalTime startTime,
-            LocalTime endTime
+            LocalDateTime startTime,
+            LocalDateTime endTime
     );
 
     @Query("""
         select count(st) from ShowTime st
-        where st.movie.movieId = :movieId
+        where st.showTimeId <> :showTimeId
           and st.room.roomId = :roomId
-          and st.status = :status
-          and st.releaseDate = :releaseDate
-          and st.startTime < :endTime
-          and st.endTime   > :startTime
+          and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
+          and function('timestamp', st.releaseDate, st.startTime) < :endTime
+          and function('timestamp', st.releaseDate, st.endTime)   > :startTime
     """)
     int countOverlappingShowTime(
-            Integer movieId,
+            Integer showTimeId,
             Integer roomId,
-            Status status,
-            LocalDate releaseDate,
-            LocalTime startTime,
-            LocalTime endTime
+            LocalDateTime startTime,
+            LocalDateTime endTime
     );
 
 
@@ -58,7 +51,9 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     @Query("""
     select new com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto(
-      st.showTimeId, st.releaseDate, st.startTime, st.endTime,
+      st.showTimeId,
+      function('timestamp', st.releaseDate, st.startTime),
+      function('timestamp', st.releaseDate, st.endTime),
       m.movieId, m.movieName, mt.movieTypeName,
       c.cinemaId, c.cinemaName,
       r.roomId, r.roomName, rt.roomTypeName
@@ -69,7 +64,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join st.room r
     join r.roomType rt
     join r.cinema c
-    where st.status = com.dev.cinemasystem.enums.Status.active
+    where st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED
       and (:keyword is null or lower(m.movieName) like lower(concat('%', :keyword, '%')))
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
@@ -78,7 +73,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
       and (:dateTo   is null or st.releaseDate <= :dateTo)
       and (:timeFrom is null or st.startTime >= :timeFrom)
       and (:timeTo   is null or st.startTime <= :timeTo)
-    order by st.releaseDate, st.startTime
+    order by st.startTime
     """)
     Page<ShowTimeSearchDto> searchShowTimes(
             @Param("keyword") String keyword,
@@ -93,5 +88,6 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     );
 
 }
+
 
 

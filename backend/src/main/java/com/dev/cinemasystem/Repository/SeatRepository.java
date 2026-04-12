@@ -1,11 +1,12 @@
 package com.dev.cinemasystem.Repository;
 
 import com.dev.cinemasystem.Entity.Seat;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.SeatStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SeatRepository extends JpaRepository<Seat, Integer> {
@@ -19,14 +20,17 @@ public interface SeatRepository extends JpaRepository<Seat, Integer> {
             String seatRow, Integer seatColumn,  Integer roomId);
 
     Page<Seat> findAllByRoom_RoomIdAndSeatType_SeatTypeIdAndStatus(
-            Integer cinemaId, Integer seatTypeId, Status status, Pageable pageable);
+            Integer cinemaId, Integer seatTypeId, SeatStatus status, Pageable pageable);
 
     Page<Seat> findAllByRoom_RoomIdAndStatus(
-            Integer cinemaId, Status status, Pageable pageable);
+            Integer cinemaId, SeatStatus status, Pageable pageable);
 
     Page<Seat> findAllBySeatType_SeatTypeIdAndStatus(
-            Integer seatTypeId, Status status, Pageable pageable);
+            Integer seatTypeId, SeatStatus status, Pageable pageable);
 
-    Page<Seat> findAllByStatus(Status status, Pageable pageable);
+    Page<Seat> findAllByStatus(SeatStatus status, Pageable pageable);
+
+    List<Seat> findAllByRoom_RoomId(Integer roomId);
 }
+
 

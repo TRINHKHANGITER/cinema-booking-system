@@ -1,13 +1,10 @@
 package com.dev.cinemasystem.dto.showTimeDTO;
 
-import com.dev.cinemasystem.enums.Status;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 
 @Data
@@ -18,11 +15,13 @@ import java.time.LocalTime;
 public class ShowTimeResponse {
 
     Integer showTimeId;
-    LocalDate releaseDate;
-    LocalTime startTime;
-    LocalTime endTime;
+    LocalDateTime startTime;
+    LocalDateTime endTime;
+    LocalDateTime sellStartTime;
+    LocalDateTime sellEndTime;
     Integer roomId;
     Integer movieId;
-    Status status;
+    ShowTimeStatus status;
 
 }
+

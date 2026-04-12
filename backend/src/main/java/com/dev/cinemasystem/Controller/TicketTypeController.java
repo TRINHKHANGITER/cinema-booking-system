@@ -7,7 +7,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeCreationRequest;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeResponse;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.TicketTypeStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +42,7 @@ public class TicketTypeController {
 
     @GetMapping("/all")
     public ApiResponse<PagingDto<TicketTypeResponse>> getAllTickets(
-            @RequestParam (required = false)Status status,
+            @RequestParam (required = false)TicketTypeStatus status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
 
@@ -73,3 +73,4 @@ public class TicketTypeController {
     }
 
 }
+

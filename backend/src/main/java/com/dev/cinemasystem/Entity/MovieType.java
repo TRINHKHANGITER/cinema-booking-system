@@ -1,7 +1,7 @@
 package com.dev.cinemasystem.Entity;
 
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.MovieTypeStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +26,8 @@ public class MovieType {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    Status status;
+    MovieTypeStatus status;
 
 }
+
+

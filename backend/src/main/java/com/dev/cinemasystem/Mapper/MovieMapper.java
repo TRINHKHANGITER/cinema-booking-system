@@ -15,18 +15,23 @@ public interface MovieMapper {
     List<MovieResponse> toMovieResponseList(List<Movie> movies);
 
     @Mapping(source = "movieType.movieTypeId", target = "movieTypeId")
-//    @Mapping(source = "room.roomId", target = "roomId")
+    @Mapping(source = "trailerUrl", target = "videoTrailer")
+    @Mapping(source = "imageLandscape", target = "image")
     MovieResponse toMovieResponse(Movie movie);
 
     @Mapping(source = "movieTypeId", target = "movieType.movieTypeId")
-//    @Mapping(source = "roomId", target = "room.roomId")
-//    @Mapping(target = "videoTrailer", ignore = true)
-    @Mapping(target = "image", ignore = true)
+    @Mapping(target = "movieId", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Movie toMovieFromMovieCreationRequest(MovieCreationResquest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-//    @Mapping(target = "videoTrailer", ignore = true)
-    @Mapping(target = "image", ignore = true)
+    @Mapping(target = "movieId", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "movieType", ignore = true)
     void updateMovieInfo(@MappingTarget Movie movie, MovieUpdateResquest request);
 
 }

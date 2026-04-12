@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.Entity;
 
-
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -22,7 +21,6 @@ public class ShowTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer showTimeId;
 
-
     @Column(nullable = false)
     LocalDate releaseDate;
 
@@ -34,14 +32,13 @@ public class ShowTime {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    Status status;
+    ShowTimeStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movie_id",nullable = false)
+    @JoinColumn(name = "movie_id", nullable = false)
     Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id",nullable = false)
+    @JoinColumn(name = "room_id", nullable = false)
     Room room;
-
 }

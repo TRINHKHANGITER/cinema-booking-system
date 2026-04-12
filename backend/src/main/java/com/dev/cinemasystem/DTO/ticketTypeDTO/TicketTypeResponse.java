@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.dto.ticketTypeDTO;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.TicketTypeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,5 +15,6 @@ public class TicketTypeResponse {
     String ticketTypeName;
 
     String description;
-    Status status;
+    TicketTypeStatus status;
 }
+

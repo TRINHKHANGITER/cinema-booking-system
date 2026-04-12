@@ -11,7 +11,7 @@ import com.dev.cinemasystem.Repository.RoomTypeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.roomDTO.RoomCreationResquest;
 import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.RoomStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -64,13 +64,13 @@ public class RoomService {
         var room = roomMapper.toRoomFromRoomCreationRequest(request);
         room.setCinema(cinema);
         room.setRoomType(roomType);
-        room.setStatus(Status.active);
+        room.setStatus(RoomStatus.ACTIVE);
         roomRepository.save(room);
         log.info("Creating room with name: {}", room.getRoomName());
         return roomMapper.toRoomResponse(roomRepository.save(room));
     }
 
-    public PagingDto<RoomResponse> getAllrooms(Integer cinemaId, Integer roomTypeId, Status status, Integer page, Integer size){
+    public PagingDto<RoomResponse> getAllrooms(Integer cinemaId, Integer roomTypeId, RoomStatus status, Integer page, Integer size){
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
@@ -130,7 +130,7 @@ public class RoomService {
                     log.error("Room with id {} not found", roomId);
                     return new AppException(ErrorCode.ROOM_NOT_FOUND);
                 });
-        room.setStatus(Status.deleted);
+        room.setStatus(RoomStatus.INACTIVE);
         roomRepository.save(room);
         log.info("Deleted room with id: {}", roomId);
         return true;
@@ -138,3 +138,4 @@ public class RoomService {
 
 
 }
+

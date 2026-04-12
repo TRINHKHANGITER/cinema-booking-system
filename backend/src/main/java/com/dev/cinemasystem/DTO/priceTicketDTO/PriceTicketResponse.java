@@ -1,6 +1,6 @@
 package com.dev.cinemasystem.dto.priceTicketDTO;
 
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.PriceTicketStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -19,6 +19,7 @@ public class PriceTicketResponse {
     Integer roomTypeId;
     Integer seatTypeId;
     Integer ticketTypeId;
-    Status status;
+    PriceTicketStatus status;
 
 }
+

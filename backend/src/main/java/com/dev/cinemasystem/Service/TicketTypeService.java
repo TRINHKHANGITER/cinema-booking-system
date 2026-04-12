@@ -10,7 +10,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeCreationRequest;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeResponse;
 import com.dev.cinemasystem.dto.ticketTypeDTO.TicketTypeUpdateRequest;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.TicketTypeStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -55,12 +55,12 @@ public class TicketTypeService {
             throw new AppException(ErrorCode.TICKET_TYPE_NAME_EXISTS);
         }
         var ticketType = ticketTypeMapper.toTicketTypeFromTicketCreationRequest(request);
-        ticketType.setStatus(Status.active);
+        ticketType.setStatus(TicketTypeStatus.ACTIVE);
         log.info("Creating ticket type with name: {}", ticketType.getTicketTypeName());
         return ticketTypeMapper.toTicketTypeResponse(ticketTypeRepository.save(ticketType));
     }
 
-    public PagingDto<TicketTypeResponse> getAllTicketTypes( Status status, Integer page, Integer size){
+    public PagingDto<TicketTypeResponse> getAllTicketTypes( TicketTypeStatus status, Integer page, Integer size){
         if (page < 1) {
             log.error("Invalid page number: {}", page);
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
@@ -117,7 +117,7 @@ public class TicketTypeService {
                     log.error("ticketTypeId with id {} not found", ticketTypeId);
                     return new AppException(ErrorCode.TICKET_NOT_FOUND);
                 });
-        ticket.setStatus(Status.deleted);
+        ticket.setStatus(TicketTypeStatus.INACTIVE);
         ticketTypeRepository.save(ticket);
         log.info("Deleted ticket with id: {}", ticketTypeId);
         return true;
@@ -125,3 +125,4 @@ public class TicketTypeService {
 
 
 }
+

@@ -4,7 +4,7 @@ package com.dev.cinemasystem.configuration.security;
 import com.dev.cinemasystem.Entity.User;
 import com.dev.cinemasystem.Repository.UserRepository;
 import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.Status;
+import com.dev.cinemasystem.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,8 +13,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.time.LocalDate;
 
 @Configuration
 @RequiredArgsConstructor
@@ -32,13 +30,11 @@ ApplicationInitConfig {
                 User user = User.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
-                        .role(Role.admin)
+                        .role(Role.ADMIN)
                         .email("admin@gmail.com")
                         .fullName("System Administrator")
                         .phoneNumber("0123456789")
-                        .createAt(LocalDate.now())
-                        .updateAt(LocalDate.now())
-                        .status(Status.active)
+                        .status(UserStatus.ACTIVE)
                         .build();
                 userRepository.save(user);
                 log.info("admin has been created with default password : admin");
@@ -48,13 +44,11 @@ ApplicationInitConfig {
                 User user = User.builder()
                         .username("user123")
                         .password(passwordEncoder.encode("user123"))
-                        .role(Role.customer)
+                        .role(Role.USER)
                         .email("user123@gmail.com")
                         .fullName("user123")
                         .phoneNumber("012345678910")
-                        .createAt(LocalDate.now())
-                        .updateAt(LocalDate.now())
-                        .status(Status.active)
+                        .status(UserStatus.ACTIVE)
                         .build();
                 userRepository.save(user);
                 log.info(" user123 has been created with default password : user123 ");
@@ -68,3 +62,4 @@ ApplicationInitConfig {
     }
 
 }
+
