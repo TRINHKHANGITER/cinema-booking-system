@@ -29,7 +29,7 @@ ApplicationInitConfig {
             if(!userRepository.existsByUsername("admin") && !userRepository.existsByEmail("admin@gmail.com") && !userRepository.existsByPhoneNumber("0123456789")){
                 User user = User.builder()
                         .username("admin")
-                        .password(passwordEncoder.encode("admin"))
+                        .password(passwordEncoder.encode("password123"))
                         .role(Role.ADMIN)
                         .email("admin@gmail.com")
                         .fullName("System Administrator")
@@ -43,7 +43,7 @@ ApplicationInitConfig {
             if(!userRepository.existsByUsername("user123") && !userRepository.existsByEmail("user123@gmail.com") && !userRepository.existsByPhoneNumber("012345678910")){
                 User user = User.builder()
                         .username("user123")
-                        .password(passwordEncoder.encode("user123"))
+                        .password(passwordEncoder.encode("password123"))
                         .role(Role.USER)
                         .email("user123@gmail.com")
                         .fullName("user123")

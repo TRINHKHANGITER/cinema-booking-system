@@ -117,14 +117,14 @@ INSERT INTO province (province_name, status) VALUES
 
 -- user (password = bcrypt hash of "Password@123")
 INSERT INTO users (full_name, phone_number, date_of_birth, sex, username, password_hash, email, role, created_at, updated_at, status) VALUES
--- ('Nguyễn Văn Admin',  '0901000001', '1985-03-15', 'MALE',   'admin',        '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'admin@cinema.vn',        'ADMIN', NOW(), NOW(), 'ACTIVE'),
-('Trần Thị Staff',    '0901000002', '1995-07-20', 'FEMALE', 'staff01',      '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'staff01@cinema.vn',      'STAFF', NOW(), NOW(), 'ACTIVE'),
-('Lê Minh Tuấn',      '0901000003', '1998-01-10', 'MALE',   'leminhtuán',   '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'leminhtuán@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
-('Phạm Thị Hoa',      '0901000004', '2000-05-25', 'FEMALE', 'phamthihoa',   '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'phamthihoa@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
-('Hoàng Đức Mạnh',    '0901000005', '1997-09-30', 'MALE',   'hoangeucmanh', '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'hoangeucmanh@gmail.com', 'USER',  NOW(), NOW(), 'LOCKED'),
-('Vũ Thị Lan',        '0901000006', '2001-12-05', 'FEMALE', 'vuthilan',     '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'vuthilan@gmail.com',     'USER',  NOW(), NOW(), 'SUSPENDED'),
-('Đặng Văn Hùng',     '0901000007', '1993-04-18', 'MALE',   'dangvanhung',  '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'dangvanhung@gmail.com',  'USER',  NOW(), NOW(), 'DELETED'),
-('Bùi Thị Mai',       '0901000008', '1999-08-22', 'FEMALE', 'buithimai',    '$2a$10$EixZaYVK1fsbw1Zfbx3OXePaWxn96p36ZJNjmnd9ZRR0NMjBGJBSW', 'buithimai@gmail.com',    'USER',  NOW(), NOW(), 'DELETED');
+-- ('Nguyễn Văn Admin',  '0901000001', '1985-03-15', 'MALE',   'admin',        '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'admin@cinema.vn',        'ADMIN', NOW(), NOW(), 'ACTIVE'),
+('Trần Thị Staff',    '0901000002', '1995-07-20', 'FEMALE', 'staff01',      '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'staff01@cinema.vn',      'STAFF', NOW(), NOW(), 'ACTIVE'),
+('Lê Minh Tuấn',      '0901000003', '1998-01-10', 'MALE',   'leminhtuán',   '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'leminhtuán@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
+('Phạm Thị Hoa',      '0901000004', '2000-05-25', 'FEMALE', 'phamthihoa',   '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'phamthihoa@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
+('Hoàng Đức Mạnh',    '0901000005', '1997-09-30', 'MALE',   'hoangeucmanh', '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'hoangeucmanh@gmail.com', 'USER',  NOW(), NOW(), 'LOCKED'),
+('Vũ Thị Lan',        '0901000006', '2001-12-05', 'FEMALE', 'vuthilan',     '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'vuthilan@gmail.com',     'USER',  NOW(), NOW(), 'SUSPENDED'),
+('Đặng Văn Hùng',     '0901000007', '1993-04-18', 'MALE',   'dangvanhung',  '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'dangvanhung@gmail.com',  'USER',  NOW(), NOW(), 'DELETED'),
+('Bùi Thị Mai',       '0901000008', '1999-08-22', 'FEMALE', 'buithimai',    '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'buithimai@gmail.com',    'USER',  NOW(), NOW(), 'DELETED');
 
 -- cinema
 -- cinema (Galaxy)

@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.userDto;
 
+import com.dev.cinemasystem.enums.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,6 +20,7 @@ public class UserResponse {
     LocalDate dateOfBirth;
     String sex;
     String email;
+    Role role;
     String status;
 
 }
