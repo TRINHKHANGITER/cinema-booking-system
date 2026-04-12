@@ -29,7 +29,9 @@ const Booking = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   useEffect(() => {
-    fetchShowDetail(state.showId);
+    if (state?.showTimeId) {
+      fetchShowDetail(state.showTimeId);
+    }
     return () => {
       resetBooking();
       resetSeats();
@@ -102,7 +104,7 @@ const Booking = () => {
                 {/* Ảnh phim */}
                 <div className="row-span-2 md:row-span-1 xl:row-span-2 block md:hidden xl:block">
                   <img
-                    src={showDetail?.movie.imagePortrait}
+                    src={showDetail?.movie.imagePortrait ?? undefined}
                     alt={showDetail?.movie.movieName}
                     width={100}
                     height={150}
@@ -112,7 +114,7 @@ const Booking = () => {
                 </div>
                 <div className="row-span-2 md:row-span-1 xl:row-span-2 hidden md:block xl:hidden">
                   <img
-                    src={showDetail?.movie.imagePortrait}
+                    src={showDetail?.movie.imagePortrait ?? undefined}
                     alt={showDetail?.movie.movieName}
                     width={100}
                     height={150}
@@ -127,11 +129,11 @@ const Booking = () => {
                     {showDetail?.movie.movieName}
                   </h3>
                   <p className="text-sm inline-block">
-                    {showDetail?.room.roomtype.roomTypeName}
+                    {showDetail?.room.roomType.roomTypeName}
                   </p>
-                  {showDetail?.movie?.age > 0 && (
+                  {(showDetail?.movie?.minimumAge ?? 0) > 0 && (
                     <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold ml-2">
-                      T{showDetail?.movie.age}
+                      T{showDetail?.movie?.minimumAge}
                     </span>
                   )}
                 </div>

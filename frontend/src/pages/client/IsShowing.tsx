@@ -154,7 +154,7 @@ const IsShowing = () => {
                                 letterSpacing: ".15pt",
                               }}
                             >
-                              {`${index + 1}. ${movie.movieName} - ${movie.movietype?.movieTypeName}`}
+                              {`${index + 1}. ${movie.movieName} - ${movie.movieType?.movieTypeName}`}
                             </span>
                           </strong>
                         </a>

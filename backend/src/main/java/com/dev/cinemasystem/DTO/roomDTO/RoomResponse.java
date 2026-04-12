@@ -2,6 +2,7 @@ package com.dev.cinemasystem.dto.roomDTO;
 
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeResponse;
+import com.dev.cinemasystem.enums.RoomStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -16,7 +17,9 @@ public class RoomResponse {
     Integer roomId;
     String roomName;
     Integer capacity;
+    RoomTypeResponse roomType;
+    CinemaResponse cinema;
     Integer roomTypeId;
     Integer cinemaId;
-    String status;
+    RoomStatus status;
 }

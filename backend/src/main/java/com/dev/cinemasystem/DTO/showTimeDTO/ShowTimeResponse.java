@@ -7,7 +7,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 
 @Data
@@ -19,11 +19,11 @@ public class ShowTimeResponse {
 
     Integer showTimeId;
     LocalDate releaseDate;
-    LocalDateTime startTime;
-    LocalDateTime endTime;
-    Integer roomId;
+    LocalTime startTime;
+    LocalTime endTime;
     RoomResponse room;
     MovieResponse movie;
+    Integer roomId;
     Integer movieId;
     ShowTimeStatus status;
 

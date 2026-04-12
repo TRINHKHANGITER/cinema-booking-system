@@ -1,58 +1,58 @@
-import type { Movie } from "../types/product";
-import type { ShowDetail, ShowTimeSeat } from "./booking";
-import type { comboFood } from "./combo";
+import type { Movie } from "./product";
+import type { ShowDetail, Combo } from "./booking";
+import type { comboFood, SelectedCombo } from "./combo";
 import type { Showtime } from "./showtime";
 import type { User } from "./user";
-interface MovieState {
+import type { Seat } from "./seat";
+
+export interface MovieState {
   movies: Movie[];
   selectedMovie: Movie | null;
   loading: boolean;
   error: string | null;
   fetchMovies: () => Promise<void>;
-  fetchMovieBySlug: (slug: string) => Promise<void>;
+  fetchMovieBySlug: (slug: string) => Promise<Movie | null>;
 }
 
-interface ShowtimeState {
+export interface ShowtimeState {
   showtimes: Showtime[];
   loading: boolean;
   error: string | null;
   selectedDate: string;
   setSelectedDate: (date: string) => void;
-
-  fetchShowtimeByMovie: (slug: string) => Promise<void>;
+  fetchShowtimeByMovie: (keyword: string) => Promise<void>;
 }
+
 export interface BookingState {
   showDetail: ShowDetail | null;
-  selectedSeats: ShowTimeSeat["seat"][];
-  selectedCombos: Combo[];
+  selectedSeats: Seat[];
+  selectedCombos: SelectedCombo[];
   loading: boolean;
   error: string | null;
 
   fetchShowDetail: (showId: number) => Promise<void>;
-  // toggleSeat: (seat: ShowTimeSeat["seat"] & { price?: number }) => void;
-  toggleCombo: (combo: Combo, delta: number) => void;
-  // getTotalPrice: () => number;
+  toggleCombo: (combo: comboFood, delta: number) => void;
   resetBooking: () => void;
 }
-interface SeatState {
+
+export interface SeatState {
   seats: Seat[];
   selectedSeats: Seat[];
   loading: boolean;
   error: string | null;
 
-  fetchSeats: (showId: number) => Promise<void>;
+  fetchSeats: (roomId: number) => Promise<void>;
   toggleSeat: (seat: Seat, allSeats: Seat[]) => void;
   resetSeats: () => void;
 }
 
-interface FoodState {
+export interface FoodState {
   combo: comboFood[];
-  comboSelected: comboFood[] | null;
+  comboSelected: Combo[] | null;
   loading: boolean;
   error: string | null;
   fetchFoods: () => Promise<void>;
 }
-
 
 export interface AuthState {
   accessToken: string | null;
@@ -65,9 +65,8 @@ export interface AuthState {
     fullName: string,
     password: string,
     email: string,
-    phone:string,
-    birthDay:string
-    
+    phone: string,
+    birthDay: string,
   ) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;

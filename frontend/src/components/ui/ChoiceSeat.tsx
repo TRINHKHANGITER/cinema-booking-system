@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import useSeatStore from "../../stores/seat";
-import { formatTime, groupSeatsByRow } from "../../utils/utils";
+import { formatTime, groupSeatsByRow, seatUnitPrice } from "../../utils/utils";
 
 type Props = {
   startTime: string;
@@ -25,25 +25,21 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
 
   return (
     <div>
-      {/* Suất chiếu */}
       <div className="bg-white px-6 py-4 rounded md:mb-8 mb-4 w-full">
         <div className="flex gap-8 items-center">
-          <label className="text-sm font-semibold">Suất chiếu</label>
+          <label className="text-sm font-semibold">Su?t chi?u</label>
           <button className="py-2 px-4 border border-gray-300 rounded text-sm bg-[#034ea2] text-white">
             {formatTime(startTime)}
           </button>
         </div>
       </div>
 
-      {/* Sơ đồ ghế */}
       <div className="bg-white py-6 px-4 rounded md:mb-8 w-full">
-        {/* Màn hình */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-3/5 h-1 bg-[#034ea2] rounded-full opacity-50" />
-          <p className="text-xs text-gray-400 mt-2 tracking-widest">Màn hình</p>
+          <p className="text-xs text-gray-400 mt-2 tracking-widest">M�n h�nh</p>
         </div>
 
-        {/* Ghế */}
         <div className="flex flex-col items-center gap-1.5 overflow-auto">
           {Object.entries(grouped)
             .sort(([a], [b]) => a.localeCompare(b))
@@ -68,7 +64,7 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                             Boolean,
                           ) as number[])
                         : [seat.seatId];
-                      const isBooked = !seat.status;
+                      const isBooked = seat.status !== "ACTIVE";
                       const isSelected = selectedIds.has(seat.seatId);
 
                       const seatClass = isBooked
@@ -91,11 +87,11 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                           <button
                             disabled={isBooked}
                             onClick={() => toggle(ids)}
-                            title={`${seat.seatRow}${seat.seatColumn} - ${seat.prices?.[0]?.price?.toLocaleString() ?? ""}₫`}
+                            title={`${seat.seatRow}${seat.seatColumn} - ${seatUnitPrice(seat).toLocaleString()}d`}
                             className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium transition-all duration-150 flex-shrink-0 ${isCouple ? "w-16" : "w-7"} ${seatClass}`}
                           >
                             {isCouple
-                              ? `${seat.seatRow}${seat.seatColumn}·${next?.seatRow ?? ""}${next?.seatColumn ?? ""}`
+                              ? `${seat.seatRow}${seat.seatColumn}�${next?.seatRow ?? ""}${next?.seatColumn ?? ""}`
                               : `${seat.seatRow}${seat.seatColumn}`}
                           </button>
                         </React.Fragment>
@@ -110,22 +106,21 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
             })}
         </div>
 
-        {/* Chú thích */}
         <div className="mt-8 pt-4 border-t border-gray-100 flex md:flex-row flex-col-reverse justify-between items-center gap-3">
           <div className="flex gap-4 flex-wrap justify-center">
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded bg-gray-100 border border-gray-200 inline-block" />
-              <span className="text-xs text-gray-500">Đã bán</span>
+              <span className="text-xs text-gray-500">�� b�n</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded bg-[#034ea2] inline-block" />
-              <span className="text-xs text-gray-500">Đang chọn</span>
+              <span className="text-xs text-gray-500">�ang ch?n</span>
             </div>
           </div>
           <div className="flex gap-4 flex-wrap justify-center">
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded border border-gray-300 bg-white inline-block" />
-              <span className="text-xs text-gray-500">Ghế đơn</span>
+              <span className="text-xs text-gray-500">Gh? don</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded bg-[#FAEEDA] border border-[#EF9F27] inline-block" />
@@ -133,7 +128,7 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-10 h-5 rounded border border-[#ED93B1] bg-[#FBEAF0] inline-block" />
-              <span className="text-xs text-gray-500">Ghế đôi</span>
+              <span className="text-xs text-gray-500">Gh? d�i</span>
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {RoomTypeMapper.class, CinemaMapper.class})
 public interface RoomMapper {
     List<RoomResponse> toRoomResponseList(List<Room> rooms);
 

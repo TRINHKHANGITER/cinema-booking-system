@@ -5,7 +5,6 @@ import { seatService } from "../services/seat.service";
 import type { Seat } from "../types/seat";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 const useSeatStore = create<SeatState>((set, get) => ({
   seats: [],
@@ -13,16 +12,16 @@ const useSeatStore = create<SeatState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchSeats: async (showId: number) => {
+  fetchSeats: async (roomId: number) => {
     set({ loading: true, error: null });
     try {
-      const res = await seatService.getSeatByTheater(showId);
-      set({ seats: res.data, loading: false });
+      const seats = await seatService.getSeatByRoom(roomId);
+      set({ seats, loading: false });
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có lỗi xảy ra, vui lòng thử lại";
+        "C� l?i x?y ra, vui l�ng th? l?i";
       toast.error(message);
       set({ loading: false, error: message });
       throw error;
@@ -31,10 +30,9 @@ const useSeatStore = create<SeatState>((set, get) => ({
 
   toggleSeat: (seat: Seat, allSeats: Seat[]) => {
     const { selectedSeats } = get();
-    const isCoupleSeat = seat.seattype?.seatTypeId === 3;
+    const isCoupleSeat = seat.seatType?.seatTypeId === 3;
 
     if (isCoupleSeat) {
-      // Tìm ghế cặp đôi liền kề (cùng hàng, column lẻ-chẵn)
       const partnerColumn =
         seat.seatColumn % 2 === 0 ? seat.seatColumn - 1 : seat.seatColumn + 1;
 
@@ -42,23 +40,19 @@ const useSeatStore = create<SeatState>((set, get) => ({
         (s) =>
           s.seatRow === seat.seatRow &&
           s.seatColumn === partnerColumn &&
-          s.seattype?.seatTypeId === 3,
+          s.seatType?.seatTypeId === 3,
       );
 
       const isSelected = selectedSeats.some((s) => s.seatId === seat.seatId);
 
       if (isSelected) {
-        // Bỏ chọn cả 2 ghế
         const idsToRemove = new Set(
           [seat.seatId, partnerSeat?.seatId].filter(Boolean),
         );
         set({
-          selectedSeats: selectedSeats.filter(
-            (s) => !idsToRemove.has(s.seatId),
-          ),
+          selectedSeats: selectedSeats.filter((s) => !idsToRemove.has(s.seatId)),
         });
       } else {
-        // Chọn cả 2 ghế, đánh dấu ghế phụ để không tính tiền
         const seatsToAdd: Seat[] = [
           { ...seat, isPrimary: true },
           ...(partnerSeat ? [{ ...partnerSeat, isPrimary: false }] : []),
@@ -67,7 +61,6 @@ const useSeatStore = create<SeatState>((set, get) => ({
         set({ selectedSeats: [...selectedSeats, ...seatsToAdd] });
       }
     } else {
-      // Ghế thường
       const exists = selectedSeats.some((s) => s.seatId === seat.seatId);
       if (exists) {
         set({

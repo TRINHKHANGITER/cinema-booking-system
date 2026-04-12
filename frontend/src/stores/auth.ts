@@ -1,10 +1,8 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-// import { authService } from "@/services/authService";
 import type { AuthState } from "../types/store";
 import { authService } from "../services/auth.service";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
@@ -14,96 +12,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAccessToken: (accessToken) => {
     set({ accessToken });
   },
+
   clearState: () => {
     set({ accessToken: null, user: null, loading: false });
   },
 
-  signUp: async (fullName, password, email,phone,birthDay) => {
+  signUp: async (fullName, password, email, phone, birthDay) => {
     try {
       set({ loading: true });
-
-      //  gọi api
-      await authService.signUp(fullName,password,email ,phone,birthDay);
-
-      toast.success(
-        "Đăng ký thành công!."
-      );
-    } catch (error :any) {
-        
+      await authService.signUp(fullName, password, email, phone, birthDay);
+      toast.success("�ang k� th�nh c�ng.");
+    } catch (error: any) {
       console.error(error);
-       if (error?.response?.status === 409) {
-            
-            toast.error("Email đã được sử dụng");
-       }
+      if (error?.response?.status === 409) {
+        toast.error("Email ho?c username d� du?c s? d?ng");
+      } else {
+        toast.error("�ang k� th?t b?i");
+      }
       throw error;
     } finally {
       set({ loading: false });
     }
   },
 
-  signIn: async (username, password) => {
+  signIn: async (emailOrUsername, password) => {
     try {
       set({ loading: true });
 
-      const { accessToken } = await authService.signIn(username, password);
-      get().setAccessToken(accessToken);
+      const loginResult = await authService.signIn(emailOrUsername, password);
 
-      await get().fetchMe();
+      if (!loginResult?.authenticated || !loginResult?.accessToken) {
+        throw new Error("Login failed");
+      }
 
-      toast.success("Đăng nhập thành công");
+      get().setAccessToken(loginResult.accessToken);
+      set({ user: loginResult.user });
+
+      toast.success("�ang nh?p th�nh c�ng");
     } catch (error: any) {
       console.error(error);
       if (error?.response?.status === 400 || error?.response?.status === 401) {
-            
-            toast.error("Email hoặc password không đúng");
-       }
+        toast.error("Email/username ho?c password kh�ng d�ng");
+      } else {
+        toast.error("�ang nh?p th?t b?i");
+      }
     } finally {
       set({ loading: false });
     }
   },
 
   signOut: async () => {
-    try {
-      get().clearState();
-      await authService.signOut();
-      toast.success("Logout thành công!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Lỗi xảy ra khi logout. Hãy thử lại!");
-    }
+    get().clearState();
+    await authService.signOut();
+    toast.success("�ang xu?t th�nh c�ng");
   },
 
   fetchMe: async () => {
-    try {
-      set({ loading: true });
-      const user = await authService.fetchMe();
-
-      set({ user });
-    } catch (error) {
-      console.error(error);
-      set({ user: null, accessToken: null });
-      toast.error("Lỗi xảy ra khi lấy dữ liệu người dùng. Hãy thử lại!");
-    } finally {
-      set({ loading: false });
-    }
+    return;
   },
 
   refresh: async () => {
-    try {
-      set({ loading: true });
-      const { user, fetchMe, setAccessToken } = get();
-      const accessToken = await authService.refresh();
-
-      setAccessToken(accessToken);
-
-      if (!user) {
-        await fetchMe();
-      }
-    } catch (error: any) {
-      console.error(error);
-      get().clearState();
-    } finally {
-      set({ loading: false });
-    }
+    return;
   },
 }));

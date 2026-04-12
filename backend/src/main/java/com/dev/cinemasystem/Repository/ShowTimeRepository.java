@@ -54,8 +54,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     @Query("""
     select new com.dev.cinemasystem.dto.showTimeDTO.ShowTimeSearchDto(
       st.showTimeId,
-      function('timestamp', st.releaseDate, st.startTime),
-      function('timestamp', st.releaseDate, st.endTime),
+      concat(concat(st.releaseDate, 'T'), st.startTime),
+      concat(concat(st.releaseDate, 'T'), st.endTime),
       m.movieId, m.movieName, mt.movieTypeName,
       c.cinemaId, c.cinemaName,
       r.roomId, r.roomName, rt.roomTypeName

@@ -1,10 +1,9 @@
 import { create } from "zustand";
 import type { FoodState } from "../types/store";
-
 import { toast } from "sonner";
 import { comboService } from "../services/combo.service";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 const useFoodStore = create<FoodState>((set) => ({
   combo: [],
   comboSelected: null,
@@ -14,13 +13,13 @@ const useFoodStore = create<FoodState>((set) => ({
   fetchFoods: async () => {
     set({ loading: true, error: null });
     try {
-      const products = await comboService.getCombo();
-      set({ combo: products.data, loading: false });
+      const combo = await comboService.getCombo();
+      set({ combo, loading: false });
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có lỗi xảy ra, vui lòng thử lại";
+        "C� l?i x?y ra, vui l�ng th? l?i";
 
       toast.error(message);
       set({ loading: false });

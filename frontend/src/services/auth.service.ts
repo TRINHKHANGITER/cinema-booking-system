@@ -1,5 +1,13 @@
 import api from "../lib/axios";
+import type { ApiResponse } from "../types/api";
+import type { User } from "../types/user";
 
+type LoginResult = {
+  accessToken: string;
+  refreshToken: string;
+  authenticated: boolean;
+  user: User;
+};
 
 export const authService = {
   signUp: async (
@@ -7,37 +15,40 @@ export const authService = {
     password: string,
     email: string,
     phone: string,
-    dateOfBirth: string
+    dateOfBirth: string,
   ) => {
-    const res = await api.post(
-      "/auth/sign-up",
-      { fullName, password, email, phone, dateOfBirth },
-      { withCredentials: true }
-    );
+    const username = email.split("@")[0];
+    const res = await api.post<ApiResponse<User>>("/user", {
+      fullName,
+      phoneNumber: phone,
+      username,
+      dateOfBirth: dateOfBirth || null,
+      sex: "other",
+      email,
+      password,
+    });
 
-    return res.data;
+    return res.data.result;
   },
 
-  signIn: async (username: string, password: string) => {
-    const res = await api.post(
-      "auth/sign-in",
-      { username, password },
-      { withCredentials: true }
-    );
-    return res.data; // access token
+  signIn: async (emailOrUsername: string, password: string) => {
+    const res = await api.post<ApiResponse<LoginResult>>("/auth/login", {
+      emailOrUsername,
+      password,
+    });
+
+    return res.data.result;
   },
 
   signOut: async () => {
-    return api.post("/auth/sign-out", { withCredentials: true });
+    return;
   },
 
   fetchMe: async () => {
-    const res = await api.get("/me", { withCredentials: true });
-    return res.data.user;
+    return null;
   },
 
   refresh: async () => {
-    const res = await api.post("/auth/refresh", { withCredentials: true });
-    return res.data.accessToken;
+    return null;
   },
 };

@@ -15,6 +15,7 @@ import {
   filterShowtimesByDate,
   formatTime,
   groupShowtimesByCinema,
+  parseActors,
 } from "../../utils/utils";
 import { useAuthStore } from "../../stores/auth";
 import Signin from "../../layouts/signin";
@@ -31,10 +32,15 @@ const [openSignIn, setOpenSignIn] = useState(false);
   const { fetchShowtimeByMovie, showtimes, selectedDate } = useShowtimeStore();
 
   useEffect(() => {
-    if (slug) {
-      fetchMovieBySlug(slug);
-      fetchShowtimeByMovie(slug);
-    }
+    const loadData = async () => {
+      if (!slug) return;
+      const movie = await fetchMovieBySlug(slug);
+      if (movie?.movieName) {
+        await fetchShowtimeByMovie(movie.movieName);
+      }
+    };
+
+    loadData().catch(console.error);
     fetchMovies();
   }, [slug]);
   const filteredShowtimes = filterShowtimesByDate(showtimes, selectedDate);
@@ -55,7 +61,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
               </div>
               <div className="relative">
                 <img
-                  src={selectedMovie?.imageLandscape}
+                  src={selectedMovie?.imageLandscape ?? undefined}
                   className="w-[860px] h-full lg:h-[500px] object-cover"
                 />
                 <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] cursor-pointer">
@@ -85,7 +91,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                       loading="lazy"
                       width="220"
                       height="280"
-                      src={selectedMovie?.imagePortrait}
+                      src={selectedMovie?.imagePortrait ?? undefined}
                       className="border-2 rounded border-white lg:w-[320px] lg:h-100 w-full h-full object-cover duration-500 ease-in-out scale-100 blur-0 grayscale-0"
                       style={{ color: "transparent" }}
                     />
@@ -96,14 +102,14 @@ const [openSignIn, setOpenSignIn] = useState(false);
                         {selectedMovie?.movieName}
                       </h1>
                       <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-center text-white font-bold">
-                        T{selectedMovie?.age}
+                        T{selectedMovie?.minimumAge}
                       </span>
                     </div>
 
                     <div className="flex items-center">
                       <div className="text-sm flex items-center font-semibold">
                         <Clock />
-                        <span>{selectedMovie?.duration} Phút</span>
+                        <span>{selectedMovie?.durationMinutes} Phút</span>
                       </div>
                       <div className="text-sm ml-4 flex items-center font-semibold">
                         <Calendar />
@@ -116,7 +122,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                     <div className="mt-2">
                       <a className="text-[20px] hover:text-[rgb(245,128,32)] transition duration-500 cursor-pointer flex items-center">
                         <Vote />
-                        <span className="mr-1">{selectedMovie?.rate}</span>
+                        <span className="mr-1">{selectedMovie?.ratingAverage}</span>
                         <span className="text-sm text-gray-500">
                           ({selectedMovie?.totalVotes})
                         </span>
@@ -138,7 +144,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                         </span>
                         <div className="flex gap-2 ml-2">
                           <span className="border border-gray-300 px-3 py-1 rounded-lg hover:border-[rgb(245,128,32)]">
-                            {selectedMovie?.movietype.movieTypeName}
+                            {selectedMovie?.movieType?.movieTypeName}
                           </span>
                         </div>
                       </div>
@@ -155,7 +161,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                           Diễn viên:
                         </span>
                         <div className="flex flex-wrap gap-2 ml-2">
-                          {selectedMovie?.actors?.map((actor, index) => (
+                          {parseActors(selectedMovie?.actors).map((actor, index) => (
                             <span
                               key={index}
                               className="border border-gray-300 px-3 py-1 rounded-lg hover:border-[rgb(245,128,32)]"
@@ -178,7 +184,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                     loading="lazy"
                     width="220"
                     height="280"
-                    src={selectedMovie?.imagePortrait}
+                    src={selectedMovie?.imagePortrait ?? undefined}
                     className="border-2 rounded border-white lg:w-[320px] lg:h-[400px] md:w-full md:h-full w-[120px] h-[160px] object-cover col-span-1 duration-500 ease-in-out"
                     style={{ color: "transparent" }}
                   />
@@ -188,13 +194,13 @@ const [openSignIn, setOpenSignIn] = useState(false);
                         {selectedMovie?.movieName}
                       </h1>
                       <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold">
-                        T{selectedMovie?.age}
+                        T{selectedMovie?.minimumAge}
                       </span>
                     </div>
                     <div className="flex items-center">
                       <div className="text-sm flex items-center font-semibold">
                         <Clock />
-                        <span>{selectedMovie?.duration} Phút</span>
+                        <span>{selectedMovie?.durationMinutes} Phút</span>
                       </div>
                       <div className="text-sm ml-4 flex items-center font-semibold">
                         <Calendar />
@@ -207,7 +213,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                     </div>
                     <div className="mt-2 flex items-center text-[20px]">
                       <Vote />
-                      <span className="mr-1">{selectedMovie?.rate}</span>
+                      <span className="mr-1">{selectedMovie?.ratingAverage}</span>
                       <span className="text-sm text-gray-500">
                         ({selectedMovie?.totalVotes})
                       </span>
@@ -244,7 +250,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                       <ul className="ml-2 flex flex-wrap gap-1 flex-1">
                         <li className="inline-block">
                           <a className="text-black text-sm inline-flex h-8 border border-gray-300 hover:border-[rgb(245,128,32)] rounded-lg px-4 py-2 capitalize items-center">
-                            {selectedMovie?.movietype.movieTypeName}
+                            {selectedMovie?.movieType?.movieTypeName}
                           </a>
                         </li>
                       </ul>
@@ -266,7 +272,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                         Diễn viên:
                       </span>
                       <ul className="ml-2 flex flex-wrap gap-1 flex-1">
-                        {selectedMovie?.actors?.map((actor, index) => (
+                        {parseActors(selectedMovie?.actors).map((actor, index) => (
                           <li key={index} className="inline-block">
                             <a className="text-black text-sm inline-flex h-8 border border-gray-300 hover:border-[rgb(245,128,32)] rounded-lg px-4 py-2 capitalize items-center">
                               {actor}
@@ -357,7 +363,7 @@ const [openSignIn, setOpenSignIn] = useState(false);
                                     }}
                                     state={show}
                                     to={`/dat-ve/${slug}`}
-                                    // key={show.showId}
+                                    key={show.showTimeId}
                                     className="py-2 md:px-8 px-6 border border-gray-300 rounded text-sm font-normal text-black-10 active:bg-[#034ea2] transition-all duration-500 ease-in-out hover:text-white hover:bg-[#034ea2]"
                                   >
                                     {formatTime(show.startTime)}
@@ -407,3 +413,4 @@ const [openSignIn, setOpenSignIn] = useState(false);
 };
 
 export default BookTicket;
+

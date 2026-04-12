@@ -3,7 +3,7 @@ import type { MovieState } from "../types/store";
 import { productService } from "../services/productService";
 import { toast } from "sonner";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 const useMovieStore = create<MovieState>((set) => ({
   movies: [],
   selectedMovie: null,
@@ -13,13 +13,13 @@ const useMovieStore = create<MovieState>((set) => ({
   fetchMovies: async () => {
     set({ loading: true, error: null });
     try {
-      const products = await productService.getProduct();
-      set({ movies: products.data, loading: false });
+      const movies = await productService.getProduct();
+      set({ movies, loading: false });
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có lỗi xảy ra, vui lòng thử lại";
+        "C� l?i x?y ra, vui l�ng th? l?i";
 
       toast.error(message);
       set({ loading: false });
@@ -30,13 +30,14 @@ const useMovieStore = create<MovieState>((set) => ({
   fetchMovieBySlug: async (slug: string) => {
     set({ loading: true, error: null });
     try {
-      const product = await productService.getProductBySlug(slug);
-      set({ selectedMovie: product.data, loading: false });
+      const movie = await productService.getProductBySlug(slug);
+      set({ selectedMovie: movie ?? null, loading: false });
+      return movie ?? null;
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có lỗi xảy ra, vui lòng thử lại";
+        "C� l?i x?y ra, vui l�ng th? l?i";
 
       toast.error(message);
       set({ loading: false });

@@ -1,9 +1,8 @@
 package com.dev.cinemasystem.dto.seatDTO;
 
+import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
+import com.dev.cinemasystem.dto.seatTypeDTO.SeatTypeResponse;
 import com.dev.cinemasystem.enums.SeatStatus;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,6 +17,8 @@ public class SeatResponse {
     Integer seatId;
     String seatRow;
     Integer seatColumn;
+    SeatTypeResponse seatType;
+    RoomResponse room;
     Integer seatTypeId;
     Integer roomId;
     SeatStatus status;

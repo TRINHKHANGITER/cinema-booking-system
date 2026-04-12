@@ -1,25 +1,34 @@
+export type MovieStatus = "ACTIVE" | "INACTIVE";
+export type MovieTypeStatus = "ACTIVE" | "INACTIVE";
+
+export interface MovieType {
+  movieTypeId: number;
+  movieTypeName: string;
+  description: string | null;
+  status: MovieTypeStatus;
+}
+
 export interface Movie {
   movieId: number;
-  movieTypeId: number;
   movieName: string;
-  description?: string;
-  age?: number;
-  imageLandscape?: string;
-  imagePortrait?: string;
-  rate?: number;
-  totalVotes?: number;
-  startDate?: string;
-  endDate?: string;
-  slug?: string;
-  trailer?: string;
-  duration: number;
-  createdAt?: string;
-  status: number;
-  country?: string;
-  producer?: string;
-  director?: string;
-  actors?: string[];
-  movietype: {
-    movieTypeName: string;
-  };
+  description: string | null;
+  durationMinutes: number;
+  slug: string | null;
+  minimumAge: number | null;
+  imageLandscape: string | null;
+  imagePortrait: string | null;
+  trailerUrl: string | null;
+  ratingAverage: number | null;
+  totalVotes: number | null;
+  releaseDate: string | null;
+  endDate: string | null;
+  country: string | null;
+  producer: string | null;
+  director: string | null;
+  actors: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  movieTypeId: number;
+  movieType: MovieType;
+  status: MovieStatus;
 }

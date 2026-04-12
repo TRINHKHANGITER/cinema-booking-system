@@ -117,7 +117,7 @@ const Footer = () => {
                 3/9 Võ Văn Tần, Phường Xuân Hòa, Thành phố Hồ Chí Minh, Việt Nam
               </p>
 
-              <p className="flex items-center justify-center gap-x-2">
+              <div className="flex items-center justify-center gap-x-2">
                 <Phone/>
                 <a
                   href="tel:02839333303"
@@ -141,7 +141,7 @@ const Footer = () => {
                   <Plane/>
                   hotro@galaxystudio.vn
                 </a>
-              </p>
+              </div>
             </div>
 
           </div>
