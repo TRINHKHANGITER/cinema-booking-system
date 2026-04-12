@@ -17,6 +17,8 @@ import java.time.LocalTime;
 public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     Page<ShowTime> findAllByStatus(ShowTimeStatus status, Pageable pageable);
+    Page<ShowTime> findAllByRoom_Cinema_CinemaId(Integer cinemaId, Pageable pageable);
+    Page<ShowTime> findAllByRoom_Cinema_CinemaIdAndStatus(Integer cinemaId, ShowTimeStatus status, Pageable pageable);
 
     @Query("""
         select (count(st) > 0) from ShowTime st

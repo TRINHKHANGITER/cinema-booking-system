@@ -3,6 +3,7 @@ package com.dev.cinemasystem.Service;
 
 import com.dev.cinemasystem.Entity.Movie;
 import com.dev.cinemasystem.Entity.Room;
+import com.dev.cinemasystem.Entity.ShowTime;
 import com.dev.cinemasystem.Exception.AppException;
 import com.dev.cinemasystem.Exception.ErrorCode;
 import com.dev.cinemasystem.Mapper.ShowTimeMapper;
@@ -12,6 +13,7 @@ import com.dev.cinemasystem.Repository.SeatRepository;
 import com.dev.cinemasystem.Repository.ShowTimeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
+import com.dev.cinemasystem.enums.SortDirection;
 import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.utils.ParseTime;
 import lombok.AccessLevel;
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -64,6 +67,28 @@ public class ShowTimeService {
         LocalDateTime start = getStartDateTime(showTime);
         LocalDateTime end = combineDateTime(showTime.getReleaseDate(), showTime.getEndTime());
         return normalizeEnd(start, end);
+    }
+
+    private Sort buildShowTimeSort(String sortBy, SortDirection direction) {
+        Sort.Direction sortDirection = direction == SortDirection.DESC ? Sort.Direction.DESC : Sort.Direction.ASC;
+        if (sortBy == null || sortBy.isBlank() || "showtime".equalsIgnoreCase(sortBy)) {
+            return Sort.by(sortDirection, "releaseDate", "startTime");
+        }
+
+        if ("starttime".equalsIgnoreCase(sortBy)) {
+            return Sort.by(sortDirection, "startTime");
+        }
+        if ("endtime".equalsIgnoreCase(sortBy)) {
+            return Sort.by(sortDirection, "endTime");
+        }
+        if ("releasedate".equalsIgnoreCase(sortBy)) {
+            return Sort.by(sortDirection, "releaseDate", "startTime");
+        }
+        if ("showtimeid".equalsIgnoreCase(sortBy)) {
+            return Sort.by(sortDirection, "showTimeId");
+        }
+
+        return Sort.by(sortDirection, "releaseDate", "startTime");
     }
 
 
@@ -181,6 +206,51 @@ public class ShowTimeService {
         showTimeRepository.save(showTime);
         log.info("Deleted showTime with id: {}", showTimeId);
         return true;
+    }
+
+    public PagingDto<ShowTimeResponse> getShowTimes(
+            Integer cinemaId,
+            ShowTimeStatus status,
+            int page,
+            int size,
+            String sortBy,
+            SortDirection direction
+    ) {
+        if (page < 0) {
+            log.error("Invalid page number: {}", page);
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+        if (size < 1) {
+            log.error("Invalid page size: {}", size);
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, buildShowTimeSort(sortBy, direction));
+        Page<ShowTime> showTimePage;
+
+        if (cinemaId != null && status != null) {
+            showTimePage = showTimeRepository.findAllByRoom_Cinema_CinemaIdAndStatus(cinemaId, status, pageable);
+        } else if (cinemaId != null) {
+            showTimePage = showTimeRepository.findAllByRoom_Cinema_CinemaId(cinemaId, pageable);
+        } else if (status != null) {
+            showTimePage = showTimeRepository.findAllByStatus(status, pageable);
+        } else {
+            showTimePage = showTimeRepository.findAll(pageable);
+        }
+
+        List<ShowTimeResponse> showTimeResponses = showTimePage.getContent()
+                .stream()
+                .map(showTimeMapper::toShowTimeResponse)
+                .toList();
+
+        log.info("Retrieved {} showtimes with filters cinemaId={}, status={}", showTimeResponses.size(), cinemaId, status);
+        return PagingDto.<ShowTimeResponse>builder()
+                .items(showTimeResponses)
+                .currentPage(showTimePage.getNumber())
+                .pageSize(showTimePage.getSize())
+                .totalItems(showTimePage.getTotalElements())
+                .totalPages(showTimePage.getTotalPages())
+                .build();
     }
 
     public PagingDto<ShowTimeSearchDto> searchShowTimes(ShowTimeSearchRequest resquest){

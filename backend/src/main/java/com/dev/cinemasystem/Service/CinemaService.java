@@ -12,6 +12,7 @@ import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
 import com.dev.cinemasystem.enums.CinemaStatus;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -73,6 +74,21 @@ public class CinemaService {
                 .totalItems(cinemaPage.getTotalElements())
                 .totalPages(cinemaPage.getTotalPages())
                 .build();
+    }
+
+    public List<CinemaResponse> getCinemas(Integer provinceId, Boolean isShowing, CinemaStatus status) {
+        List<Cinema> cinemas;
+        if (Boolean.TRUE.equals(isShowing)) {
+            cinemas = cinemaRepository.findAllByFiltersWithShowTimeStatus(
+                    provinceId,
+                    status,
+                    ShowTimeStatus.SCHEDULED
+            );
+        } else {
+            cinemas = cinemaRepository.findAllByFilters(provinceId, status);
+        }
+        log.info("Retrieved {} cinemas with filters provinceId={}, isShowing={}, status={}", cinemas.size(), provinceId, isShowing, status);
+        return cinemaMapper.toResponseList(cinemas);
     }
 
     public CinemaResponse createCinema(CinemaCreationRequest request) {

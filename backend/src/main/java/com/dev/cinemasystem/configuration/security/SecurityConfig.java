@@ -25,6 +25,7 @@ public class SecurityConfig {
             "/login/**",
 
             "/user/**",
+            "/province/**",
             "/cinema/**",
             "/room/**",
             "/room-type/**",
@@ -36,6 +37,7 @@ public class SecurityConfig {
             "/ticket-type/**",
             "/price-ticket/**",
             "/show-time/**",
+            "/showtime/**",
 
             // Swagger
             "/swagger-ui/**",

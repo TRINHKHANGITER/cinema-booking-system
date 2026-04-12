@@ -18,8 +18,6 @@ public interface ShowTimeMapper {
     @Mapping(target = "movieId", source = "movie.movieId")
     @Mapping(target = "startTime", expression = "java(toDateTime(showTime.getReleaseDate(), showTime.getStartTime()))")
     @Mapping(target = "endTime", expression = "java(toDateTime(showTime.getReleaseDate(), showTime.getEndTime()))")
-    @Mapping(target = "sellStartTime", ignore = true)
-    @Mapping(target = "sellEndTime", ignore = true)
     ShowTimeResponse toShowTimeResponse(ShowTime showTime);
 
 

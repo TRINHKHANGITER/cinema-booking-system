@@ -5,6 +5,8 @@ import com.dev.cinemasystem.Service.ShowTimeService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
+import com.dev.cinemasystem.enums.SortDirection;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/show-time")
+@RequestMapping({"/show-time", "/showtime"})
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,6 +29,21 @@ public class ShowTimeController {
         return ApiResponse.<ShowTimeResponse>builder()
                 .message("ShowTime retrieved successfully")
                 .result(showTimeService.getShowTimeById(showTimeId))
+                .build();
+    }
+
+    @GetMapping("/cinema/{cinemaId}")
+    public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimes(
+            @PathVariable Integer cinemaId,
+            @RequestParam(defaultValue = "SCHEDULED") ShowTimeStatus status,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "showtime") String sortBy,
+            @RequestParam(defaultValue = "ASC") SortDirection direction
+    ) {
+        return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
+                .message("ShowTimes retrieved successfully")
+                .result(showTimeService.getShowTimes(cinemaId, status, page, size, sortBy, direction))
                 .build();
     }
 

@@ -13,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/cinema")
 @RequiredArgsConstructor
@@ -20,6 +22,18 @@ import org.springframework.web.bind.annotation.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CinemaController {
     CinemaService cinemaService;
+
+    @GetMapping
+    public ApiResponse<List<CinemaResponse>> getCinemas(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) Boolean isShowing,
+            @RequestParam(required = false) CinemaStatus status
+    ) {
+        return ApiResponse.<List<CinemaResponse>>builder()
+                .message("Cinemas retrieved successfully")
+                .result(cinemaService.getCinemas(provinceId, isShowing, status))
+                .build();
+    }
 
     @GetMapping("/{cinemaId}")
     public ApiResponse<CinemaResponse> getCinemaById(@PathVariable Integer cinemaId) {
