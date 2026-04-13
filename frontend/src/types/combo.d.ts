@@ -1,11 +1,11 @@
-export interface comboFood {
-  comboId: number;
-  comboName: string;
-  description: string;
-  price: number;
-  status: string;
-}
+export type comboFood = {
+    comboId: number;
+    comboName: string;
+    description: string;
+    price: number;
+    status: string;
+};
 
-export interface SelectedCombo extends comboFood {
-  quantity: number;
-}
+export type SelectedCombo = comboFood & {
+    quantity: number;
+};
