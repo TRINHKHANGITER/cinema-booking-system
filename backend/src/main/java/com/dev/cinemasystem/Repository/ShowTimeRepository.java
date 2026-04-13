@@ -21,6 +21,39 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     Page<ShowTime> findAllByRoom_Cinema_CinemaIdAndStatus(Integer cinemaId, ShowTimeStatus status, Pageable pageable);
 
     @Query("""
+        select st
+        from ShowTime st
+        join st.room r
+        join r.cinema c
+        join c.province p
+        join st.movie m
+        join m.movieType mt
+        where (:provinceId is null or p.provinceId = :provinceId)
+          and (:cinemaId is null or c.cinemaId = :cinemaId)
+          and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
+          and (
+                :releaseDate is null
+                or (:releaseDateCondition = 'GT' and st.releaseDate > :releaseDate)
+                or (:releaseDateCondition = 'GTE' and st.releaseDate >= :releaseDate)
+                or (:releaseDateCondition = 'EQ' and st.releaseDate = :releaseDate)
+              )
+          and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
+          and (:movieId is null or m.movieId = :movieId)
+          and (:status is null or st.status = :status)
+    """)
+    Page<ShowTime> findAllByFilters(
+            @Param("provinceId") Integer provinceId,
+            @Param("cinemaId") Integer cinemaId,
+            @Param("movieTypeId") Integer movieTypeId,
+            @Param("releaseDate") LocalDate releaseDate,
+            @Param("releaseDateCondition") String releaseDateCondition,
+            @Param("name") String name,
+            @Param("movieId") Integer movieId,
+            @Param("status") ShowTimeStatus status,
+            Pageable pageable
+    );
+
+    @Query("""
         select (count(st) > 0) from ShowTime st
         where st.room.roomId = :roomId
           and st.status <> com.dev.cinemasystem.enums.ShowTimeStatus.CANCELLED

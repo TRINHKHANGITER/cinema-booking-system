@@ -253,6 +253,83 @@ public class ShowTimeService {
                 .build();
     }
 
+    public PagingDto<ShowTimeResponse> getShowTimesByFilters(
+            Integer provinceId,
+            Integer cinemaId,
+            Integer movieTypeId,
+            LocalDate releaseDate,
+            String releaseDateCondition,
+            String name,
+            Integer movieId,
+            ShowTimeStatus status,
+            int page,
+            int size,
+            String sortBy,
+            SortDirection direction
+    ) {
+        if (page < 1) {
+            log.error("Invalid page number: {}", page);
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+        if (size < 1) {
+            log.error("Invalid page size: {}", size);
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+
+        String normalizedName = (name == null || name.isBlank()) ? null : name.trim();
+        String normalizedReleaseDateCondition = normalizeReleaseDateCondition(releaseDateCondition);
+        Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
+
+        Page<ShowTime> showTimePage = showTimeRepository.findAllByFilters(
+                provinceId,
+                cinemaId,
+                movieTypeId,
+                releaseDate,
+                normalizedReleaseDateCondition,
+                normalizedName,
+                movieId,
+                status,
+                pageable
+        );
+
+        List<ShowTimeResponse> showTimeResponses = showTimePage.getContent()
+                .stream()
+                .map(showTimeMapper::toShowTimeResponse)
+                .toList();
+
+        log.info(
+                "Retrieved {} showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseDate={}, releaseDateCondition={}, name={}, movieId={}, status={}",
+                showTimeResponses.size(),
+                provinceId,
+                cinemaId,
+                movieTypeId,
+                releaseDate,
+                normalizedReleaseDateCondition,
+                normalizedName,
+                movieId,
+                status
+        );
+
+        return PagingDto.<ShowTimeResponse>builder()
+                .items(showTimeResponses)
+                .currentPage(page)
+                .pageSize(size)
+                .totalItems(showTimePage.getTotalElements())
+                .totalPages(showTimePage.getTotalPages())
+                .build();
+    }
+
+    private String normalizeReleaseDateCondition(String releaseDateCondition) {
+        if (releaseDateCondition == null || releaseDateCondition.isBlank()) {
+            return "EQ";
+        }
+
+        return switch (releaseDateCondition.trim().toUpperCase()) {
+            case "GT", "GTE", "EQ" -> releaseDateCondition.trim().toUpperCase();
+            default -> "EQ";
+        };
+    }
+
     public PagingDto<ShowTimeSearchDto> searchShowTimes(ShowTimeSearchRequest resquest){
         Pageable pageable = PageRequest.of(resquest.getPage() - 1, resquest.getSize());
         Page<ShowTimeSearchDto> showTimePage = showTimeRepository.searchShowTimes(

@@ -12,8 +12,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping({"/show-time", "/showtime"})
@@ -22,6 +24,40 @@ import org.springframework.web.bind.annotation.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ShowTimeController {
     ShowTimeService showTimeService;
+
+    @GetMapping
+    public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimesByFilters(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) Integer cinemaId,
+            @RequestParam(required = false) Integer movieTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
+            @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer movieId,
+            @RequestParam(required = false) ShowTimeStatus status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "showtime") String sortBy,
+            @RequestParam(defaultValue = "ASC") SortDirection direction
+    ) {
+        return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
+                .message("ShowTimes retrieved successfully")
+                .result(showTimeService.getShowTimesByFilters(
+                        provinceId,
+                        cinemaId,
+                        movieTypeId,
+                        releaseDate,
+                        releaseDateCondition,
+                        name,
+                        movieId,
+                        status,
+                        page,
+                        size,
+                        sortBy,
+                        direction
+                ))
+                .build();
+    }
 
 
     @GetMapping("/{showTimeId}")

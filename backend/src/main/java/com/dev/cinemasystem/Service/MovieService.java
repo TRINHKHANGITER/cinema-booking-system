@@ -61,8 +61,8 @@ public class MovieService {
         }
     }
 
-    public MovieResponse getMovieById(Integer movieId) {
-        var movie = movieRepository.findById(movieId)
+    public MovieResponse getMovieById(Integer movieId, MovieStatus status) {
+        var movie = movieRepository.findByMovieIdAndStatus(movieId, status)
                 .orElseThrow(() -> {
                     log.error("Movie with id {} not found", movieId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);

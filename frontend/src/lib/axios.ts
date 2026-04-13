@@ -1,29 +1,9 @@
-// import axios from "axios";
-// import { useAuthStore } from "../stores/auth";
-
-// const api = axios.create({
-//   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/cinema/api",
-//   withCredentials: false,
-// });
-
-// api.interceptors.request.use((config) => {
-//   const { accessToken } = useAuthStore.getState();
-
-//   if (accessToken) {
-//     config.headers.Authorization = `Bearer ${accessToken}`;
-//   }
-
-//   return config;
-// });
-
-// export default api;
-
 
 import axios from "axios";
 
-const LS_ACCESS = "VINH_KHANH_FOOD_TOUR_ACCESS_TOKEN";
-const LS_REFRESH = "VINH_KHANH_FOOD_TOUR_REFRESH_TOKEN";
-const LS_USER = "VINH_KHANH_FOOD_TOUR_USER";
+const LS_ACCESS = import.meta.env.LOCALSTORAGE_ACCESS_TOKEN_KEY;
+const LS_REFRESH = import.meta.env.LOCALSTORAGE_REFRESH_TOKEN_KEY;
+const LS_USER = import.meta.env.LOCALSTORAGE_USER_KEY;
 
 const axiosClient = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_API,
@@ -40,9 +20,9 @@ axiosClient.interceptors.request.use(
             localStorage.removeItem(LS_ACCESS);
             localStorage.removeItem(LS_REFRESH);
             localStorage.removeItem(LS_USER);
-                if (window.location.pathname !== "/login") {
-                    window.location.href = "/login";
-                }
+                // if (window.location.pathname !== "/login") {
+                //     window.location.href = "/login";
+                // }
         }
         return config;
     },
