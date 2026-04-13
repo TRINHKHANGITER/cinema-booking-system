@@ -3,6 +3,7 @@ import Video from "../icon/video";
 import BuyTicket from "../icon/buy-ticket";
 import type { Movie } from "../../types/product";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CardHomeProps {
   movie: Movie;
@@ -10,6 +11,16 @@ interface CardHomeProps {
 
 const CardHome = ({ movie }: CardHomeProps) => {
   const detailPath = `/xuat-chieu/${movie.slug ?? movie.movieId}`;
+  const hasTrailer = Boolean(movie.trailerUrl?.trim());
+
+  const handleOpenTrailer = () => {
+    if (!hasTrailer || !movie.trailerUrl) {
+      toast.error("Phim này chưa có trailer");
+      return;
+    }
+
+    window.open(movie.trailerUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div>
@@ -58,7 +69,9 @@ const CardHome = ({ movie }: CardHomeProps) => {
                 </Link>
                 <button
                   type="button"
-                  className="text-white w-[120px] h-[40px] border border-white hover:bg-[#fb9440]/80 hover:border-transparent rounded text-sm px-5 py-2.5 text-center inline-flex items-center cursor-pointer"
+                  onClick={handleOpenTrailer}
+                  disabled={!hasTrailer}
+                  className="text-white w-[120px] h-[40px] border border-white hover:bg-[#fb9440]/80 hover:border-transparent rounded text-sm px-5 py-2.5 text-center inline-flex items-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Video />
                   Trailer
