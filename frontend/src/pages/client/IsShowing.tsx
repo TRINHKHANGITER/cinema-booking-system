@@ -1,39 +1,103 @@
 import { useEffect, useMemo, useState } from "react";
 import Location from "../../components/icon/location";
 import CardHome from "../../components/ui/CardHome";
+import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
-import { fetchCinemasThunk } from "../../stores/slices/cinemaSlice";
-import { fetchMoviesThunk } from "../../stores/slices/movieSlice";
+import { fetchProvincesThunk } from "../../stores/slices/provinceSlice";
+import type { Movie } from "../../types/product";
+
+const PAGE_SIZE = 2;
+
+const getTodayAsLocalDate = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+};
 
 const IsShowing = () => {
     const dispatch = useAppDispatch();
-    const cinemas = useAppSelector((state) => state.cinema.cinemas);
-    const movies = useAppSelector((state) => state.movie.movies);
+    const provinces = useAppSelector((state) => state.province.provinces);
     const [activeTab, setActiveTab] = useState(0);
-
-    const movieStatus = useMemo(() => {
-        if (activeTab === 1) return "INACTIVE" as const;
-        return "ACTIVE" as const;
-    }, [activeTab]);
+    const [selectedProvinceId, setSelectedProvinceId] = useState<number | undefined>(undefined);
+    const [moviesFromShowtimes, setMoviesFromShowtimes] = useState<Movie[]>([]);
+    const [isLoadingMovies, setIsLoadingMovies] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
-        dispatch(fetchCinemasThunk({ isShowing: true, status: "ACTIVE" }));
+        dispatch(fetchProvincesThunk("ACTIVE"));
     }, [dispatch]);
 
     useEffect(() => {
-        const cinemaId = cinemas[0]?.cinemaId ?? 1;
-        dispatch(
-            fetchMoviesThunk({
-                cinemaId,
-                params: {
-                    cinemaId,
-                    status: movieStatus,
-                    page: 1,
-                    size: 50,
-                },
-            })
-        );
-    }, [cinemas, dispatch, movieStatus]);
+        let isMounted = true;
+
+        const fetchTodayShowtimes = async () => {
+            try {
+                setIsLoadingMovies(true);
+
+                const response = await showTimeService.getTodayShowTimesByProvince(getTodayAsLocalDate(), {
+                    provinceId: selectedProvinceId,
+                    status: "SCHEDULED",
+                    page: currentPage,
+                    size: PAGE_SIZE,
+                    sortBy: "startTime",
+                    direction: "ASC",
+                });
+
+                if (!isMounted) return;
+                if (response.code !== "SUCCESS") {
+                    setMoviesFromShowtimes([]);
+                    setTotalPages(1);
+                    return;
+                }
+
+                const items = response.result?.items ?? [];
+                const pageMovies = items
+                    .map((showtime) => showtime.movie)
+                    .filter((movie): movie is Movie => Boolean(movie));
+
+                setMoviesFromShowtimes(pageMovies);
+                setTotalPages(response.result?.totalPages ?? 1);
+            } catch {
+                if (!isMounted) return;
+                setMoviesFromShowtimes([]);
+                setTotalPages(1);
+            } finally {
+                if (isMounted) {
+                    setIsLoadingMovies(false);
+                }
+            }
+        };
+
+        fetchTodayShowtimes();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [currentPage, selectedProvinceId]);
+
+    const visiblePageButtons = useMemo(() => {
+        const maxButtons = 5;
+        if (totalPages <= maxButtons) {
+            return Array.from({ length: totalPages }, (_, index) => index + 1);
+        }
+
+        let start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, start + maxButtons - 1);
+
+        if (end - start + 1 < maxButtons) {
+            start = Math.max(1, end - maxButtons + 1);
+        }
+
+        const pages: number[] = [];
+        for (let page = start; page <= end; page += 1) {
+            pages.push(page);
+        }
+
+        return pages;
+    }, [currentPage, totalPages]);
 
     return (
         <div>
@@ -98,22 +162,83 @@ const IsShowing = () => {
                             </div>
                         </div>
 
-                        <a
-                            href=""
-                            className="text-[#034ea2] cursor-pointer md:text-base sm:text-[12px] text-xs mb-1.25 flex items-center justify-center"
-                        >
+                        <div className="text-[#034ea2] cursor-pointer md:text-base sm:text-[12px] text-xs mb-1.25 flex items-center justify-center">
                             <Location />
-                            <span className="inline-block ml-1">Toan quoc</span>
-                        </a>
+                            <select
+                                name="provinceId"
+                                id="provinceId"
+                                value={selectedProvinceId ?? ""}
+                                onChange={(event) => {
+                                    const value = event.target.value;
+                                    setSelectedProvinceId(value ? Number(value) : undefined);
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value="">Toan quoc</option>
+                                {provinces.map((province) => (
+                                    <option key={province.provinceId} value={province.provinceId}>
+                                        {province.provinceName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div className="tabs__content">
                         <div>
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-6 mb-10">
-                                {movies.map((movie) => (
-                                    <CardHome key={movie.movieId} movie={movie} />
-                                ))}
+                                {isLoadingMovies ? (
+                                    <p className="col-span-full text-sm text-gray-500">
+                                        Dang tai phim...
+                                    </p>
+                                ) : moviesFromShowtimes.length > 0 ? (
+                                    moviesFromShowtimes.map((movie, index) => (
+                                        <CardHome key={`${movie.movieId}-${index}`} movie={movie} />
+                                    ))
+                                ) : (
+                                    <p className="col-span-full text-sm text-gray-500">
+                                        Chua co phim theo suat chieu hom nay.
+                                    </p>
+                                )}
                             </div>
+
+                            {totalPages > 0 && (
+                                <div className="mb-10 flex items-center justify-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1.5 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1 || isLoadingMovies}
+                                    >
+                                        Truoc
+                                    </button>
+
+                                    {visiblePageButtons.map((page) => (
+                                        <button
+                                            key={page}
+                                            type="button"
+                                            className={`px-3 py-1.5 border rounded text-sm ${
+                                                currentPage === page
+                                                    ? "bg-[#034ea2] text-white border-[#034ea2]"
+                                                    : "bg-white text-[#333333]"
+                                            }`}
+                                            onClick={() => setCurrentPage(page)}
+                                            disabled={isLoadingMovies}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        className="px-3 py-1.5 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages || isLoadingMovies}
+                                    >
+                                        Sau
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -127,8 +252,8 @@ const IsShowing = () => {
 
                         <div className="leading-5 content__data__full">
                             <div className="text-sm">
-                                {movies.slice(0, 5).map((movie, index) => (
-                                    <div key={movie.movieId}>
+                                {moviesFromShowtimes.slice(0, 5).map((movie, index) => (
+                                    <div key={`${movie.movieId}-${index}-seo`}>
                                         <p style={{ marginBottom: "11px" }}>
                                             <a href="">
                                                 <strong>

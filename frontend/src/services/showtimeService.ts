@@ -180,7 +180,7 @@ export const showTimeService = {
         return showTimeService.searchShowTimes({
             keyword: normalizedKeyword ? normalizedKeyword : null,
             page: 1,
-            size: 200,
+            size: 10,
         });
     },
 };
