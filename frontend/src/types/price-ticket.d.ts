@@ -1,8 +1,17 @@
-import type { RoomTypeResponse } from "./room-type";
-import type { SeatTypeResponse } from "./seat-type";
-import type { TicketTypeResponse } from "./ticket-type";
+import type { RoomTypeEntity, RoomTypeResponse } from "./room-type";
+import type { SeatTypeEntity, SeatTypeResponse } from "./seat-type";
+import type { TicketTypeEntity, TicketTypeResponse } from "./ticket-type";
 
 export type PriceTicketStatus = "ACTIVE" | "INACTIVE";
+
+export type PriceTicketEntity = {
+    priceTicketId: number;
+    price: number;
+    status: PriceTicketStatus;
+    roomType: RoomTypeEntity;
+    seatType: SeatTypeEntity;
+    ticketType: TicketTypeEntity;
+};
 
 export type PriceTicketCreationResquest = {
     price: number;
@@ -18,16 +27,13 @@ export type PriceTicketUpdateResquest = {
     ticketTypeId?: number;
 };
 
-export type PriceTicketResponse = {
-    priceTicketId: number;
-    price: number;
-    roomType: RoomTypeResponse;
-    seatType: SeatTypeResponse;
-    ticketType: TicketTypeResponse;
-    roomTypeId: number;
-    seatTypeId: number;
-    ticketTypeId: number;
-    status: PriceTicketStatus;
+export type PriceTicketResponse = PriceTicketEntity & {
+    roomTypeId?: number;
+    seatTypeId?: number;
+    ticketTypeId?: number;
+    roomType?: RoomTypeResponse;
+    seatType?: SeatTypeResponse;
+    ticketType?: TicketTypeResponse;
 };
 
 export type PriceTicketCreationRequest = PriceTicketCreationResquest;

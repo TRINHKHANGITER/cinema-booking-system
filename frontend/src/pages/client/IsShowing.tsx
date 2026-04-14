@@ -4,7 +4,7 @@ import Location from "../../components/icon/location";
 
 import CardHome from "../../components/ui/CardHome";
 
-import useMovieStore from "../../stores/product";
+import useMovieStore from "../../stores/slices/movieSlice";
 
 const IsShowing = () => {
     const [activeTab, setActiveTab] = useState(0);

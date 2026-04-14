@@ -1,7 +1,16 @@
-import type { CinemaResponse } from "./cinema";
-import type { RoomTypeResponse } from "./room-type";
+import type { CinemaEntity, CinemaResponse } from "./cinema";
+import type { RoomTypeEntity, RoomTypeResponse } from "./room-type";
 
 export type RoomStatus = "ACTIVE" | "INACTIVE" | "UNDER_MAINTENANCE";
+
+export type RoomEntity = {
+    roomId: number;
+    roomName: string;
+    capacity: number;
+    status: RoomStatus;
+    roomType: RoomTypeEntity;
+    cinema: CinemaEntity;
+};
 
 export type RoomCreationResquest = {
     roomName: string;
@@ -17,15 +26,11 @@ export type RoomUpdateResquest = {
     cinemaId?: number;
 };
 
-export type RoomResponse = {
-    roomId: number;
-    roomName: string;
-    capacity: number;
-    roomType: RoomTypeResponse;
-    cinema: CinemaResponse;
-    roomTypeId: number;
-    cinemaId: number;
-    status: RoomStatus;
+export type RoomResponse = RoomEntity & {
+    roomTypeId?: number;
+    cinemaId?: number;
+    roomType?: RoomTypeResponse;
+    cinema?: CinemaResponse;
 };
 
 export type RoomCreationRequest = RoomCreationResquest;

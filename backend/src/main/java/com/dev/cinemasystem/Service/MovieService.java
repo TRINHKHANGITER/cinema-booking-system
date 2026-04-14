@@ -11,19 +11,15 @@ import com.dev.cinemasystem.dto.movieDTO.MovieCreationResquest;
 import com.dev.cinemasystem.dto.movieDTO.MovieResponse;
 import com.dev.cinemasystem.dto.movieDTO.MovieUpdateResquest;
 import com.dev.cinemasystem.enums.MovieStatus;
-import com.dev.cinemasystem.utils.FileStoreUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,9 +33,6 @@ public class MovieService {
     final MovieMapper movieMapper;
     final MovieTypeRepository movieTypeRepository;
 
-    @Value("${storage.image-dir}")
-    String imageDir;
-
     private String toSlug(String value) {
         if (value == null) return null;
         return value.trim()
@@ -47,18 +40,6 @@ public class MovieService {
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")
                 .replaceAll("-{2,}", "-");
-    }
-
-    private void applyUploadedImage(Movie movie, MultipartFile image, boolean overwriteExisting) {
-        if (image == null || image.isEmpty()) return;
-
-        String imageName = FileStoreUtil.saveKeepingNameWithSuffix(image, Paths.get(imageDir));
-        if (overwriteExisting || movie.getImageLandscape() == null || movie.getImageLandscape().isBlank()) {
-            movie.setImageLandscape(imageName);
-        }
-        if (overwriteExisting || movie.getImagePortrait() == null || movie.getImagePortrait().isBlank()) {
-            movie.setImagePortrait(imageName);
-        }
     }
 
     public MovieResponse getMovieById(Integer movieId, MovieStatus status) {
@@ -80,14 +61,6 @@ public class MovieService {
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
         movie.setStatus(MovieStatus.ACTIVE);
-
-        applyUploadedImage(movie, request.getImage(), false);
-
-        if ((movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank())
-                && request.getVideoTrailer() != null
-                && !request.getVideoTrailer().isBlank()) {
-            movie.setTrailerUrl(request.getVideoTrailer());
-        }
         if (movie.getSlug() == null || movie.getSlug().isBlank()) {
             movie.setSlug(toSlug(movie.getMovieName()));
         }
@@ -148,14 +121,6 @@ public class MovieService {
                 return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
             });
             movie.setMovieType(movieType);
-        }
-
-        applyUploadedImage(movie, request.getImage(), true);
-
-        if ((movie.getTrailerUrl() == null || movie.getTrailerUrl().isBlank())
-                && request.getVideoTrailer() != null
-                && !request.getVideoTrailer().isBlank()) {
-            movie.setTrailerUrl(request.getVideoTrailer());
         }
         if (movie.getSlug() == null || movie.getSlug().isBlank()) {
             movie.setSlug(toSlug(movie.getMovieName()));

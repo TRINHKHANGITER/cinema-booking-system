@@ -1,7 +1,16 @@
-import type { RoomResponse } from "./room";
-import type { SeatTypeResponse } from "./seat-type";
+import type { RoomEntity, RoomResponse } from "./room";
+import type { SeatTypeEntity, SeatTypeResponse } from "./seat-type";
 
 export type SeatStatus = "ACTIVE" | "BLOCKED" | "BROKEN";
+
+export type SeatEntity = {
+    seatId: number;
+    seatRow: string;
+    seatColumn: number;
+    status: SeatStatus;
+    seatType: SeatTypeEntity;
+    room: RoomEntity;
+};
 
 export type SeatCreationResquest = {
     seatRow: string;
@@ -17,15 +26,11 @@ export type SeatUpdateResquest = {
     roomId?: number;
 };
 
-export type SeatResponse = {
-    seatId: number;
-    seatRow: string;
-    seatColumn: number;
-    seatType: SeatTypeResponse;
-    room: RoomResponse;
-    seatTypeId: number;
-    roomId: number;
-    status: SeatStatus;
+export type SeatResponse = SeatEntity & {
+    seatTypeId?: number;
+    roomId?: number;
+    seatType?: SeatTypeResponse;
+    room?: RoomResponse;
 };
 
 export type { SeatTypeStatus } from "./seat-type";

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import Minus from "../icon/minus";
 import Plus from "../icon/plus";
-import useFoodStore from "../../stores/combo";
+import useFoodStore from "../../stores/slices/comboSlice";
 import useBookingStore from "../../stores/booking";
 
 const ChoiceFood = () => {

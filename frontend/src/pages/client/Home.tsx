@@ -5,7 +5,7 @@ import Location from "../../components/icon/location";
 
 import CardHome from "../../components/ui/CardHome";
 import ArrowRight from "../../components/icon/arrowRight";
-import useMovieStore from "../../stores/product";
+import useMovieStore from "../../stores/slices/movieSlice";
 
 const Home = () => {
     const [activeTab, setActiveTab] = useState(0);

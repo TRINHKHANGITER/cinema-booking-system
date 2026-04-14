@@ -16,7 +16,6 @@ public interface CinemaMapper {
     CinemaResponse toResponse(Cinema c);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "addressText", source = "address")
     @Mapping(target = "province", ignore = true)
     void updateEntityFromRequest(@MappingTarget Cinema cinema, CinemaUpdateRequest request);
 

@@ -7,16 +7,16 @@ import DateSlider from "../../layouts/slick";
 import Dropdown from "../../layouts/dropdown";
 import Card from "../../components/ui/Card";
 import ArrowRight from "../../components/icon/arrowRight";
-import useMovieStore from "../../stores/product";
+import useMovieStore from "../../stores/slices/movieSlice";
 import { Link, useParams } from "react-router-dom";
-import useShowtimeStore from "../../stores/showtime";
+import useShowtimeStore from "../../stores/slices/showtimeSlice";
 import {
     filterShowtimesByDate,
     formatTime,
     groupShowtimesByCinema,
     parseActors,
 } from "../../utils/utils";
-import { useAuthStore } from "../../stores/auth";
+import { useAuthStore } from "../../stores/slices/authSlice";
 import Signin from "../../layouts/signin";
 import { toast } from "sonner";
 
@@ -56,7 +56,6 @@ const BookTicket = () => {
     return (
         <div>
             <div>
-          
                 <div className="mb-4">
                     <div className="relative bg-black flex justify-center w-full h-full">
                         <div className="absolute w-full h-full z-[10] bg-[#0003]"></div>

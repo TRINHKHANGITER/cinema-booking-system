@@ -1,5 +1,12 @@
 export type MovieTypeStatus = "ACTIVE" | "INACTIVE";
 
+export type MovieTypeEntity = {
+    movieTypeId: number;
+    movieTypeName: string;
+    description: string | null;
+    status: MovieTypeStatus;
+};
+
 export type MovieTypeCreationRequest = {
     movieTypeName: string;
     description: string;
@@ -10,11 +17,5 @@ export type MovieTypeUpdateRequest = {
     description?: string;
 };
 
-export type MovieTypeResponse = {
-    movieTypeId: number;
-    movieTypeName: string;
-    description: string | null;
-    status: MovieTypeStatus;
-};
-
-export type MovieType = MovieTypeResponse;
+export type MovieTypeResponse = MovieTypeEntity;
+export type MovieType = MovieTypeEntity;

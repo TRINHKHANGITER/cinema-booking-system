@@ -107,7 +107,7 @@ public class CinemaService {
         Cinema cinema = Cinema.builder()
                 .cinemaName(request.getCinemaName())
                 .province(province)
-                .addressText(request.getAddress())
+                .addressText(request.getAddressText())
                 .description(request.getDescription())
                 .status(CinemaStatus.ACTIVE)
                 .build();

@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ChoiceSeat from "../../components/ui/ChoiceSeat";
 import { useLocation } from "react-router-dom";
 import useBookingStore from "../../stores/booking";
-import useSeatStore from "../../stores/seat";
+import useSeatStore from "../../stores/slices/seatSlice";
 import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
 import ChoiceFood from "../../components/ui/ChoiceFood";
 import Pay from "../../components/ui/Pay";

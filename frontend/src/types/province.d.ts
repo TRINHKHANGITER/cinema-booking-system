@@ -1,9 +1,10 @@
 export type ProvinceStatus = "ACTIVE" | "INACTIVE";
 
-export type ProvinceResponse = {
+export type ProvinceEntity = {
     provinceId: number;
     provinceName: string;
     status: ProvinceStatus;
 };
 
-export type Province = ProvinceResponse;
+export type ProvinceResponse = ProvinceEntity;
+export type Province = ProvinceEntity;
