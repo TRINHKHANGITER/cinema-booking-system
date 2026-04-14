@@ -1,19 +1,34 @@
 import api from "../lib/axios";
 import type { ApiResponse, PagingDto } from "../types/api";
-import type { ShowTimeResponse, ShowTimeStatus, ShowtimeSearchItem } from "../types/showtime";
+import type {
+    ShowTimeCreationRequest,
+    ShowTimeResponse,
+    ShowTimeSearchRequest,
+    ShowTimeStatus,
+    ShowTimeUpdateRequest,
+    ShowtimeSearchItem,
+} from "../types/showtime";
 
 type ShowTimeSortDirection = "ASC" | "DESC";
 type ReleaseDateCondition = "EQ" | "GT" | "GTE";
 
-type ShowTimeQueryParams = {
-  provinceId?: number;
-  cinemaId?: number;
-  movieTypeId?: number;
-  releaseDate?: string;
-  releaseDateCondition?: ReleaseDateCondition;
-  name?: string;
-  movieId?: number;
-  status?: ShowTimeStatus;
+type ShowTimeFilterParams = {
+    provinceId?: number;
+    cinemaId?: number;
+    movieTypeId?: number;
+    releaseDate?: string;
+    releaseDateCondition?: ReleaseDateCondition;
+    name?: string;
+    movieId?: number;
+    status?: ShowTimeStatus;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    direction?: ShowTimeSortDirection;
+};
+
+type ShowTimeByCinemaParams = {
+    status?: ShowTimeStatus;
     page?: number;
     size?: number;
     sortBy?: string;
@@ -31,17 +46,17 @@ type ShowTimeLocationFilterParams = {
 };
 
 export const showTimeService = {
-    getShowTimes: async (params?: ShowTimeQueryParams) => {
+    getShowTimesByFilters: async (params?: ShowTimeFilterParams) => {
         const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
             params: {
                 provinceId: params?.provinceId,
-        cinemaId: params?.cinemaId,
-        movieTypeId: params?.movieTypeId,
-        releaseDate: params?.releaseDate,
-        releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-        name: params?.name?.trim() || undefined,
-        movieId: params?.movieId,
-        status: params?.status,
+                cinemaId: params?.cinemaId,
+                movieTypeId: params?.movieTypeId,
+                releaseDate: params?.releaseDate,
+                releaseDateCondition: params?.releaseDateCondition ?? "EQ",
+                name: params?.name?.trim() || undefined,
+                movieId: params?.movieId,
+                status: params?.status,
                 page: params?.page ?? 1,
                 size: params?.size ?? 10,
                 sortBy: params?.sortBy ?? "showtime",
@@ -49,24 +64,50 @@ export const showTimeService = {
             },
         });
 
-        return res.data.result;
+        return res.data;
     },
 
-    getShowTimesByFilters: async (params?: ShowTimeQueryParams) => {
-        return showTimeService.getShowTimes({
-            provinceId: params?.provinceId,
-            cinemaId: params?.cinemaId,
-            movieTypeId: params?.movieTypeId,
-            releaseDate: params?.releaseDate,
-            releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-            name: params?.name,
-            movieId: params?.movieId,
-            status: params?.status,
-            page: params?.page ?? 1,
-            size: params?.size ?? 10,
-            sortBy: params?.sortBy ?? "showtime",
-            direction: params?.direction ?? "ASC",
+    getShowTimes: async (params?: ShowTimeFilterParams) => {
+        return showTimeService.getShowTimesByFilters(params);
+    },
+
+    getShowTimeById: async (showTimeId: number) => {
+        const res = await api.get<ApiResponse<ShowTimeResponse>>(`/showtime/${showTimeId}`);
+        return res.data;
+    },
+
+    getShowTimesByCinema: async (cinemaId: number, params?: ShowTimeByCinemaParams) => {
+        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>(`/showtime/cinema/${cinemaId}`, {
+            params: {
+                status: params?.status ?? "SCHEDULED",
+                page: params?.page ?? 0,
+                size: params?.size ?? 10,
+                sortBy: params?.sortBy ?? "showtime",
+                direction: params?.direction ?? "ASC",
+            },
         });
+
+        return res.data;
+    },
+
+    createShowTime: async (request: ShowTimeCreationRequest) => {
+        const res = await api.post<ApiResponse<ShowTimeResponse>>("/showtime", request);
+        return res.data;
+    },
+
+    updateShowTime: async (showTimeId: number, request: ShowTimeUpdateRequest) => {
+        const res = await api.patch<ApiResponse<ShowTimeResponse>>(`/showtime/${showTimeId}`, request);
+        return res.data;
+    },
+
+    deleteShowTime: async (showTimeId: number) => {
+        const res = await api.delete<ApiResponse<boolean>>(`/showtime/${showTimeId}`);
+        return res.data;
+    },
+
+    searchShowTimes: async (request: ShowTimeSearchRequest) => {
+        const res = await api.post<ApiResponse<PagingDto<ShowtimeSearchItem>>>("/showtime/search", request);
+        return res.data;
     },
 
     getShowTimesByMovieId: async (
@@ -77,7 +118,7 @@ export const showTimeService = {
         sortBy = "showtimeId",
         direction: ShowTimeSortDirection = "ASC"
     ) => {
-        return showTimeService.getShowTimes({
+        return showTimeService.getShowTimesByFilters({
             movieId,
             status,
             page,
@@ -88,25 +129,25 @@ export const showTimeService = {
     },
 
     getShowTimesByReleaseDate: async (
-    releaseDate: string,
-    releaseDateCondition: ReleaseDateCondition = "EQ",
-    page = 1,
-    size = 10,
-    sortBy = "showtimeId",
+        releaseDate: string,
+        releaseDateCondition: ReleaseDateCondition = "EQ",
+        page = 1,
+        size = 10,
+        sortBy = "showtimeId",
         direction: ShowTimeSortDirection = "ASC"
     ) => {
-    return showTimeService.getShowTimes({
-      releaseDate,
-      releaseDateCondition,
-      page,
-      size,
-      sortBy,
+        return showTimeService.getShowTimesByFilters({
+            releaseDate,
+            releaseDateCondition,
+            page,
+            size,
+            sortBy,
             direction,
         });
     },
 
     getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
-        return showTimeService.getShowTimes({
+        return showTimeService.getShowTimesByFilters({
             releaseDate,
             releaseDateCondition: "GT",
             provinceId: filters?.provinceId,
@@ -120,7 +161,7 @@ export const showTimeService = {
     },
 
     getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
-        return showTimeService.getShowTimes({
+        return showTimeService.getShowTimesByFilters({
             releaseDate,
             releaseDateCondition: "EQ",
             provinceId: filters?.provinceId,
@@ -136,12 +177,10 @@ export const showTimeService = {
     getShowTimeByMovieKeyword: async (keyword: string) => {
         const normalizedKeyword = keyword?.trim();
 
-        const res = await api.post<ApiResponse<PagingDto<ShowtimeSearchItem>>>("/showtime/search", {
+        return showTimeService.searchShowTimes({
             keyword: normalizedKeyword ? normalizedKeyword : null,
             page: 1,
             size: 200,
         });
-
-        return res.data.result?.items ?? [];
     },
 };

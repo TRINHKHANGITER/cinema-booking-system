@@ -1,158 +1,94 @@
-import axiosClient from "../lib/axios";
+import api from "../lib/axios";
 import type { ApiResponse, PagingDto } from "../types/api";
-import type { Cinema, CinemaStatus } from "../types/cinema";
-import type { Movie, MovieStatus } from "../types/movie";
-import type { Province, ProvinceStatus } from "../types/province";
-import type { Seat, SeatStatus } from "../types/seat";
-import type { ShowTimeResponse, ShowTimeStatus } from "../types/showtime";
+import type {
+    Movie,
+    MovieCreationRequest,
+    MovieStatus,
+    MovieUpdateRequest,
+} from "../types/movie";
 
-type SortDirection = "ASC" | "DESC";
-type ReleaseDateCondition = "EQ" | "GT" | "GTE";
-
-type ShowTimeFilterParams = {
-    provinceId?: number;
+type MovieListParams = {
     cinemaId?: number;
     movieTypeId?: number;
-    releaseDate?: string;
-    releaseDateCondition?: ReleaseDateCondition;
-    name?: string;
-    movieId?: number;
-    status?: ShowTimeStatus;
+    status?: MovieStatus;
     page?: number;
     size?: number;
-    sortBy?: string;
-    direction?: SortDirection;
 };
 
-type ShowTimeLocationFilterParams = {
-    provinceId?: number;
-    cinemaId?: number;
-    status?: ShowTimeStatus;
-    page?: number;
-    size?: number;
-    sortBy?: string;
-    direction?: SortDirection;
+const appendIfDefined = (form: FormData, key: string, value: unknown) => {
+    if (value === undefined || value === null) return;
+    form.append(key, String(value));
+};
+
+const toMovieFormData = (request: MovieCreationRequest | MovieUpdateRequest) => {
+    const form = new FormData();
+
+    appendIfDefined(form, "movieName", request.movieName);
+    appendIfDefined(form, "description", request.description);
+    appendIfDefined(form, "durationMinutes", request.durationMinutes);
+    appendIfDefined(form, "movieTypeId", request.movieTypeId);
+    appendIfDefined(form, "slug", request.slug);
+    appendIfDefined(form, "minimumAge", request.minimumAge);
+    appendIfDefined(form, "imageLandscape", request.imageLandscape);
+    appendIfDefined(form, "imagePortrait", request.imagePortrait);
+    appendIfDefined(form, "trailerUrl", request.trailerUrl);
+    appendIfDefined(form, "ratingAverage", request.ratingAverage);
+    appendIfDefined(form, "totalVotes", request.totalVotes);
+    appendIfDefined(form, "releaseDate", request.releaseDate);
+    appendIfDefined(form, "endDate", request.endDate);
+    appendIfDefined(form, "country", request.country);
+    appendIfDefined(form, "producer", request.producer);
+    appendIfDefined(form, "director", request.director);
+    appendIfDefined(form, "actors", request.actors);
+
+    return form;
 };
 
 export const movieService = {
-    getMovieByIdAndStatus: async (movieId: number, status?: MovieStatus) => {
-        const res = await axiosClient.get<ApiResponse<Movie>>(`/movie/${movieId}`, {
-            params: status ? { status } : undefined,
+    getMovieByIdAndStatus: async (movieId: number, status: MovieStatus = "ACTIVE") => {
+        const res = await api.get<ApiResponse<Movie>>(`/movie/${movieId}`, {
+            params: { status },
         });
 
         return res.data;
     },
 
-    getProvinces: async (status: ProvinceStatus = "ACTIVE") => {
-        const res = await axiosClient.get<ApiResponse<Province[]>>("/province", {
-            params: { status },
-        });
-
-        return res.data.result ?? [];
-    },
-
-    getCinemasByProvince: async (
-        provinceId: number,
-        isShowing = true,
-        status: CinemaStatus = "ACTIVE"
-    ) => {
-        const res = await axiosClient.get<ApiResponse<Cinema[]>>("/cinema", {
-            params: { provinceId, isShowing, status },
-        });
-
-        return res.data.result ?? [];
-    },
-
-    getShowTimes: async (params?: ShowTimeFilterParams) => {
-        const res = await axiosClient.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
+    getAllMovies: async (cinemaId: number, params?: MovieListParams) => {
+        const res = await api.get<ApiResponse<PagingDto<Movie>>>(`/movie/all/${cinemaId}`, {
             params: {
-                provinceId: params?.provinceId,
-                cinemaId: params?.cinemaId,
+                cinemaId: params?.cinemaId ?? cinemaId,
                 movieTypeId: params?.movieTypeId,
-                releaseDate: params?.releaseDate,
-                releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-                name: params?.name?.trim() || undefined,
-                movieId: params?.movieId,
                 status: params?.status,
                 page: params?.page ?? 1,
                 size: params?.size ?? 10,
-                sortBy: params?.sortBy ?? "showtimeId",
-                direction: params?.direction ?? "ASC",
             },
         });
 
-        return res.data.result;
+        return res.data;
     },
 
-    getShowTimesByReleaseDate: async (
-        releaseDate: string,
-        releaseDateCondition: ReleaseDateCondition = "EQ",
-        page = 1,
-        size = 10,
-        sortBy = "showtime",
-        direction: SortDirection = "ASC"
-    ) => {
-        return movieService.getShowTimes({
-            releaseDate,
-            releaseDateCondition,
-            page,
-            size,
-            sortBy,
-            direction,
+    createMovie: async (request: MovieCreationRequest | FormData) => {
+        const payload = request instanceof FormData ? request : toMovieFormData(request);
+
+        const res = await api.post<ApiResponse<Movie>>("/movie/movie", payload, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
+
+        return res.data;
     },
 
-    getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
-        return movieService.getShowTimes({
-            releaseDate,
-            releaseDateCondition: "GT",
-            provinceId: filters?.provinceId,
-            cinemaId: filters?.cinemaId,
-            status: filters?.status,
-            page: filters?.page ?? 1,
-            size: filters?.size ?? 10,
-            sortBy: filters?.sortBy ?? "releaseDate",
-            direction: filters?.direction ?? "ASC",
+    updateMovie: async (movieId: number, request: MovieUpdateRequest | FormData) => {
+        const payload = request instanceof FormData ? request : toMovieFormData(request);
+
+        const res = await api.patch<ApiResponse<Movie>>(`/movie/${movieId}`, payload, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
+
+        return res.data;
     },
 
-    getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
-        return movieService.getShowTimes({
-            releaseDate,
-            releaseDateCondition: "EQ",
-            provinceId: filters?.provinceId,
-            cinemaId: filters?.cinemaId,
-            status: filters?.status,
-            page: filters?.page ?? 1,
-            size: filters?.size ?? 10,
-            sortBy: filters?.sortBy ?? "releaseDate",
-            direction: filters?.direction ?? "ASC",
-        });
-    },
-
-    getShowTimesByMovieIdAndStatus: async (
-        movieId: number,
-        status: ShowTimeStatus,
-        page = 1,
-        size = 10,
-        sortBy = "showtimeId",
-        direction: SortDirection = "ASC"
-    ) => {
-        return movieService.getShowTimes({
-            movieId,
-            status,
-            page,
-            size,
-            sortBy,
-            direction,
-        });
-    },
-
-    getSeatsByRoomId: async (roomId: number, status: SeatStatus = "ACTIVE") => {
-        const res = await axiosClient.get<ApiResponse<Seat[]>>("/seat", {
-            params: { roomId, status },
-        });
-
-        return res.data.result ?? [];
+    deleteMovie: async (movieId: number) => {
+        const res = await api.delete<ApiResponse<boolean>>(`/movie/${movieId}`);
+        return res.data;
     },
 };
