@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Header from "../../layouts/header";
-import Footer from "../../layouts/footer";
+
 import Clock from "../../components/icon/clock";
 import Calendar from "../../components/icon/calendar";
 import Vote from "../../components/icon/vote";
@@ -57,7 +56,7 @@ const BookTicket = () => {
     return (
         <div>
             <div>
-                <Header />
+          
                 <div className="mb-4">
                     <div className="relative bg-black flex justify-center w-full h-full">
                         <div className="absolute w-full h-full z-[10] bg-[#0003]"></div>
@@ -445,7 +444,6 @@ const BookTicket = () => {
                         </div>
                     </div>
                 </div>
-                <Footer />
             </div>
         </div>
     );

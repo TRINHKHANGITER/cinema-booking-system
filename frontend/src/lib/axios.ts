@@ -6,7 +6,7 @@ const LS_REFRESH = import.meta.env.LOCALSTORAGE_REFRESH_TOKEN_KEY;
 const LS_USER = import.meta.env.LOCALSTORAGE_USER_KEY;
 
 const axiosClient = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_API,
+    baseURL: import.meta.env.VITE_BACKEND_API_URL,
     timeout: 50000,
 });
 

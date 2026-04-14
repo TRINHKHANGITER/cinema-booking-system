@@ -20,6 +20,16 @@ type ShowTimeQueryParams = {
     direction?: ShowTimeSortDirection;
 };
 
+type ShowTimeLocationFilterParams = {
+    provinceId?: number;
+    cinemaId?: number;
+    status?: ShowTimeStatus;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    direction?: ShowTimeSortDirection;
+};
+
 export const showTimeService = {
     getShowTimes: async (params?: ShowTimeQueryParams) => {
         const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
@@ -40,6 +50,23 @@ export const showTimeService = {
         });
 
         return res.data.result;
+    },
+
+    getShowTimesByFilters: async (params?: ShowTimeQueryParams) => {
+        return showTimeService.getShowTimes({
+            provinceId: params?.provinceId,
+            cinemaId: params?.cinemaId,
+            movieTypeId: params?.movieTypeId,
+            releaseDate: params?.releaseDate,
+            releaseDateCondition: params?.releaseDateCondition ?? "EQ",
+            name: params?.name,
+            movieId: params?.movieId,
+            status: params?.status,
+            page: params?.page ?? 1,
+            size: params?.size ?? 10,
+            sortBy: params?.sortBy ?? "showtime",
+            direction: params?.direction ?? "ASC",
+        });
     },
 
     getShowTimesByMovieId: async (
@@ -75,6 +102,34 @@ export const showTimeService = {
       size,
       sortBy,
             direction,
+        });
+    },
+
+    getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+        return showTimeService.getShowTimes({
+            releaseDate,
+            releaseDateCondition: "GT",
+            provinceId: filters?.provinceId,
+            cinemaId: filters?.cinemaId,
+            status: filters?.status,
+            page: filters?.page ?? 1,
+            size: filters?.size ?? 10,
+            sortBy: filters?.sortBy ?? "releaseDate",
+            direction: filters?.direction ?? "ASC",
+        });
+    },
+
+    getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+        return showTimeService.getShowTimes({
+            releaseDate,
+            releaseDateCondition: "EQ",
+            provinceId: filters?.provinceId,
+            cinemaId: filters?.cinemaId,
+            status: filters?.status,
+            page: filters?.page ?? 1,
+            size: filters?.size ?? 10,
+            sortBy: filters?.sortBy ?? "releaseDate",
+            direction: filters?.direction ?? "ASC",
         });
     },
 

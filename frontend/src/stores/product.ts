@@ -19,7 +19,7 @@ const useMovieStore = create<MovieState>((set) => ({
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có l?i x?y ra, vui lòng th? l?i";
+        "Cï¿½ l?i x?y ra, vui lï¿½ng th? l?i";
 
       toast.error(message);
       set({ loading: false });
@@ -37,7 +37,7 @@ const useMovieStore = create<MovieState>((set) => ({
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Có l?i x?y ra, vui lòng th? l?i";
+        "Cï¿½ l?i x?y ra, vui lï¿½ng th? l?i";
 
       toast.error(message);
       set({ loading: false });

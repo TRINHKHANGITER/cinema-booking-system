@@ -24,6 +24,16 @@ type ShowTimeFilterParams = {
     direction?: SortDirection;
 };
 
+type ShowTimeLocationFilterParams = {
+    provinceId?: number;
+    cinemaId?: number;
+    status?: ShowTimeStatus;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    direction?: SortDirection;
+};
+
 export const movieService = {
     getMovieByIdAndStatus: async (movieId: number, status?: MovieStatus) => {
         const res = await axiosClient.get<ApiResponse<Movie>>(`/movie/${movieId}`, {
@@ -89,6 +99,34 @@ export const movieService = {
             size,
             sortBy,
             direction,
+        });
+    },
+
+    getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+        return movieService.getShowTimes({
+            releaseDate,
+            releaseDateCondition: "GT",
+            provinceId: filters?.provinceId,
+            cinemaId: filters?.cinemaId,
+            status: filters?.status,
+            page: filters?.page ?? 1,
+            size: filters?.size ?? 10,
+            sortBy: filters?.sortBy ?? "releaseDate",
+            direction: filters?.direction ?? "ASC",
+        });
+    },
+
+    getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+        return movieService.getShowTimes({
+            releaseDate,
+            releaseDateCondition: "EQ",
+            provinceId: filters?.provinceId,
+            cinemaId: filters?.cinemaId,
+            status: filters?.status,
+            page: filters?.page ?? 1,
+            size: filters?.size ?? 10,
+            sortBy: filters?.sortBy ?? "releaseDate",
+            direction: filters?.direction ?? "ASC",
         });
     },
 
