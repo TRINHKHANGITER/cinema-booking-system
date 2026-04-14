@@ -130,14 +130,34 @@ const seatSlice = createSlice({
     name: "seat",
     initialState,
     reducers: {
-        toggleSeat(state, action: PayloadAction<Seat>) {
-            const seat = action.payload;
-            const index = state.selectedSeats.findIndex((item) => item.seatId === seat.seatId);
+        toggleSeat(state, action: PayloadAction<Seat[]>) {
+            const seats = action.payload;
+            if (seats.length === 0) return;
 
-            if (index >= 0) {
-                state.selectedSeats.splice(index, 1);
-            } else {
-                state.selectedSeats.push(seat);
+            const ids = seats.map((item) => item.seatId);
+            const isAlreadySelected = ids.every((id) =>
+                state.selectedSeats.some((selected) => selected.seatId === id)
+            );
+
+            if (isAlreadySelected) {
+                state.selectedSeats = state.selectedSeats.filter(
+                    (selected) => !ids.includes(selected.seatId)
+                );
+                return;
+            }
+
+            state.selectedSeats = state.selectedSeats.filter(
+                (selected) => !ids.includes(selected.seatId)
+            );
+
+            if (seats.length === 1) {
+                state.selectedSeats.push({ ...seats[0], isPrimary: true });
+                return;
+            }
+
+            state.selectedSeats.push({ ...seats[0], isPrimary: true });
+            for (let i = 1; i < seats.length; i += 1) {
+                state.selectedSeats.push({ ...seats[i], isPrimary: false });
             }
         },
         resetSelectedSeats(state) {

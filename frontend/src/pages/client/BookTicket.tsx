@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Clock from "../../components/icon/clock";
 import Calendar from "../../components/icon/calendar";
@@ -7,39 +7,92 @@ import DateSlider from "../../layouts/slick";
 import Dropdown from "../../layouts/dropdown";
 import Card from "../../components/ui/Card";
 import ArrowRight from "../../components/icon/arrowRight";
-import useMovieStore from "../../stores/slices/movieSlice";
 import { Link, useParams } from "react-router-dom";
-import useShowtimeStore from "../../stores/slices/showtimeSlice";
+import { useAppDispatch, useAppSelector } from "../../stores/hooks";
+import { fetchCinemasThunk } from "../../stores/slices/cinemaSlice";
+import {
+    fetchMovieByIdThunk,
+    fetchMoviesThunk,
+} from "../../stores/slices/movieSlice";
+import { searchShowTimesThunk } from "../../stores/slices/showtimeSlice";
 import {
     filterShowtimesByDate,
     formatTime,
     groupShowtimesByCinema,
     parseActors,
 } from "../../utils/utils";
-import { useAuthStore } from "../../stores/slices/authSlice";
 import Signin from "../../layouts/signin";
 import { toast } from "sonner";
 
 const BookTicket = () => {
-    const user = useAuthStore((s) => s.user);
+    const dispatch = useAppDispatch();
+    const user = useAppSelector((state) => state.auth.user);
+    const cinemas = useAppSelector((state) => state.cinema.cinemas);
+    const movies = useAppSelector((state) => state.movie.movies);
+    const currentMovie = useAppSelector((state) => state.movie.currentMovie);
+    const showtimes = useAppSelector((state) => state.showtime.searchItems);
+    const selectedDate = useAppSelector((state) => state.showtime.selectedDate);
+
     const { slug } = useParams();
     const [openSignIn, setOpenSignIn] = useState(false);
 
-    const { fetchMovieBySlug, selectedMovie, fetchMovies, movies } = useMovieStore();
-    const { fetchShowtimeByMovie, showtimes, selectedDate } = useShowtimeStore();
+    const selectedCinemaId = cinemas[0]?.cinemaId ?? 1;
+    const numericMovieId = useMemo(() => {
+        if (!slug) return null;
+        return /^[0-9]+$/.test(slug) ? Number(slug) : null;
+    }, [slug]);
+
+    const selectedMovie = useMemo(() => {
+        if (numericMovieId) {
+            return (
+                currentMovie ??
+                movies.find((movie) => movie.movieId === numericMovieId) ??
+                null
+            );
+        }
+
+        if (!slug) return null;
+        return (
+            movies.find(
+                (movie) => movie.slug === slug || String(movie.movieId) === slug
+            ) ?? null
+        );
+    }, [currentMovie, movies, numericMovieId, slug]);
 
     useEffect(() => {
-        const loadData = async () => {
-            if (!slug) return;
-            const movie = await fetchMovieBySlug(slug);
-            if (movie?.movieName) {
-                await fetchShowtimeByMovie(movie.movieName);
-            }
-        };
+        dispatch(fetchCinemasThunk({ isShowing: true, status: "ACTIVE" }));
+    }, [dispatch]);
 
-        loadData().catch(console.error);
-        fetchMovies();
-    }, [slug]);
+    useEffect(() => {
+        dispatch(
+            fetchMoviesThunk({
+                cinemaId: selectedCinemaId,
+                params: {
+                    cinemaId: selectedCinemaId,
+                    status: "ACTIVE",
+                    page: 1,
+                    size: 50,
+                },
+            })
+        );
+    }, [dispatch, selectedCinemaId]);
+
+    useEffect(() => {
+        if (!numericMovieId) return;
+        dispatch(fetchMovieByIdThunk({ movieId: numericMovieId, status: "ACTIVE" }));
+    }, [dispatch, numericMovieId]);
+
+    useEffect(() => {
+        if (!selectedMovie?.movieName) return;
+        dispatch(
+            searchShowTimesThunk({
+                keyword: selectedMovie.movieName,
+                page: 1,
+                size: 200,
+            })
+        );
+    }, [dispatch, selectedMovie?.movieName]);
+
     const filteredShowtimes = filterShowtimesByDate(showtimes, selectedDate);
     const grouped = groupShowtimesByCinema(filteredShowtimes);
 

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"; //giúp kết nối zod v
 import Close from "../components/icon/close";
 import EyeFlash from "../components/icon/eyeFlash";
 import { useAuthStore } from "../stores/slices/authSlice";
+import { toast } from "sonner";
 
 interface SigninProps {
     open: boolean;
@@ -29,13 +30,17 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
         resolver: zodResolver(signInSchema), // để kết nối useForm với zod đã định nghĩa
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onSubmit = async (data: SignInFormValues) => {
         const { email, password } = data;
-        await signIn(email, password);
-
-        reset();
-        setOpen(false);
+        try {
+            const response = await signIn(email, password);
+            toast.success(response.message || "Dang nhap thanh cong");
+            reset();
+            setOpen(false);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Dang nhap that bai";
+            toast.error(message);
+        }
     };
     return (
         <div

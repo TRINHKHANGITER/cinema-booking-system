@@ -1,9 +1,13 @@
+/* eslint-disable react-hooks/purity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../../services/auth.service";
+import { userService } from "../../services/user.service";
 import type { ApiResponse } from "../../types/api";
 import type { LoginRequest, LoginResponse } from "../../types/auth";
-import type { UserResponse } from "../../types/user";
+import type { UserCreationRequest, UserResponse } from "../../types/user";
 import {
     baseAsyncInitialState,
     mapUnknownError,
@@ -131,4 +135,89 @@ const authSlice = createSlice({
 });
 
 export const { signOut, restoreAuthFromStorage } = authSlice.actions;
+
+type AuthStoreCompat = AuthState & {
+    signIn: (email: string, password: string) => Promise<ApiResponse<LoginResponse>>;
+    signOut: () => Promise<void>;
+    signUp: (
+        fullName: string,
+        password: string,
+        email: string,
+        phoneNumber: string,
+        dateOfBirth?: string
+    ) => Promise<void>;
+    refresh: () => Promise<void>;
+    fetchMe: () => Promise<void>;
+};
+
+export const useAuthStore = <T = AuthStoreCompat>(
+    selector?: (state: AuthStoreCompat) => T
+): T => {
+    const dispatch = useDispatch<any>();
+    const auth = useSelector((state: { auth: AuthState }) => state.auth);
+
+    const compat: AuthStoreCompat = {
+        ...auth,
+        signIn: async (email: string, password: string) => {
+            const action = await dispatch(
+                loginThunk({
+                    emailOrUsername: email,
+                    password,
+                })
+            );
+
+            if (loginThunk.fulfilled.match(action)) {
+                return action.payload;
+            }
+
+            const errorMessage =
+                action.payload?.message ?? action.error?.message ?? "Dang nhap that bai";
+            throw new Error(errorMessage);
+        },
+        signOut: async () => {
+            dispatch(signOut());
+        },
+        signUp: async (
+            fullName: string,
+            password: string,
+            email: string,
+            phoneNumber: string,
+            dateOfBirth?: string
+        ) => {
+            const username = email.split("@")[0] || `user${Date.now()}`;
+            const payload: UserCreationRequest = {
+                fullName,
+                phoneNumber,
+                username,
+                email,
+                password,
+                dateOfBirth: dateOfBirth || null,
+                sex: null,
+            };
+
+            const response = await userService.createUser(payload);
+            if (response.code === "SUCCESS") {
+                await dispatch(
+                    loginThunk({
+                        emailOrUsername: email,
+                        password,
+                    })
+                );
+            }
+        },
+        refresh: async () => {
+            dispatch(restoreAuthFromStorage());
+        },
+        fetchMe: async () => {
+            dispatch(restoreAuthFromStorage());
+        },
+    };
+
+    if (!selector) {
+        return compat as T;
+    }
+
+    return selector(compat);
+};
+
 export default authSlice.reducer;

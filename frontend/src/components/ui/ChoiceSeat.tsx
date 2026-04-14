@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from "react";
-import useSeatStore from "../../stores/slices/seatSlice";
+import { useEffect, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../../stores/hooks";
+import { fetchSeatsByRoomThunk, toggleSeat } from "../../stores/slices/seatSlice";
 import { formatTime, groupSeatsByRow, seatUnitPrice } from "../../utils/utils";
 
 type Props = {
@@ -8,26 +9,32 @@ type Props = {
 };
 
 const ChoiceSeat = ({ startTime, roomId }: Props) => {
-    const { seats, fetchSeats, selectedSeats, toggleSeat } = useSeatStore();
+    const dispatch = useAppDispatch();
+    const seats = useAppSelector((state) => state.seat.seats);
+    const selectedSeats = useAppSelector((state) => state.seat.selectedSeats);
 
     useEffect(() => {
-        fetchSeats(roomId);
-    }, [roomId]);
+        dispatch(fetchSeatsByRoomThunk({ roomId, status: "ACTIVE" }));
+    }, [dispatch, roomId]);
 
     const grouped = useMemo(() => groupSeatsByRow(seats), [seats]);
-
     const selectedIds = new Set(selectedSeats.map((s) => s.seatId));
 
     const toggle = (seatIds: number[]) => {
-        const firstSeat = seats.find((s) => s.seatId === seatIds[0]);
-        if (firstSeat) toggleSeat(firstSeat, seats);
+        const targets = seatIds
+            .map((id) => seats.find((s) => s.seatId === id))
+            .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+        if (targets.length > 0) {
+            dispatch(toggleSeat(targets));
+        }
     };
 
     return (
         <div>
             <div className="bg-white px-6 py-4 rounded md:mb-8 mb-4 w-full">
                 <div className="flex gap-8 items-center">
-                    <label className="text-sm font-semibold">Su?t chi?u</label>
+                    <label className="text-sm font-semibold">Suat chieu</label>
                     <button className="py-2 px-4 border border-gray-300 rounded text-sm bg-[#034ea2] text-white">
                         {formatTime(startTime)}
                     </button>
@@ -37,17 +44,16 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
             <div className="bg-white py-6 px-4 rounded md:mb-8 w-full">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-3/5 h-1 bg-[#034ea2] rounded-full opacity-50" />
-                    <p className="text-xs text-gray-400 mt-2 tracking-widest">M�n h�nh</p>
+                    <p className="text-xs text-gray-400 mt-2 tracking-widest">Man hinh</p>
                 </div>
 
                 <div className="flex flex-col items-center gap-1.5 overflow-auto">
                     {Object.entries(grouped)
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([row, rowSeats]) => {
-                            const isCouple = rowSeats[0].seatTypeId === 3;
-                            const sorted = [...rowSeats].sort(
-                                (a, b) => a.seatColumn - b.seatColumn
-                            );
+                            const sorted = [...rowSeats].sort((a, b) => a.seatColumn - b.seatColumn);
+                            const typeId = sorted[0]?.seatTypeId ?? sorted[0]?.seatType?.seatTypeId;
+                            const isCouple = typeId === 3;
                             const mid = Math.floor(sorted.length / 2);
 
                             return (
@@ -55,37 +61,36 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                                     <span className="w-4 text-[11px] text-gray-400 text-center flex-shrink-0">
                                         {row}
                                     </span>
+
                                     <div className="flex gap-1 items-center">
                                         {sorted.map((seat, i) => {
                                             if (isCouple && i % 2 !== 0) return null;
+
                                             const next = isCouple ? sorted[i + 1] : null;
                                             const ids = isCouple
-                                                ? ([seat.seatId, next?.seatId].filter(
-                                                      Boolean
-                                                  ) as number[])
+                                                ? ([seat.seatId, next?.seatId].filter(Boolean) as number[])
                                                 : [seat.seatId];
                                             const isBooked = seat.status !== "ACTIVE";
                                             const isSelected = selectedIds.has(seat.seatId);
+                                            const currentTypeId = seat.seatTypeId ?? seat.seatType?.seatTypeId;
 
                                             const seatClass = isBooked
                                                 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed"
                                                 : isSelected
-                                                  ? seat.seatTypeId === 2
+                                                  ? currentTypeId === 2
                                                       ? "bg-[#BA7517] border-[#854F0B] text-[#FAEEDA] scale-110"
-                                                      : seat.seatTypeId === 3
+                                                      : currentTypeId === 3
                                                         ? "bg-[#D4537E] border-[#993556] text-[#FBEAF0] scale-105"
                                                         : "bg-[#034ea2] border-[#023a7a] text-white scale-110"
-                                                  : seat.seatTypeId === 2
+                                                  : currentTypeId === 2
                                                     ? "bg-[#FAEEDA] border-[#EF9F27] text-[#854F0B] hover:bg-[#FAC775]"
-                                                    : seat.seatTypeId === 3
+                                                    : currentTypeId === 3
                                                       ? "bg-[#FBEAF0] border-[#ED93B1] text-[#72243E] hover:bg-[#F4C0D1]"
                                                       : "bg-white border-gray-300 text-gray-600 hover:border-[#034ea2] hover:text-[#034ea2]";
 
                                             return (
-                                                <React.Fragment key={seat.seatId}>
-                                                    {i === mid && (
-                                                        <div className="w-3 flex-shrink-0" />
-                                                    )}
+                                                <div key={seat.seatId}>
+                                                    {i === mid && <div className="w-3 flex-shrink-0" />}
                                                     <button
                                                         disabled={isBooked}
                                                         onClick={() => toggle(ids)}
@@ -93,13 +98,14 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                                                         className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium transition-all duration-150 flex-shrink-0 ${isCouple ? "w-16" : "w-7"} ${seatClass}`}
                                                     >
                                                         {isCouple
-                                                            ? `${seat.seatRow}${seat.seatColumn}�${next?.seatRow ?? ""}${next?.seatColumn ?? ""}`
+                                                            ? `${seat.seatRow}${seat.seatColumn}-${next?.seatRow ?? ""}${next?.seatColumn ?? ""}`
                                                             : `${seat.seatRow}${seat.seatColumn}`}
                                                     </button>
-                                                </React.Fragment>
+                                                </div>
                                             );
                                         })}
                                     </div>
+
                                     <span className="w-4 text-[11px] text-gray-400 text-center flex-shrink-0">
                                         {row}
                                     </span>
@@ -112,17 +118,18 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                     <div className="flex gap-4 flex-wrap justify-center">
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-gray-100 border border-gray-200 inline-block" />
-                            <span className="text-xs text-gray-500">�� b�n</span>
+                            <span className="text-xs text-gray-500">Da ban</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-[#034ea2] inline-block" />
-                            <span className="text-xs text-gray-500">�ang ch?n</span>
+                            <span className="text-xs text-gray-500">Dang chon</span>
                         </div>
                     </div>
+
                     <div className="flex gap-4 flex-wrap justify-center">
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded border border-gray-300 bg-white inline-block" />
-                            <span className="text-xs text-gray-500">Gh? don</span>
+                            <span className="text-xs text-gray-500">Ghe don</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-[#FAEEDA] border border-[#EF9F27] inline-block" />
@@ -130,7 +137,7 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-10 h-5 rounded border border-[#ED93B1] bg-[#FBEAF0] inline-block" />
-                            <span className="text-xs text-gray-500">Gh? d�i</span>
+                            <span className="text-xs text-gray-500">Ghe doi</span>
                         </div>
                     </div>
                 </div>

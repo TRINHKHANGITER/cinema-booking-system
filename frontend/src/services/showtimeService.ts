@@ -82,7 +82,7 @@ export const showTimeService = {
                 status: params?.status ?? "SCHEDULED",
                 page: params?.page ?? 0,
                 size: params?.size ?? 10,
-                sortBy: params?.sortBy ?? "showtime",
+                sortBy: params?.sortBy ?? "showtimeId",
                 direction: params?.direction ?? "ASC",
             },
         });
@@ -145,6 +145,7 @@ export const showTimeService = {
             direction,
         });
     },
+    
 
     getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
         return showTimeService.getShowTimesByFilters({
@@ -165,8 +166,7 @@ export const showTimeService = {
             releaseDate,
             releaseDateCondition: "EQ",
             provinceId: filters?.provinceId,
-            cinemaId: filters?.cinemaId,
-            status: filters?.status,
+            status: filters?.status ?? "SCHEDULED",
             page: filters?.page ?? 1,
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",

@@ -1,14 +1,15 @@
+import { useMemo, useRef } from "react";
 import Slider from "react-slick";
-import { useRef, useState } from "react";
-import ArrowRight from "../components/icon/arrowRight";
 import ArrowLeft from "../components/icon/arrowLeft";
-import useShowtimeStore from "../stores/slices/showtimeSlice";
+import ArrowRight from "../components/icon/arrowRight";
+import { useAppDispatch, useAppSelector } from "../stores/hooks";
+import { setSelectedDate } from "../stores/slices/showtimeSlice";
 
-const weekdays = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+const weekdays = ["Chu Nhat", "Thu Hai", "Thu Ba", "Thu Tu", "Thu Nam", "Thu Sau", "Thu Bay"];
 
 const createDates = (days = 10) => {
-    const arr = [];
-    for (let i = 0; i < days; i++) {
+    const arr: Date[] = [];
+    for (let i = 0; i < days; i += 1) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         arr.push(date);
@@ -17,18 +18,27 @@ const createDates = (days = 10) => {
 };
 
 export default function DateSlider() {
+    const dispatch = useAppDispatch();
+    const selectedDate = useAppSelector((state) => state.showtime.selectedDate);
     const sliderRef = useRef<Slider | null>(null);
-    const dates = createDates(10);
-    const [active, setActive] = useState(0);
-    const { setSelectedDate } = useShowtimeStore();
+    const dates = useMemo(() => createDates(10), []);
 
-    const handleSelect = (date: Date, index: number) => {
-        setActive(index);
-        // Format thành "YYYY-MM-DD"
+    const active = useMemo(() => {
+        const index = dates.findIndex((date) => {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, "0");
+            const dd = String(date.getDate()).padStart(2, "0");
+            return `${yyyy}-${mm}-${dd}` === selectedDate;
+        });
+
+        return index >= 0 ? index : 0;
+    }, [dates, selectedDate]);
+
+    const handleSelect = (date: Date) => {
         const yyyy = date.getFullYear();
-        const mm = (date.getMonth() + 1).toString().padStart(2, "0");
-        const dd = date.getDate().toString().padStart(2, "0");
-        setSelectedDate(`${yyyy}-${mm}-${dd}`);
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        dispatch(setSelectedDate(`${yyyy}-${mm}-${dd}`));
     };
 
     const settings = {
@@ -52,14 +62,14 @@ export default function DateSlider() {
             <div className="w-full max-w-[380px]">
                 <Slider ref={sliderRef} {...settings}>
                     {dates.map((date, index) => {
-                        const day = date.getDate().toString().padStart(2, "0");
-                        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-                        const label = index === 0 ? "Hôm Nay" : weekdays[date.getDay()];
+                        const day = String(date.getDate()).padStart(2, "0");
+                        const month = String(date.getMonth() + 1).padStart(2, "0");
+                        const label = index === 0 ? "Hom Nay" : weekdays[date.getDay()];
 
                         return (
                             <div key={index} className="px-1">
                                 <div
-                                    onClick={() => handleSelect(date, index)}
+                                    onClick={() => handleSelect(date)}
                                     className={`cursor-pointer w-[80px] h-[65px] rounded-md flex flex-col items-center justify-center text-sm transition ${
                                         active === index ? "bg-[#034ea2] text-white" : ""
                                     }`}
