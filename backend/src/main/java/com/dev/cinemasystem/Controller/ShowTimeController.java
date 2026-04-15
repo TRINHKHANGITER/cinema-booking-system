@@ -26,7 +26,7 @@ public class ShowTimeController {
     ShowTimeService showTimeService;
 
     @GetMapping
-    public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimesByFilters(
+    public ApiResponse<PagingDto<ShowtimeMovieResponse>> getShowTimesByFilters(
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
@@ -40,7 +40,7 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "showtime") String sortBy,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
+        return ApiResponse.<PagingDto<ShowtimeMovieResponse>>builder()
                 .message("ShowTimes retrieved successfully")
                 .result(showTimeService.getShowTimesByFilters(
                         provinceId,
@@ -59,17 +59,17 @@ public class ShowTimeController {
                 .build();
     }
 
-
+    
     @GetMapping("/{showTimeId}")
-    public ApiResponse<ShowTimeResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
-        return ApiResponse.<ShowTimeResponse>builder()
+    public ApiResponse<ShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
+        return ApiResponse.<ShowtimeMovieResponse>builder()
                 .message("ShowTime retrieved successfully")
                 .result(showTimeService.getShowTimeById(showTimeId))
                 .build();
     }
 
     @GetMapping("/cinema/{cinemaId}")
-    public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimes(
+    public ApiResponse<PagingDto<ShowtimeMovieResponse>> getShowTimes(
             @PathVariable Integer cinemaId,
             @RequestParam(defaultValue = "SCHEDULED") ShowTimeStatus status,
             @RequestParam(defaultValue = "0") Integer page,
@@ -77,23 +77,23 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "showtime") String sortBy,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
+        return ApiResponse.<PagingDto<ShowtimeMovieResponse>>builder()
                 .message("ShowTimes retrieved successfully")
                 .result(showTimeService.getShowTimes(cinemaId, status, page, size, sortBy, direction))
                 .build();
     }
 
     @PostMapping
-    public ApiResponse<ShowTimeResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
-        return ApiResponse.<ShowTimeResponse>builder()
+    public ApiResponse<ShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
+        return ApiResponse.<ShowtimeMovieResponse>builder()
                 .message("ShowTime created successfully")
                 .result(showTimeService.createShowTime(request))
                 .build();
     }
 
     @PatchMapping("/{showTimeId}")
-    public ApiResponse<ShowTimeResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
-        return ApiResponse.<ShowTimeResponse>builder()
+    public ApiResponse<ShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
+        return ApiResponse.<ShowtimeMovieResponse>builder()
                 .message("ShowTime updated successfully")
                 .result(showTimeService.updateShowTime(showTimeId, request))
                 .build();

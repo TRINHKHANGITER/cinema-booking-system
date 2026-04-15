@@ -49,6 +49,17 @@ const Booking = () => {
         };
     }, [dispatch, showTimeId]);
 
+    const selectedShowTime = useMemo(() => {
+        if (!showDetail) return null;
+        if (!showTimeId) return showDetail.showTimes?.[0] ?? null;
+
+        return (
+            showDetail.showTimes?.find((showTime) => showTime.showTimeId === showTimeId) ??
+            showDetail.showTimes?.[0] ??
+            null
+        );
+    }, [showDetail, showTimeId]);
+
     const groupedSelected = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
 
     const handleNext = () => {
@@ -97,8 +108,11 @@ const Booking = () => {
                             <div className="bg-white p-6 rounded">Dang tai thong tin suat chieu...</div>
                         )}
 
-                        {step === 1 && showDetail && (
-                            <ChoiceSeat startTime={showDetail.startTime} roomId={showDetail.room.roomId} />
+                        {step === 1 && showDetail && selectedShowTime && (selectedShowTime.room?.roomId ?? selectedShowTime.roomId) && (
+                            <ChoiceSeat
+                                startTime={selectedShowTime.startTime}
+                                roomId={selectedShowTime.room?.roomId ?? selectedShowTime.roomId}
+                            />
                         )}
                         {step === 2 && (
                             <ChoiceFood selectedCombos={selectedCombos} onChange={setSelectedCombos} />
@@ -112,8 +126,8 @@ const Booking = () => {
                             <div className="bg-white p-4 grid grid-cols-3 xl:gap-2 items-center">
                                 <div className="row-span-2 md:row-span-1 xl:row-span-2 block md:hidden xl:block">
                                     <img
-                                        src={showDetail?.movie.imagePortrait ?? undefined}
-                                        alt={showDetail?.movie.movieName}
+                                        src={showDetail?.imagePortrait ?? undefined}
+                                        alt={showDetail?.movieName}
                                         width={100}
                                         height={150}
                                         className="xl:w-full xl:h-full w-[78px] h-[110px] rounded object-cover"
@@ -122,24 +136,24 @@ const Booking = () => {
                                 </div>
 
                                 <div className="flex-1 col-span-2 md:col-span-1 xl:col-span-2">
-                                    <h3 className="text-sm xl:text-base font-bold xl:mb-2">{showDetail?.movie.movieName}</h3>
-                                    <p className="text-sm inline-block">{showDetail?.room.roomType.roomTypeName}</p>
-                                    {(showDetail?.movie?.minimumAge ?? 0) > 0 && (
+                                    <h3 className="text-sm xl:text-base font-bold xl:mb-2">{showDetail?.movieName}</h3>
+                                    <p className="text-sm inline-block">{selectedShowTime?.room?.roomType?.roomTypeName}</p>
+                                    {(showDetail?.minimumAge ?? 0) > 0 && (
                                         <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold ml-2">
-                                            T{showDetail?.movie?.minimumAge}
+                                            T{showDetail?.minimumAge}
                                         </span>
                                     )}
                                 </div>
 
                                 <div className="col-span-2 md:col-span-1 xl:col-span-3">
                                     <div className="xl:mt-4 text-sm xl:text-base">
-                                        <strong>{showDetail?.room.cinema.cinemaName}</strong>
+                                        <strong>{selectedShowTime?.room?.cinema?.cinemaName}</strong>
                                         <span> - </span>
-                                        <span>{showDetail?.room.roomName}</span>
+                                        <span>{selectedShowTime?.room?.roomName}</span>
                                     </div>
                                     <div className="xl:mt-2 text-sm xl:text-base">
                                         <span>Suat: </span>
-                                        <strong>{formatTime(showDetail?.startTime ?? "")}</strong>
+                                        <strong>{formatTime(selectedShowTime?.startTime ?? "")}</strong>
                                     </div>
 
                                     {groupedSelected.length > 0 && (

@@ -1,7 +1,7 @@
 import type { CinemaResponse } from "./cinema";
-import type { MovieEntity, MovieResponse } from "./movie";
+import type { MovieResponse } from "./movie";
 import type { ProvinceResponse } from "./province";
-import type { RoomEntity, RoomResponse } from "./room";
+import type { RoomResponse } from "./room";
 import type { RoomTypeResponse } from "./room-type";
 
 export type ShowTimeStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED";
@@ -12,8 +12,10 @@ export type ShowTimeEntity = {
     startTime: string;
     endTime: string;
     status: ShowTimeStatus;
-    movie: MovieEntity;
-    room: RoomEntity;
+    roomId: number;
+    movieId: number;
+    room?: RoomResponse;
+    movie?: MovieResponse;
 };
 
 export type ShowTimeCreationResquest = {
@@ -30,12 +32,13 @@ export type ShowTimeUpdateResquest = {
     movieId?: number;
 };
 
-export type ShowTimeResponse = ShowTimeEntity & {
-    roomId?: number;
-    movieId?: number;
-    room?: RoomResponse;
-    movie?: MovieResponse;
+export type ShowTimeResponse = ShowTimeEntity;
+
+export type ShowtimeMovieResponse = MovieResponse & {
+    showTimes: ShowTimeResponse[];
 };
+
+export type ShowtimeMovieMeResponse = ShowtimeMovieResponse;
 
 export type ShowTimeSearchDto = {
     showTimeId: number;
@@ -76,6 +79,6 @@ export type Province = ProvinceResponse;
 export type Cinema = CinemaResponse;
 export type RoomType = RoomTypeResponse;
 export type Room = RoomResponse;
-export type ShowtimeDetail = ShowTimeResponse;
+export type ShowtimeDetail = ShowtimeMovieResponse;
 export type ShowtimeSearchItem = ShowTimeSearchDto;
 export type Showtime = ShowtimeSearchItem;

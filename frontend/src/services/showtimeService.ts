@@ -2,7 +2,7 @@ import api from "../lib/axios";
 import type { ApiResponse, PagingDto } from "../types/api";
 import type {
     ShowTimeCreationRequest,
-    ShowTimeResponse,
+    ShowtimeMovieResponse,
     ShowTimeSearchRequest,
     ShowTimeStatus,
     ShowTimeUpdateRequest,
@@ -47,7 +47,7 @@ type ShowTimeLocationFilterParams = {
 
 export const showTimeService = {
     getShowTimesByFilters: async (params?: ShowTimeFilterParams) => {
-        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
+        const res = await api.get<ApiResponse<PagingDto<ShowtimeMovieResponse>>>("/showtime", {
             params: {
                 provinceId: params?.provinceId,
                 cinemaId: params?.cinemaId,
@@ -72,12 +72,12 @@ export const showTimeService = {
     },
 
     getShowTimeById: async (showTimeId: number) => {
-        const res = await api.get<ApiResponse<ShowTimeResponse>>(`/showtime/${showTimeId}`);
+        const res = await api.get<ApiResponse<ShowtimeMovieResponse>>(`/showtime/${showTimeId}`);
         return res.data;
     },
 
     getShowTimesByCinema: async (cinemaId: number, params?: ShowTimeByCinemaParams) => {
-        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>(`/showtime/cinema/${cinemaId}`, {
+        const res = await api.get<ApiResponse<PagingDto<ShowtimeMovieResponse>>>(`/showtime/cinema/${cinemaId}`, {
             params: {
                 status: params?.status ?? "SCHEDULED",
                 page: params?.page ?? 0,
@@ -91,12 +91,12 @@ export const showTimeService = {
     },
 
     createShowTime: async (request: ShowTimeCreationRequest) => {
-        const res = await api.post<ApiResponse<ShowTimeResponse>>("/showtime", request);
+        const res = await api.post<ApiResponse<ShowtimeMovieResponse>>("/showtime", request);
         return res.data;
     },
 
     updateShowTime: async (showTimeId: number, request: ShowTimeUpdateRequest) => {
-        const res = await api.patch<ApiResponse<ShowTimeResponse>>(`/showtime/${showTimeId}`, request);
+        const res = await api.patch<ApiResponse<ShowtimeMovieResponse>>(`/showtime/${showTimeId}`, request);
         return res.data;
     },
 

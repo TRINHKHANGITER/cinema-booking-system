@@ -21,11 +21,10 @@ public class ShowTimeResponse {
     LocalDate releaseDate;
     LocalTime startTime;
     LocalTime endTime;
-    RoomResponse room;
-    MovieResponse movie;
     Integer roomId;
     Integer movieId;
+    RoomResponse room;
+    MovieResponse movie;
     ShowTimeStatus status;
 
 }
-

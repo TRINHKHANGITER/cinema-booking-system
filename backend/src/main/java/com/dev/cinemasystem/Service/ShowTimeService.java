@@ -12,6 +12,7 @@ import com.dev.cinemasystem.Repository.RoomRepository;
 import com.dev.cinemasystem.Repository.SeatRepository;
 import com.dev.cinemasystem.Repository.ShowTimeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
 import com.dev.cinemasystem.enums.SortDirection;
 import com.dev.cinemasystem.enums.ShowTimeStatus;
@@ -29,7 +30,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -93,17 +97,19 @@ public class ShowTimeService {
 
 
 
-    public ShowTimeResponse getShowTimeById(Integer showTimeId){
+    public ShowtimeMovieResponse getShowTimeById(Integer showTimeId){
         var showTime = showTimeRepository.findById(showTimeId)
                 .orElseThrow(() -> {
                     log.error("ShowTime with id {} not found", showTimeId);
                     return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
+        List<ShowTime> movieShowTimes = showTimeRepository
+                .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(showTime.getMovie().getMovieId());
         log.info("Retrieving showTime with id: {}", showTimeId);
-        return showTimeMapper.toShowTimeResponse(showTime);
+        return toShowtimeMovieResponse(showTime.getMovie(), movieShowTimes);
     }
 
-    public  ShowTimeResponse createShowTime(ShowTimeCreationResquest request){
+    public  ShowtimeMovieResponse createShowTime(ShowTimeCreationResquest request){
         if(request == null){
             log.error("ShowTime creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -139,11 +145,14 @@ public class ShowTimeService {
         showTime.setMovie(movie);
         showTime.setStatus(ShowTimeStatus.SCHEDULED);
         log.info("Creating showTime for movie id {} in room id {} at time {}", request.getMovieId(), request.getRoomId(), request.getStartTime());
-        return showTimeMapper.toShowTimeResponse(showTimeRepository.save(showTime));
+        ShowTime savedShowTime = showTimeRepository.save(showTime);
+        List<ShowTime> movieShowTimes = showTimeRepository
+                .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
+        return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
     }
 
 
-    public ShowTimeResponse  updateShowTime(Integer showTimeId, ShowTimeUpdateResquest request){
+    public ShowtimeMovieResponse  updateShowTime(Integer showTimeId, ShowTimeUpdateResquest request){
 
         if(request == null){
             log.error("ShowTime update request is null");
@@ -192,7 +201,10 @@ public class ShowTimeService {
             throw new AppException(ErrorCode.SHOWTIME_ALREADY_EXISTS);
         }
         log.info("Updating showTime with id: {}", showTimeId);
-        return showTimeMapper.toShowTimeResponse(showTimeRepository.save(showTime));
+        ShowTime savedShowTime = showTimeRepository.save(showTime);
+        List<ShowTime> movieShowTimes = showTimeRepository
+                .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
+        return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
 
     }
 
@@ -208,7 +220,7 @@ public class ShowTimeService {
         return true;
     }
 
-    public PagingDto<ShowTimeResponse> getShowTimes(
+    public PagingDto<ShowtimeMovieResponse> getShowTimes(
             Integer cinemaId,
             ShowTimeStatus status,
             int page,
@@ -226,34 +238,37 @@ public class ShowTimeService {
         }
 
         Pageable pageable = PageRequest.of(page, size, buildShowTimeSort(sortBy, direction));
-        Page<ShowTime> showTimePage;
+        Page<ShowTime> uniqueMoviePage = showTimeRepository.findAllByFiltersWithUniqueMovie(
+                null,
+                cinemaId,
+                null,
+                null,
+                "EQ",
+                null,
+                null,
+                status,
+                pageable
+        );
 
-        if (cinemaId != null && status != null) {
-            showTimePage = showTimeRepository.findAllByRoom_Cinema_CinemaIdAndStatus(cinemaId, status, pageable);
-        } else if (cinemaId != null) {
-            showTimePage = showTimeRepository.findAllByRoom_Cinema_CinemaId(cinemaId, pageable);
-        } else if (status != null) {
-            showTimePage = showTimeRepository.findAllByStatus(status, pageable);
-        } else {
-            showTimePage = showTimeRepository.findAll(pageable);
-        }
+        PagingDto<ShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
+                uniqueMoviePage,
+                null,
+                cinemaId,
+                null,
+                null,
+                "EQ",
+                null,
+                null,
+                status,
+                uniqueMoviePage.getNumber(),
+                uniqueMoviePage.getSize()
+        );
 
-        List<ShowTimeResponse> showTimeResponses = showTimePage.getContent()
-                .stream()
-                .map(showTimeMapper::toShowTimeResponse)
-                .toList();
-
-        log.info("Retrieved {} showtimes with filters cinemaId={}, status={}", showTimeResponses.size(), cinemaId, status);
-        return PagingDto.<ShowTimeResponse>builder()
-                .items(showTimeResponses)
-                .currentPage(showTimePage.getNumber())
-                .pageSize(showTimePage.getSize())
-                .totalItems(showTimePage.getTotalElements())
-                .totalPages(showTimePage.getTotalPages())
-                .build();
+        log.info("Retrieved {} grouped showtimes with filters cinemaId={}, status={}", response.getItems().size(), cinemaId, status);
+        return response;
     }
 
-    public PagingDto<ShowTimeResponse> getShowTimesByFilters(
+    public PagingDto<ShowtimeMovieResponse> getShowTimesByFilters(
             Integer provinceId,
             Integer cinemaId,
             Integer movieTypeId,
@@ -280,7 +295,7 @@ public class ShowTimeService {
         String normalizedReleaseDateCondition = normalizeReleaseDateCondition(releaseDateCondition);
         Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
 
-        Page<ShowTime> showTimePage = showTimeRepository.findAllByFilters(
+        Page<ShowTime> uniqueMoviePage = showTimeRepository.findAllByFiltersWithUniqueMovie(
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -292,14 +307,23 @@ public class ShowTimeService {
                 pageable
         );
 
-        List<ShowTimeResponse> showTimeResponses = showTimePage.getContent()
-                .stream()
-                .map(showTimeMapper::toShowTimeResponse)
-                .toList();
+        PagingDto<ShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
+                uniqueMoviePage,
+                provinceId,
+                cinemaId,
+                movieTypeId,
+                releaseDate,
+                normalizedReleaseDateCondition,
+                normalizedName,
+                movieId,
+                status,
+                page,
+                size
+        );
 
         log.info(
-                "Retrieved {} showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseDate={}, releaseDateCondition={}, name={}, movieId={}, status={}",
-                showTimeResponses.size(),
+                "Retrieved {} grouped showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseDate={}, releaseDateCondition={}, name={}, movieId={}, status={}",
+                response.getItems().size(),
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -310,12 +334,114 @@ public class ShowTimeService {
                 status
         );
 
-        return PagingDto.<ShowTimeResponse>builder()
-                .items(showTimeResponses)
-                .currentPage(page)
-                .pageSize(size)
-                .totalItems(showTimePage.getTotalElements())
-                .totalPages(showTimePage.getTotalPages())
+        return response;
+    }
+
+
+
+    private PagingDto<ShowtimeMovieResponse> buildMovieGroupedPagingResponse(
+            Page<ShowTime> uniqueMoviePage,
+            Integer provinceId,
+            Integer cinemaId,
+            Integer movieTypeId,
+            LocalDate releaseDate,
+            String releaseDateCondition,
+            String name,
+            Integer movieId,
+            ShowTimeStatus status,
+            int currentPage,
+            int pageSize
+    ) {
+        List<ShowTime> representativeShowTimes = uniqueMoviePage.getContent();
+        if (representativeShowTimes.isEmpty()) {
+            return PagingDto.<ShowtimeMovieResponse>builder()
+                    .items(List.of())
+                    .currentPage(currentPage)
+                    .pageSize(pageSize)
+                    .totalItems(uniqueMoviePage.getTotalElements())
+                    .totalPages(uniqueMoviePage.getTotalPages())
+                    .build();
+        }
+
+        Map<Integer, ShowTime> representativeByMovieId = new LinkedHashMap<>();
+        for (ShowTime showTime : representativeShowTimes) {
+            representativeByMovieId.putIfAbsent(showTime.getMovie().getMovieId(), showTime);
+        }
+
+        List<Integer> movieIds = new ArrayList<>(representativeByMovieId.keySet());
+        List<ShowTime> groupedShowTimes = showTimeRepository.findAllByFiltersAndMovieIds(
+                provinceId,
+                cinemaId,
+                movieTypeId,
+                releaseDate,
+                releaseDateCondition,
+                name,
+                movieId,
+                status,
+                movieIds
+        );
+
+        Map<Integer, List<ShowTime>> showTimesByMovieId = new LinkedHashMap<>();
+        for (ShowTime showTime : groupedShowTimes) {
+            Integer groupedMovieId = showTime.getMovie().getMovieId();
+            showTimesByMovieId.computeIfAbsent(groupedMovieId, ignored -> new ArrayList<>()).add(showTime);
+        }
+
+        List<ShowtimeMovieResponse> items = movieIds.stream()
+                .map(currentMovieId -> {
+                    ShowTime representativeShowTime = representativeByMovieId.get(currentMovieId);
+                    List<ShowTime> movieShowTimes = showTimesByMovieId.getOrDefault(currentMovieId, List.of(representativeShowTime));
+                    return toShowtimeMovieResponse(representativeShowTime.getMovie(), movieShowTimes);
+                })
+                .toList();
+
+        return PagingDto.<ShowtimeMovieResponse>builder()
+                .items(items)
+                .currentPage(currentPage)
+                .pageSize(pageSize)
+                .totalItems(uniqueMoviePage.getTotalElements())
+                .totalPages(uniqueMoviePage.getTotalPages())
+                .build();
+    }
+
+    private ShowtimeMovieResponse toShowtimeMovieResponse(Movie movie, List<ShowTime> showTimes) {
+        Integer movieTypeId = movie.getMovieType() != null ? movie.getMovieType().getMovieTypeId() : null;
+        MovieTypeResponse movieType = movie.getMovieType() == null
+                ? null
+                : MovieTypeResponse.builder()
+                .movieTypeId(movie.getMovieType().getMovieTypeId())
+                .movieTypeName(movie.getMovieType().getMovieTypeName())
+                .description(movie.getMovieType().getDescription())
+                .status(movie.getMovieType().getStatus())
+                .build();
+        List<ShowTimeResponse> showTimeResponses = showTimes.stream()
+                .map(showTimeMapper::toShowTimeResponse)
+                .toList();
+
+        return ShowtimeMovieResponse.builder()
+                .movieId(movie.getMovieId())
+                .movieName(movie.getMovieName())
+                .description(movie.getDescription())
+                .durationMinutes(movie.getDurationMinutes())
+                .slug(movie.getSlug())
+                .minimumAge(movie.getMinimumAge())
+                .imageLandscape(movie.getImageLandscape())
+                .imagePortrait(movie.getImagePortrait())
+                .trailerUrl(movie.getTrailerUrl())
+                .ratingAverage(movie.getRatingAverage())
+                .totalVotes(movie.getTotalVotes())
+                .releaseDate(movie.getReleaseDate())
+                .endDate(movie.getEndDate())
+                .country(movie.getCountry())
+                .producer(movie.getProducer())
+                .director(movie.getDirector())
+                .actors(movie.getActors())
+                .createdAt(movie.getCreatedAt())
+                .updatedAt(movie.getUpdatedAt())
+                .movieTypeId(movieTypeId)
+                .movieType(movieType)
+                .status(movie.getStatus())
+                .showTimes(showTimeResponses)
                 .build();
     }
 
@@ -354,4 +480,3 @@ public class ShowTimeService {
                 .build();
     }
 }
-

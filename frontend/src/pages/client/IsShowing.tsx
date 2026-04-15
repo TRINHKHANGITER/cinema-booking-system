@@ -54,11 +54,7 @@ const IsShowing = () => {
                 }
 
                 const items = response.result?.items ?? [];
-                const pageMovies = items
-                    .map((showtime) => showtime.movie)
-                    .filter((movie): movie is Movie => Boolean(movie));
-
-                setMoviesFromShowtimes(pageMovies);
+                setMoviesFromShowtimes(items);
                 setTotalPages(response.result?.totalPages ?? 1);
             } catch {
                 if (!isMounted) return;

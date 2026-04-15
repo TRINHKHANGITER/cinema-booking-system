@@ -47,15 +47,7 @@ const Home = () => {
                     return;
                 }
 
-                const uniqueMovies = new Map<number, Movie>();
-
-                for (const showtime of response.result?.items ?? []) {
-                    const movie = showtime.movie;
-                    if (!movie || uniqueMovies.has(movie.movieId)) continue;
-                    uniqueMovies.set(movie.movieId, movie);
-                }
-
-                setMoviesFromShowtimes(Array.from(uniqueMovies.values()));
+                setMoviesFromShowtimes(response.result?.items ?? []);
             } catch {
                 if (!isMounted) return;
                 setMoviesFromShowtimes([]);

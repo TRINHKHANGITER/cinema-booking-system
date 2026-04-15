@@ -4,7 +4,7 @@ import { showTimeService } from "../../services/showtimeService";
 import type { ApiResponse, PagingDto } from "../../types/api";
 import type {
     ShowTimeCreationRequest,
-    ShowTimeResponse,
+    ShowtimeMovieResponse,
     ShowTimeSearchRequest,
     ShowTimeStatus,
     ShowTimeUpdateRequest,
@@ -47,9 +47,9 @@ export type ShowTimeState = {
     loading: boolean;
     code: string | null;
     message: string | null;
-    showtimes: ShowTimeResponse[];
-    currentShowtime: ShowTimeResponse | null;
-    paging: PagingDto<ShowTimeResponse> | null;
+    showtimes: ShowtimeMovieResponse[];
+    currentShowtime: ShowtimeMovieResponse | null;
+    paging: PagingDto<ShowtimeMovieResponse> | null;
     searchItems: ShowtimeSearchItem[];
     selectedDate: string;
 };
@@ -64,7 +64,7 @@ const initialState: ShowTimeState = {
 };
 
 export const fetchShowTimesByFiltersThunk = createAsyncThunk<
-    ApiResponse<PagingDto<ShowTimeResponse>>,
+    ApiResponse<PagingDto<ShowtimeMovieResponse>>,
     ShowTimeFilterParams | undefined,
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchByFilters", async (params, { rejectWithValue }) => {
@@ -79,7 +79,7 @@ export const fetchShowTimesByFiltersThunk = createAsyncThunk<
 });
 
 export const fetchShowTimeByIdThunk = createAsyncThunk<
-    ApiResponse<ShowTimeResponse>,
+    ApiResponse<ShowtimeMovieResponse>,
     number,
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchById", async (showTimeId, { rejectWithValue }) => {
@@ -94,7 +94,7 @@ export const fetchShowTimeByIdThunk = createAsyncThunk<
 });
 
 export const fetchShowTimesByCinemaThunk = createAsyncThunk<
-    ApiResponse<PagingDto<ShowTimeResponse>>,
+    ApiResponse<PagingDto<ShowtimeMovieResponse>>,
     { cinemaId: number; params?: ShowTimeByCinemaParams },
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchByCinema", async ({ cinemaId, params }, { rejectWithValue }) => {
@@ -124,7 +124,7 @@ export const searchShowTimesThunk = createAsyncThunk<
 });
 
 export const fetchShowTimesByMovieIdThunk = createAsyncThunk<
-    ApiResponse<PagingDto<ShowTimeResponse>>,
+    ApiResponse<PagingDto<ShowtimeMovieResponse>>,
     { movieId: number; status?: ShowTimeStatus; page?: number; size?: number },
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchByMovie", async ({ movieId, status, page, size }, { rejectWithValue }) => {
@@ -144,7 +144,7 @@ export const fetchShowTimesByMovieIdThunk = createAsyncThunk<
 });
 
 export const createShowTimeThunk = createAsyncThunk<
-    ApiResponse<ShowTimeResponse>,
+    ApiResponse<ShowtimeMovieResponse>,
     ShowTimeCreationRequest,
     { rejectValue: ApiErrorPayload }
 >("showtime/create", async (request, { rejectWithValue }) => {
@@ -159,7 +159,7 @@ export const createShowTimeThunk = createAsyncThunk<
 });
 
 export const updateShowTimeThunk = createAsyncThunk<
-    ApiResponse<ShowTimeResponse>,
+    ApiResponse<ShowtimeMovieResponse>,
     { showTimeId: number; request: ShowTimeUpdateRequest },
     { rejectValue: ApiErrorPayload }
 >("showtime/update", async ({ showTimeId, request }, { rejectWithValue }) => {
@@ -201,27 +201,27 @@ const showtimeSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchShowTimesByFiltersThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowTimeResponse>>>) => {
+            .addCase(fetchShowTimesByFiltersThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
                 state.paging = action.payload.result ?? null;
                 state.showtimes = action.payload.result?.items ?? [];
             })
-            .addCase(fetchShowTimeByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowTimeResponse>>) => {
+            .addCase(fetchShowTimeByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
                 state.currentShowtime = action.payload.result ?? null;
             })
-            .addCase(fetchShowTimesByCinemaThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowTimeResponse>>>) => {
+            .addCase(fetchShowTimesByCinemaThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
                 state.paging = action.payload.result ?? null;
                 state.showtimes = action.payload.result?.items ?? [];
             })
-            .addCase(fetchShowTimesByMovieIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowTimeResponse>>>) => {
+            .addCase(fetchShowTimesByMovieIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
@@ -234,15 +234,21 @@ const showtimeSlice = createSlice({
                 state.message = action.payload.message ?? null;
                 state.searchItems = action.payload.result?.items ?? [];
             })
-            .addCase(createShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowTimeResponse>>) => {
+            .addCase(createShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
-                if (action.payload.result) {
-                    state.showtimes.push(action.payload.result);
+                const created = action.payload.result;
+                if (!created) return;
+
+                const existingIndex = state.showtimes.findIndex((item) => item.movieId === created.movieId);
+                if (existingIndex >= 0) {
+                    state.showtimes[existingIndex] = created;
+                } else {
+                    state.showtimes.push(created);
                 }
             })
-            .addCase(updateShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowTimeResponse>>) => {
+            .addCase(updateShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
                 state.loading = false;
                 state.code = action.payload.code;
                 state.message = action.payload.message ?? null;
@@ -250,9 +256,9 @@ const showtimeSlice = createSlice({
                 if (!updated) return;
 
                 state.showtimes = state.showtimes.map((item) =>
-                    item.showTimeId === updated.showTimeId ? updated : item
+                    item.movieId === updated.movieId ? updated : item
                 );
-                if (state.currentShowtime?.showTimeId === updated.showTimeId) {
+                if (state.currentShowtime?.movieId === updated.movieId) {
                     state.currentShowtime = updated;
                 }
             })
