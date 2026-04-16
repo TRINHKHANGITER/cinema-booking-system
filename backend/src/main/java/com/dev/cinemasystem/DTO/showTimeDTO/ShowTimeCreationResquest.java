@@ -25,12 +25,6 @@ public class ShowTimeCreationResquest {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime endTime;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime sellStartTime;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime sellEndTime;
-
     @Min(value = 1, message = "ROOM_ID_INVALID")
     @NotNull(message = "ROOM_ID_BLANK")
     Integer roomId;

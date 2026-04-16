@@ -1,8 +1,7 @@
 package com.dev.cinemasystem.dto.movieDTO;
 
-import com.dev.cinemasystem.Entity.MovieType;
+import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
 import com.dev.cinemasystem.enums.MovieStatus;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,10 +23,6 @@ public class MovieResponse {
 
     String description;
 
-    String videoTrailer;
-
-    String image;
-
     Integer durationMinutes;
 
     String slug;
@@ -47,6 +42,7 @@ public class MovieResponse {
     LocalDateTime updatedAt;
 
     Integer movieTypeId;
+    MovieTypeResponse movieType;
 
     MovieStatus status;
 

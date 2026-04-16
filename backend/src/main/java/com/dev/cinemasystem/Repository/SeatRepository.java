@@ -31,6 +31,8 @@ public interface SeatRepository extends JpaRepository<Seat, Integer> {
     Page<Seat> findAllByStatus(SeatStatus status, Pageable pageable);
 
     List<Seat> findAllByRoom_RoomId(Integer roomId);
+    List<Seat> findAllByRoom_RoomIdOrderBySeatRowAscSeatColumnAsc(Integer roomId);
+    List<Seat> findAllByRoom_RoomIdAndStatusOrderBySeatRowAscSeatColumnAsc(Integer roomId, SeatStatus status);
 }
 
 

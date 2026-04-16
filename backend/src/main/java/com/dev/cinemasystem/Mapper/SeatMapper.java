@@ -3,15 +3,13 @@ package com.dev.cinemasystem.Mapper;
 
 
 import com.dev.cinemasystem.Entity.Seat;
-import com.dev.cinemasystem.Entity.User;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
-import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
 import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {SeatTypeMapper.class, RoomMapper.class})
 public interface SeatMapper {
     List<SeatResponse> toSeatResponseList(List<Seat> seats);
 

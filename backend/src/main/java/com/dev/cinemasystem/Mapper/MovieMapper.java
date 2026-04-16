@@ -10,13 +10,11 @@ import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = MovieTypeMapper.class)
 public interface MovieMapper {
     List<MovieResponse> toMovieResponseList(List<Movie> movies);
 
     @Mapping(source = "movieType.movieTypeId", target = "movieTypeId")
-    @Mapping(source = "trailerUrl", target = "videoTrailer")
-    @Mapping(source = "imageLandscape", target = "image")
     MovieResponse toMovieResponse(Movie movie);
 
     @Mapping(source = "movieTypeId", target = "movieType.movieTypeId")

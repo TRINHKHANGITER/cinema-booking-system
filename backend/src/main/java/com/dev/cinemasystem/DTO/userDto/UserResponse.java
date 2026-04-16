@@ -1,10 +1,13 @@
 package com.dev.cinemasystem.dto.userDto;
 
+import com.dev.cinemasystem.enums.GioiTinh;
 import com.dev.cinemasystem.enums.Role;
+import com.dev.cinemasystem.enums.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -18,9 +21,11 @@ public class UserResponse {
     String username;
     String phoneNumber;
     LocalDate dateOfBirth;
-    String sex;
+    GioiTinh sex;
     String email;
     Role role;
-    String status;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+    UserStatus status;
 
 }

@@ -1,11 +1,13 @@
-export interface comboFood {
-  comboId: number;
-  comboName: string;
-  description: string;
-  price: string;
-  status: number;
-}
+export type ComboStatus = "AVAILABLE" | "UNAVAILABLE" | "DISCONTINUED";
 
-export interface SelectedCombo extends comboFood {
-  quantity: number;
-}
+export type ComboEntity = {
+    comboId: number;
+    comboName: string;
+    image: string | null;
+    description: string | null;
+    price: number;
+    status: ComboStatus;
+};
+
+export type Combo = ComboEntity;
+export type SelectedCombo = ComboEntity & { quantity: number };

@@ -11,15 +11,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {RoomMapper.class, MovieMapper.class})
 public interface ShowTimeMapper {
 
     @Mapping(target = "roomId", source = "room.roomId")
     @Mapping(target = "movieId", source = "movie.movieId")
-    @Mapping(target = "startTime", expression = "java(toDateTime(showTime.getReleaseDate(), showTime.getStartTime()))")
-    @Mapping(target = "endTime", expression = "java(toDateTime(showTime.getReleaseDate(), showTime.getEndTime()))")
-    @Mapping(target = "sellStartTime", ignore = true)
-    @Mapping(target = "sellEndTime", ignore = true)
     ShowTimeResponse toShowTimeResponse(ShowTime showTime);
 
 
@@ -43,8 +39,4 @@ public interface ShowTimeMapper {
     @Mapping(target = "room", ignore = true)
     void updateShowTimeInfo(@MappingTarget ShowTime showTime, ShowTimeUpdateResquest request);
 
-    default LocalDateTime toDateTime(LocalDate releaseDate, java.time.LocalTime time) {
-        if (releaseDate == null || time == null) return null;
-        return LocalDateTime.of(releaseDate, time);
-    }
 }

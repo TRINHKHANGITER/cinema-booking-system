@@ -75,6 +75,25 @@ public class SeatService {
         return seatMapper.toSeatResponse(seatRepository.save(seat));
     }
 
+    public List<SeatResponse> getSeatsByRoom(Integer roomId, SeatStatus status) {
+        if (roomId == null) {
+            log.error("Room id is required");
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        roomRepository.findById(roomId).orElseThrow(() -> {
+            log.error("Room with id {} not found", roomId);
+            return new AppException(ErrorCode.ROOM_NOT_FOUND);
+        });
+
+        List<Seat> seats = status == null
+                ? seatRepository.findAllByRoom_RoomIdOrderBySeatRowAscSeatColumnAsc(roomId)
+                : seatRepository.findAllByRoom_RoomIdAndStatusOrderBySeatRowAscSeatColumnAsc(roomId, status);
+
+        log.info("Retrieved {} seats by roomId={} and status={}", seats.size(), roomId, status);
+        return seatMapper.toSeatResponseList(seats);
+    }
+
     public PagingDto<SeatResponse> getAllseats(Integer roomId, Integer seatTypeId, SeatStatus status, Integer page, Integer size){
         if (page < 1) {
             log.error("Invalid page number: {}", page);

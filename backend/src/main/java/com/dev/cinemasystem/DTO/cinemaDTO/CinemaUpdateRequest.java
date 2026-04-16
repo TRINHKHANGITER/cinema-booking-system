@@ -15,7 +15,7 @@ public class CinemaUpdateRequest {
     @Min(value = 1, message = "PROVINCE_ID_INVALID")
     Integer provinceId;
 
-    String address;
+    String addressText;
 
     String description;
 }

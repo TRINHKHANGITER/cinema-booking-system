@@ -1,26 +1,40 @@
-export interface SeatType {
-  seatTypeId: number;
-  seatTypeName: string;
-  description: string;
-  status: boolean;
-}
-export interface Price {
-  priceTicketId: number;
-  ticketTypeId: number;
-  ticketTypeName: string;
-  price: number;
-}
-export interface Seat {
-  seatId: number;
-  seatTypeId: number;
-  roomId: number;
-  seatRow: string;
-  seatColumn: number;
-  status: boolean;
-  seattype: SeatType;
-  prices: Price[];
-  isPrimary?: boolean; //dùng để không tính tiền 2 lần ghế đôi
-}
-export interface SeatResponse {
-  data: Seat[];
-}
+import type { RoomEntity, RoomResponse } from "./room";
+import type { SeatTypeEntity, SeatTypeResponse } from "./seat-type";
+
+export type SeatStatus = "ACTIVE" | "BLOCKED" | "BROKEN";
+
+export type SeatEntity = {
+    seatId: number;
+    seatRow: string;
+    seatColumn: number;
+    status: SeatStatus;
+    seatType: SeatTypeEntity;
+    room: RoomEntity;
+};
+
+export type SeatCreationResquest = {
+    seatRow: string;
+    seatColumn: number;
+    seatTypeId: number;
+    roomId: number;
+};
+
+export type SeatUpdateResquest = {
+    seatRow?: string;
+    seatColumn?: number;
+    seatTypeId?: number;
+    roomId?: number;
+};
+
+export type SeatResponse = SeatEntity & {
+    seatTypeId?: number;
+    roomId?: number;
+    seatType?: SeatTypeResponse;
+    room?: RoomResponse;
+};
+
+export type { SeatTypeStatus } from "./seat-type";
+export type SeatCreationRequest = SeatCreationResquest;
+export type SeatUpdateRequest = SeatUpdateResquest;
+export type SeatType = SeatTypeResponse;
+export type Seat = SeatResponse & { isPrimary?: boolean };

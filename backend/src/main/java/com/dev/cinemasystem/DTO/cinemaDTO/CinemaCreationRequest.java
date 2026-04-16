@@ -20,7 +20,7 @@ public class CinemaCreationRequest {
     Integer provinceId;
 
     @NotBlank(message = "ADDRESS_BLANK")
-    String address;
+    String addressText;
 
     String description;
 }

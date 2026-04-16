@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 @RestController
 @RequestMapping("/seat")
@@ -22,6 +23,16 @@ import org.springframework.web.bind.annotation.*;
 public class SeatController {
     SeatService seatService;
 
+    @GetMapping
+    public ApiResponse<List<SeatResponse>> getSeatsByRoom(
+            @RequestParam Integer roomId,
+            @RequestParam(defaultValue = "ACTIVE") SeatStatus status
+    ) {
+        return ApiResponse.<List<SeatResponse>>builder()
+                .message("Seats retrieved successfully")
+                .result(seatService.getSeatsByRoom(roomId, status))
+                .build();
+    }
 
     @GetMapping("/{seatId}")
     public ApiResponse<SeatResponse> getSeatById(@PathVariable Integer seatId    ) {

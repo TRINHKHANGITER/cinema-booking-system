@@ -27,10 +27,14 @@ public class MovieController {
 
 
     @GetMapping("/{movieId}")
-    public ApiResponse<MovieResponse> getMovieById(@PathVariable @Valid Integer movieId    ) {
+    public ApiResponse<MovieResponse> getMovieByIdAndStatus(
+                @PathVariable @Valid Integer movieId,
+                @RequestParam (defaultValue = "ACTIVE") MovieStatus  status
+        
+        ) {
         return ApiResponse.<MovieResponse>builder()
                 .message("Movie retrieved successfully")
-                .result(movieService.getMovieById(movieId))
+                .result(movieService.getMovieById(movieId, status))
                 .build();
     }
 
