@@ -12,8 +12,8 @@ import { Link } from "react-router-dom";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
-    const user = useAuthStore((s) => s.user);
-    const { signOut } = useAuthStore();
+    const { user, accessToken, signOut } = useAuthStore();
+    const isSignedIn = Boolean(accessToken);
 
     const [open, setOpen] = useState<boolean>(false);
     const [openSignIn, setOpenSignIn] = useState<boolean>(false);
@@ -344,7 +344,7 @@ scale-100 blur-0 grayscale-0)'
                                 <Search />
                             </a>
                         </div>
-                        {user ? (
+                        {isSignedIn ? (
                             <div className="md:px-2 py-4 relative items-center text-left md:cursor-pointer group transition-all duration-500 ease-in-out md:flex hidden">
                                 <div className="w-[40px] h-[40px] leading-[62px] text-center rounded-full bg-[#D0D0D0] border-4 border-solid border-[#E9E9E2] flex-none mr-4">
                                     <img
@@ -369,7 +369,7 @@ scale-100 blur-0 grayscale-0)'
                                         style={{ color: "transparent" }}
                                     />
                                     <p className="flex-auto md:flex hidden flex-col text-sm font-bold not-italic justify-start items-start md:pr-0 group hover:text-orange-500 transition-all duration-500 ease-in-out capitalize">
-                                        {user.fullName}
+                                        {user?.fullName ?? "Tai khoan"}
                                         <span className="block text-xs font-light not-italic">
                                             Star
                                         </span>

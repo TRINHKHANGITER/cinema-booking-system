@@ -1,9 +1,18 @@
 
 import axios from "axios";
 
-const LS_ACCESS = import.meta.env.LOCALSTORAGE_ACCESS_TOKEN_KEY;
-const LS_REFRESH = import.meta.env.LOCALSTORAGE_REFRESH_TOKEN_KEY;
-const LS_USER = import.meta.env.LOCALSTORAGE_USER_KEY;
+const LS_ACCESS =
+    import.meta.env.VITE_LOCALSTORAGE_ACCESS_TOKEN_KEY ??
+    import.meta.env.LOCALSTORAGE_ACCESS_TOKEN_KEY ??
+    "CINEMA_ACCESS_TOKEN_KEY";
+const LS_REFRESH =
+    import.meta.env.VITE_LOCALSTORAGE_REFRESH_TOKEN_KEY ??
+    import.meta.env.LOCALSTORAGE_REFRESH_TOKEN_KEY ??
+    "CINEMA_REFRESH_TOKEN_KEY";
+const LS_USER =
+    import.meta.env.VITE_LOCALSTORAGE_USER_KEY ??
+    import.meta.env.LOCALSTORAGE_USER_KEY ??
+    "CINEMA_USER_KEY";
 
 const axiosClient = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_API_URL,
