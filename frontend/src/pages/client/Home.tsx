@@ -7,6 +7,7 @@ import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { fetchProvincesThunk } from "../../stores/slices/provinceSlice";
 import type { Movie } from "../../types/product";
+import { Link } from "react-router-dom";
 
 const getTodayAsLocalDate = () => {
     const now = new Date();
@@ -22,6 +23,7 @@ const Home = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [selectedProvinceId, setSelectedProvinceId] = useState<number | undefined>(undefined);
     const [moviesFromShowtimes, setMoviesFromShowtimes] = useState<Movie[]>([]);
+    const [isLoadingMovies, setIsLoadingMovies] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProvincesThunk("ACTIVE"));
@@ -30,16 +32,24 @@ const Home = () => {
     useEffect(() => {
         let isMounted = true;
 
-        const fetchTodayShowtimes = async () => {
+        const fetchShowtimesByTab = async () => {
             try {
-                const response = await showTimeService.getTodayShowTimesByProvince(getTodayAsLocalDate(), {
+                setIsLoadingMovies(true);
+
+                const filters = {
                     provinceId: selectedProvinceId,
                     status: "SCHEDULED",
                     page: 1,
                     size: 200,
                     sortBy: "startTime",
                     direction: "ASC",
-                });
+                } as const;
+                const releaseDate = getTodayAsLocalDate();
+
+                const response =
+                    activeTab === 1
+                        ? await showTimeService.getUpcomingShowTimesByProvince(releaseDate, filters)
+                        : await showTimeService.getTodayShowTimesByProvince(releaseDate, filters);
 
                 if (!isMounted) return;
                 if (response.code !== "SUCCESS") {
@@ -51,17 +61,23 @@ const Home = () => {
             } catch {
                 if (!isMounted) return;
                 setMoviesFromShowtimes([]);
+            } finally {
+                if (isMounted) {
+                    setIsLoadingMovies(false);
+                }
             }
         };
 
-        fetchTodayShowtimes();
+        fetchShowtimesByTab();
 
         return () => {
             isMounted = false;
         };
-    }, [selectedProvinceId]);
+    }, [activeTab, selectedProvinceId]);
 
     const displayedMovies = useMemo(() => moviesFromShowtimes.slice(0, 8), [moviesFromShowtimes]);
+    const emptyMessage =
+        activeTab === 1 ? "Chua co phim sap chieu theo suat chieu." : "Chua co phim theo suat chieu hom nay.";
 
     return (
         <div>
@@ -90,7 +106,7 @@ const Home = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Dang chieu
+                                                Đang chiếu
                                             </a>
                                         </li>
 
@@ -105,7 +121,7 @@ const Home = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Sap chieu
+                                                Sắp chiếu
                                             </a>
                                         </li>
 
@@ -152,23 +168,23 @@ const Home = () => {
                     <div className="tabs__content">
                         <div>
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-6 mb-10">
-                                {displayedMovies.length > 0 ? (
+                                {isLoadingMovies ? (
+                                    <p className="col-span-full text-sm text-gray-500">Dang tai phim...</p>
+                                ) : displayedMovies.length > 0 ? (
                                     displayedMovies.map((movie) => <CardHome key={movie.movieId} movie={movie} />)
                                 ) : (
-                                    <p className="col-span-full text-sm text-gray-500">
-                                        Chua co phim theo suat chieu hom nay.
-                                    </p>
+                                    <p className="col-span-full text-sm text-gray-500">{emptyMessage}</p>
                                 )}
                             </div>
 
                             <div className="film__footer text-center transition-all duration-300">
-                                <a
-                                    href="/phim-dang-chieu"
+                                <Link
+                                    to="/phim-dang-chieu"
                                     className="text-[#f26b38] hover:text-white w-40 border border-[#fb9440] hover:bg-[#fb9440] transition-all duration-300 focus:ring-1 focus:outline-none focus:ring-[#fb9440] rounded text-sm px-5 py-2.5 text-center inline-flex items-center dark:hover:bg-[#fb9440] dark:focus:ring-[#fb9440] mr-2 mb-2 justify-center"
                                 >
                                     Xem them
                                     <ArrowRight />
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>

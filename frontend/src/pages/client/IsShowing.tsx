@@ -33,18 +33,24 @@ const IsShowing = () => {
     useEffect(() => {
         let isMounted = true;
 
-        const fetchTodayShowtimes = async () => {
+        const fetchShowtimesByTab = async () => {
             try {
                 setIsLoadingMovies(true);
 
-                const response = await showTimeService.getTodayShowTimesByProvince(getTodayAsLocalDate(), {
+                const filters = {
                     provinceId: selectedProvinceId,
                     status: "SCHEDULED",
                     page: currentPage,
                     size: PAGE_SIZE,
                     sortBy: "startTime",
                     direction: "ASC",
-                });
+                } as const;
+                const releaseDate = getTodayAsLocalDate();
+
+                const response =
+                    activeTab === 1
+                        ? await showTimeService.getUpcomingShowTimesByProvince(releaseDate, filters)
+                        : await showTimeService.getTodayShowTimesByProvince(releaseDate, filters);
 
                 if (!isMounted) return;
                 if (response.code !== "SUCCESS") {
@@ -67,12 +73,12 @@ const IsShowing = () => {
             }
         };
 
-        fetchTodayShowtimes();
+        fetchShowtimesByTab();
 
         return () => {
             isMounted = false;
         };
-    }, [currentPage, selectedProvinceId]);
+    }, [activeTab, currentPage, selectedProvinceId]);
 
     const visiblePageButtons = useMemo(() => {
         const maxButtons = 5;
@@ -110,7 +116,10 @@ const IsShowing = () => {
                                 <div className="w-full">
                                     <ul className="flex mb-0 list-none flex-wrap flex-row">
                                         <li
-                                            onClick={() => setActiveTab(0)}
+                                            onClick={() => {
+                                                setActiveTab(0);
+                                                setCurrentPage(1);
+                                            }}
                                             className="-mb-px mr-3 md:mr-8 text-[#333333] last:mr-0 flex-auto text-center hover:text-[#034EA2] transition-all duration-300 ease-in-out cursor-pointer relative"
                                         >
                                             <a
@@ -120,12 +129,15 @@ const IsShowing = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Dang chieu
+                                                Đang chiếu
                                             </a>
                                         </li>
 
                                         <li
-                                            onClick={() => setActiveTab(1)}
+                                            onClick={() => {
+                                                setActiveTab(1);
+                                                setCurrentPage(1);
+                                            }}
                                             className="-mb-px mr-3 md:mr-8 text-[#333333] last:mr-0 flex-auto text-center hover:text-[#034EA2] transition-all duration-300 ease-in-out cursor-pointer relative"
                                         >
                                             <a
@@ -135,7 +147,7 @@ const IsShowing = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Sap chieu
+                                                Sắp chiếu
                                             </a>
                                         </li>
 
@@ -170,7 +182,7 @@ const IsShowing = () => {
                                     setCurrentPage(1);
                                 }}
                             >
-                                <option value="">Toan quoc</option>
+                                <option value="">Toàn quốc</option>
                                 {provinces.map((province) => (
                                     <option key={province.provinceId} value={province.provinceId}>
                                         {province.provinceName}
@@ -193,7 +205,9 @@ const IsShowing = () => {
                                     ))
                                 ) : (
                                     <p className="col-span-full text-sm text-gray-500">
-                                        Chua co phim theo suat chieu hom nay.
+                                        {activeTab === 1
+                                            ? "Chua co phim sap chieu theo suat chieu."
+                                            : "Chua co phim theo suat chieu hom nay."}
                                     </p>
                                 )}
                             </div>

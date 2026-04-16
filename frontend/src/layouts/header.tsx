@@ -8,6 +8,7 @@ import Search from "../components/icon/search";
 import Signin from "./signin";
 import Register from "./register";
 import { useAuthStore } from "../stores/slices/authSlice";
+import { Link } from "react-router-dom";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
@@ -35,7 +36,7 @@ const Header = () => {
             <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-[120px] xl:px-[0px] ">
                 {/* */}
                 <nav className="flex justify-start justify-items-center items-center flex-row undefined">
-                    <a href="/" className="logo__header grow-0 md:mr-[100px] mr-[20px]">
+                    <Link to="/" className="logo__header grow-0 md:mr-[100px] mr-[20px]">
                         <img
                             alt="Galaxy - Cinema"
                             loading="lazy"
@@ -46,7 +47,7 @@ scale-100 blur-0 grayscale-0)'
                             style={{ color: "transparent" }}
                             src={"/images/galaxy-logo-mobile.png"}
                         />
-                    </a>
+                    </Link>
                     {/* repo */}
                     <a className="xl:hidden grow text-left block mr-4" href="/booking/">
                         <img
@@ -63,7 +64,7 @@ scale-100 blur-0 grayscale-0)'
                     {/* phần center */}
                     <div className="hidden xl:flex screen1200:grow screen1200:basis-full items-center gap-8 px-5 transition-all duration-300 ease-in-out">
                         <div className="grow md:flex hidden items-center justify-center">
-                            <a href="/" className="md:block hidden mr-4">
+                            <Link to="/" className="md:block hidden mr-4">
                                 <img
                                     src={"../../images/btn-ticket.webp"}
                                     alt="Ticket"
@@ -74,7 +75,7 @@ scale-100 blur-0 grayscale-0)'
       scale-100 blur-0 grayscale-0)'
                                     style={{ color: "transparent" }}
                                 />
-                            </a>
+                            </Link>
                             <div className="hover relative">
                                 <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
                                     <a
@@ -101,13 +102,13 @@ scale-100 blur-0 grayscale-0)'
                                             <div className="movie_show">
                                                 <div>
                                                     <span className="border-l-4 border-solid border-[#034ea2]"></span>
-                                                    <a
+                                                    <Link
                                                         type="button"
                                                         className="text-base font-normal text-[#333333] pl-2 inline cursor-pointer uppercase hover:text-orange-500  transition-all duration-300 ease-in-out"
-                                                        href="/phim-dang-chieu/"
+                                                        to="/phim-dang-chieu"
                                                     >
                                                         Phim đang chiếu
-                                                    </a>
+                                                    </Link>
                                                 </div>
                                                 <ul>
                                                     <li className="text-sm text-black py-2 transition-all duration-300">
