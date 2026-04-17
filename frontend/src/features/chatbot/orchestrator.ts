@@ -48,6 +48,8 @@ export class ChatbotOrchestrator {
         const parsed = parseChatIntent(rawInput);
 
         switch (parsed.intent) {
+            case "movies_on_date":
+                return this.handleMoviesOnExplicitDate(parsed.entities);
             case "movies_today":
                 return this.handleMoviesByDate("today", parsed.entities);
             case "movies_tomorrow":
@@ -106,6 +108,45 @@ export class ChatbotOrchestrator {
         ];
     }
 
+    private async handleMoviesOnExplicitDate(
+        entities: ChatIntentEntities
+    ): Promise<BotMessageDraft[]> {
+        const explicitDate = entities.explicitDate;
+        if (!explicitDate) {
+            return this.handleUnknownIntent();
+        }
+
+        const dateLabel = this.formatIsoDateLabel(explicitDate);
+        const movies = await this.adapter.getScheduledMoviesByDate(explicitDate);
+        const uniqueMovies = uniqueBy(movies, (movie) => movie.movieId);
+        const timeAfter = entities.timeAfter;
+
+        const filteredMovies =
+            timeAfter !== undefined
+                ? uniqueMovies.filter((movie) => this.movieHasShowtimeAfter(movie, timeAfter))
+                : uniqueMovies;
+
+        if (filteredMovies.length === 0) {
+            const timeSuffix = timeAfter ? ` sau ${timeAfter}` : "";
+            return [
+                {
+                    type: "text",
+                    content: `Ngay ${dateLabel} hien chua co phim${timeSuffix}.`,
+                },
+            ];
+        }
+
+        return [
+            {
+                type: "movie_list",
+                content: `Danh sach phim chieu ngay ${dateLabel}:`,
+                payload: {
+                    movies: filteredMovies.slice(0, 10).map((movie) => this.toMovieCard(movie)),
+                },
+            },
+        ];
+    }
+
     private async handleGenresList(): Promise<BotMessageDraft[]> {
         const genres = await this.adapter.getGenreCatalog();
 
@@ -140,10 +181,10 @@ export class ChatbotOrchestrator {
             ];
         }
 
-        const date = entities.dateTarget ? this.getDateByTarget(entities.dateTarget) : undefined;
+        const dateQuery = this.resolveDateQuery(entities);
         const movies = await this.adapter.getMoviesByFilters({
             movieTypeId: genre.genreId ?? undefined,
-            releaseDate: date,
+            releaseDate: dateQuery?.isoDate,
             releaseDateCondition: "EQ",
             status: "SCHEDULED",
             page: 1,
@@ -167,7 +208,7 @@ export class ChatbotOrchestrator {
         }
 
         if (filteredMovies.length === 0) {
-            const dateLabel = entities.dateTarget ? ` vao ${this.getDateLabel(entities.dateTarget)}` : "";
+            const dateLabel = dateQuery ? ` vao ${dateQuery.label}` : "";
             return [
                 {
                     type: "text",
@@ -179,9 +220,7 @@ export class ChatbotOrchestrator {
         return [
             {
                 type: "movie_list",
-                content: `Phim the loai ${genre.genreName}${
-                    entities.dateTarget ? ` (${this.getDateLabel(entities.dateTarget)})` : ""
-                }:`,
+                content: `Phim the loai ${genre.genreName}${dateQuery ? ` (${dateQuery.label})` : ""}:`,
                 payload: {
                     movies: filteredMovies.slice(0, 10).map((movie) => this.toMovieCard(movie)),
                 },
@@ -244,8 +283,13 @@ export class ChatbotOrchestrator {
 
         let showtimes = this.sortShowtimes(context.showtimes);
 
+        const explicitDate = entities.explicitDate;
         const dateTarget = entities.dateTarget;
-        if (dateTarget) {
+        if (explicitDate) {
+            showtimes = showtimes.filter((showtime) =>
+                this.matchIsoDate(showtime.startTime, explicitDate)
+            );
+        } else if (dateTarget) {
             showtimes = showtimes.filter((showtime) =>
                 this.matchDateTarget(showtime.startTime, dateTarget)
             );
@@ -376,14 +420,17 @@ export class ChatbotOrchestrator {
             ];
         }
 
-        const dateTarget = entities.dateTarget ?? "today";
-        const date = this.getDateByTarget(dateTarget);
+        const dateQuery = this.resolveDateQuery(entities, "today");
+        if (!dateQuery) {
+            return this.handleUnknownIntent();
+        }
+
         const timeAfter = entities.timeAfter ?? "19:00";
 
         const showtimes = await this.adapter.searchShowtimes({
             movieTypeId: genre.genreId ?? undefined,
-            dateFrom: date,
-            dateTo: date,
+            dateFrom: dateQuery.isoDate,
+            dateTo: dateQuery.isoDate,
             timeFrom: timeAfter,
             page: 1,
             size: 200,
@@ -400,9 +447,7 @@ export class ChatbotOrchestrator {
             return [
                 {
                     type: "text",
-                    content: `Khong co phim ${genre.genreName} chieu sau ${timeAfter} vao ${this.getDateLabel(
-                        dateTarget
-                    )}.`,
+                    content: `Khong co phim ${genre.genreName} chieu sau ${timeAfter} vao ${dateQuery.label}.`,
                 },
             ];
         }
@@ -435,7 +480,7 @@ export class ChatbotOrchestrator {
         return [
             {
                 type: "movie_list",
-                content: `Phim ${genre.genreName} chieu sau ${timeAfter} (${this.getDateLabel(dateTarget)}):`,
+                content: `Phim ${genre.genreName} chieu sau ${timeAfter} (${dateQuery.label}):`,
                 payload: {
                     movies: movieCards,
                 },
@@ -446,20 +491,23 @@ export class ChatbotOrchestrator {
                 payload: {
                     showtimes: sortedShowtimes
                         .slice(0, 24)
-                        .map((showtime) => this.toShowtimeCard(showtime, dateTarget)),
+                        .map((showtime) => this.toShowtimeCard(showtime, dateQuery.dateTarget)),
                 },
             },
         ];
     }
 
     private async handleRomanticTonight(entities: ChatIntentEntities): Promise<BotMessageDraft[]> {
-        const dateTarget = entities.dateTarget ?? "today";
-        const date = this.getDateByTarget(dateTarget);
+        const dateQuery = this.resolveDateQuery(entities, "today");
+        if (!dateQuery) {
+            return this.handleUnknownIntent();
+        }
+
         const timeAfter = entities.timeAfter ?? "18:00";
 
         const showtimes = await this.adapter.searchShowtimes({
-            dateFrom: date,
-            dateTo: date,
+            dateFrom: dateQuery.isoDate,
+            dateTo: dateQuery.isoDate,
             timeFrom: timeAfter,
             page: 1,
             size: 200,
@@ -530,7 +578,7 @@ export class ChatbotOrchestrator {
                 payload: {
                     showtimes: sortedShowtimes
                         .slice(0, 20)
-                        .map((showtime) => this.toShowtimeCard(showtime, dateTarget)),
+                        .map((showtime) => this.toShowtimeCard(showtime, dateQuery.dateTarget)),
                 },
             },
         ];
@@ -735,6 +783,38 @@ export class ChatbotOrchestrator {
         });
     }
 
+    private resolveDateQuery(
+        entities: ChatIntentEntities,
+        fallbackTarget?: DateTarget
+    ): { isoDate: string; label: string; dateTarget?: DateTarget } | null {
+        if (entities.explicitDate) {
+            return {
+                isoDate: entities.explicitDate,
+                label: this.formatIsoDateLabel(entities.explicitDate),
+            };
+        }
+
+        const target = entities.dateTarget ?? fallbackTarget;
+        if (!target) {
+            return null;
+        }
+
+        return {
+            isoDate: this.getDateByTarget(target),
+            label: this.getDateLabel(target),
+            dateTarget: target,
+        };
+    }
+
+    private formatIsoDateLabel(isoDate: string): string {
+        const matched = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!matched) {
+            return isoDate;
+        }
+
+        return `${matched[3]}/${matched[2]}/${matched[1]}`;
+    }
+
     private getDateByTarget(target: DateTarget): string {
         const now = new Date();
         const date = target === "tomorrow" ? addDays(now, 1) : now;
@@ -753,6 +833,15 @@ export class ChatbotOrchestrator {
 
         const targetDate = this.getDateByTarget(target);
         return toYyyyMmDd(parsed) === targetDate;
+    }
+
+    private matchIsoDate(startTime: string, isoDate: string): boolean {
+        const parsed = new Date(startTime);
+        if (Number.isNaN(parsed.getTime())) {
+            return false;
+        }
+
+        return toYyyyMmDd(parsed) === isoDate;
     }
 
     private movieHasShowtimeAfter(movie: ShowtimeMovieResponse, timeAfter: string): boolean {

@@ -14,6 +14,7 @@ export type ChatMessageType =
 export type DateTarget = "today" | "tomorrow";
 
 export type ChatIntent =
+    | "movies_on_date"
     | "movies_today"
     | "movies_tomorrow"
     | "movies_by_genre"
@@ -62,6 +63,7 @@ export type ChatIntentEntities = {
     genreKey?: string;
     timeAfter?: string;
     dateTarget?: DateTarget;
+    explicitDate?: string;
 };
 
 export type ParsedIntent = {

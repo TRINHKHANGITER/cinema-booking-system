@@ -45,6 +45,56 @@ const extractDateTarget = (normalizedInput: string): DateTarget | undefined => {
     return undefined;
 };
 
+const toIsoDate = (year: number, month: number, day: number): string | undefined => {
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return undefined;
+    }
+
+    const candidate = new Date(year, month - 1, day);
+    if (
+        candidate.getFullYear() !== year ||
+        candidate.getMonth() + 1 !== month ||
+        candidate.getDate() !== day
+    ) {
+        return undefined;
+    }
+
+    return `${year}-${pad2(month)}-${pad2(day)}`;
+};
+
+const normalizeYear = (rawYear: number): number => {
+    if (rawYear >= 100) {
+        return rawYear;
+    }
+
+    return rawYear + 2000;
+};
+
+const extractExplicitDate = (normalizedInput: string): string | undefined => {
+    const ymdMatch = normalizedInput.match(/\b(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\b/);
+    if (ymdMatch) {
+        const year = Number(ymdMatch[1]);
+        const month = Number(ymdMatch[2]);
+        const day = Number(ymdMatch[3]);
+        return toIsoDate(year, month, day);
+    }
+
+    const dmyMatch = normalizedInput.match(/\b(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?\b/);
+    if (!dmyMatch) {
+        return undefined;
+    }
+
+    const day = Number(dmyMatch[1]);
+    const month = Number(dmyMatch[2]);
+    const inferredYear = dmyMatch[3] ? normalizeYear(Number(dmyMatch[3])) : new Date().getFullYear();
+
+    if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(inferredYear)) {
+        return undefined;
+    }
+
+    return toIsoDate(inferredYear, month, day);
+};
+
 const extractGenreKey = (normalizedInput: string): string | undefined => {
     for (const [genreKey, aliases] of Object.entries(GENRE_ALIASES)) {
         if (aliases.some((alias) => normalizedInput.includes(alias))) {
@@ -80,6 +130,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
     const normalizedInput = normalizeText(rawInput);
     const genreKey = extractGenreKey(normalizedInput);
     const dateTarget = extractDateTarget(normalizedInput);
+    const explicitDate = extractExplicitDate(normalizedInput);
     const timeAfter = extractTimeAfter(normalizedInput);
 
     if (!normalizedInput) {
@@ -98,6 +149,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             normalizedInput,
             entities: {
                 dateTarget,
+                explicitDate,
             },
         };
     }
@@ -110,6 +162,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             entities: {
                 dateTarget: dateTarget ?? "today",
                 timeAfter: timeAfter ?? "18:00",
+                explicitDate,
             },
         };
     }
@@ -127,6 +180,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
                 movieName: extractMovieNameForShowtime(normalizedInput),
                 dateTarget,
                 timeAfter,
+                explicitDate,
             },
         };
     }
@@ -138,6 +192,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             normalizedInput,
             entities: {
                 movieName: extractMovieNameForInfo(normalizedInput),
+                explicitDate,
             },
         };
     }
@@ -149,6 +204,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             normalizedInput,
             entities: {
                 movieName: extractMovieNameForSimilarity(normalizedInput),
+                explicitDate,
             },
         };
     }
@@ -162,6 +218,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
                 genreKey,
                 timeAfter,
                 dateTarget: dateTarget ?? "today",
+                explicitDate,
             },
         };
     }
@@ -174,6 +231,19 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             entities: {
                 genreKey,
                 dateTarget,
+                explicitDate,
+            },
+        };
+    }
+
+    if (explicitDate && includesAny(normalizedInput, ["phim", "chieu", "suat"])) {
+        return {
+            intent: "movies_on_date",
+            rawInput,
+            normalizedInput,
+            entities: {
+                explicitDate,
+                timeAfter,
             },
         };
     }
@@ -186,6 +256,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             entities: {
                 dateTarget,
                 timeAfter,
+                explicitDate,
             },
         };
     }
@@ -198,6 +269,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             entities: {
                 dateTarget,
                 timeAfter,
+                explicitDate,
             },
         };
     }
@@ -211,6 +283,7 @@ export const parseChatIntent = (rawInput: string): ParsedIntent => {
             movieName: extractMovieNameForInfo(normalizedInput),
             dateTarget,
             timeAfter,
+            explicitDate,
         },
     };
 };
