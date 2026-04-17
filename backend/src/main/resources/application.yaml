@@ -61,3 +61,9 @@ springdoc:
 
 storage:
   image-dir: data/image
+
+
+gemini:
+  api:
+    key: 
+    url: 

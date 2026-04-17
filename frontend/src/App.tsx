@@ -35,6 +35,7 @@ import { cusPublicRoutes } from "./route/route";
 import DefaultLayout from "./layouts/DefaultLayout";
 import { Toaster } from "sonner";
 import AuthInitializer from "./layouts/AuthInitializer";
+import ChatWidget from "./components/chatbot/ChatWidget";
 
 function App() {
     return (
@@ -67,6 +68,7 @@ function App() {
                             return null;
                         })}
                     </Routes>
+                    <ChatWidget />
                 </AuthInitializer>
             </Router>
         </>
