@@ -5,11 +5,9 @@ import com.dev.cinemasystem.dto.paymentDTO.PaymentResponse;
 import com.dev.cinemasystem.dto.paymentDTO.PaymentUpdateRequest;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.Payment;
-import com.dev.cinemasystem.mapper.OrderMapper;
 import com.dev.cinemasystem.mapper.PaymentMapper;
 import com.dev.cinemasystem.repository.OrderRepository;
 import com.dev.cinemasystem.repository.PaymentRepository;
-import com.dev.cinemasystem.configuration.payment.VnPayConfig;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +23,6 @@ public class PaymentService {
     final PaymentRepository paymentRepository;
     final PaymentMapper paymentMapper;
     final OrderRepository orderRepository;
-    final VnPayConfig vnPayConfig;
-    final OrderMapper orderMapper;
 
     public PaymentResponse createPayment(PaymentCreationRequest paymentCreationRequest) {
         Payment payment = paymentMapper.toPayment(paymentCreationRequest);
@@ -34,16 +30,18 @@ public class PaymentService {
         Order order = orderRepository.findById(paymentCreationRequest.getOrderId())
                 .orElseThrow(RuntimeException::new);
         payment.setOrder(order);
+        payment.setInfoTransaction(buildTransferContent(order.getOrderId()));
 
         return paymentMapper.toPaymentResponse(paymentRepository.save(payment));
     }
 
-    public PaymentResponse updatePayment(int paymentId, PaymentUpdateRequest paymentUpdateRequest) {
+    public void updatePayment(int paymentId, PaymentUpdateRequest paymentUpdateRequest) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not exists!"));
 
         paymentMapper.updatePayment(payment, paymentUpdateRequest);
-        return paymentMapper.toPaymentResponse(payment);
+        paymentRepository.save(payment);
+        // paymentMapper.toPaymentResponse(payment);
     }
 
     public List<PaymentResponse> getPayments() {
@@ -61,6 +59,10 @@ public class PaymentService {
 
         payment.setStatus(paymentStatus);
         paymentRepository.save(payment);
+    }
+
+    public static String buildTransferContent(int orderId) {
+        return "THANH TOAN DH" + String.format("%04d", orderId);
     }
 
 }

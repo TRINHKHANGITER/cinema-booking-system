@@ -2,7 +2,6 @@ package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.configuration.payment.VnPayConfig;
 import com.dev.cinemasystem.constant.VnpayParamsRequest;
-import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
 import com.dev.cinemasystem.dto.vnpayDTO.VnpayRequest;
 import com.dev.cinemasystem.utils.VnPayUtil;
 import lombok.AccessLevel;
@@ -27,7 +26,7 @@ public class VnpayService {
     final VnPayConfig vnPayConfig;
 
     public String buildVnpayUrl(VnpayRequest vnpayRequest, String clientIp) {
-        String infoTransactionOrder = buildTransferContent(vnpayRequest.getOrderId());
+        String infoTransactionOrder = PaymentService.buildTransferContent(vnpayRequest.getOrderId());
         ZonedDateTime now = ZonedDateTime.now(VIETNAM_ZONE);
         ZonedDateTime expireAt = now.plusMinutes(15);
 
@@ -55,8 +54,6 @@ public class VnpayService {
         return vnPayConfig.getPayUrl() + "?" + queryString;
     }
 
-    private String buildTransferContent(Integer orderId) {
-        return "THANH TOAN DH" + String.format("%04d", orderId);
-    }
+
 
 }

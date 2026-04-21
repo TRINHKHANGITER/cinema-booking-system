@@ -7,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum OrderStatus {
-    CREATED("Đơn vừa được tạo"),
     PENDING("Đang chờ thanh toán"),
     CONFIRMED("Thanh toán thành công"),
     CANCELLED("Đơn đã bị huỷ"),

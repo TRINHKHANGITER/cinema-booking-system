@@ -65,12 +65,13 @@ const Booking = () => {
     const checkoutPayload = useMemo(() => {
         if (!user?.userId || !showTimeId || selectedSeats.length === 0) return null;
 
-        let age = calculateAgeFromDate(user.dateOfBirth);
-        age = age !== null ? age : 24;
+        // let age = calculateAgeFromDate(user.dateOfBirth);
+        // age = age !== null ? age : 24;
         return {
             userId: user.userId,
             tickets: selectedSeats.map((seat) => ({
-                ticketTypeId: age <= 22 ? 1 : 2,
+                // ticketTypeId: age <= 22 ? 1 : 2,
+                ticketTypeId: 1,
                 showTimeId,
                 seatId: seat.seatId,
             })),
@@ -85,21 +86,6 @@ const Booking = () => {
         if (!checkoutPayload) return null;
 
         try {
-            // let res = await checkoutService.createCheckout({
-            //     userId: 1,
-            //     tickets: [
-            //         { ticketTypeId: 1, showTimeId: 5, seatId: 10 },
-            //         { ticketTypeId: 2, showTimeId: 5, seatId: 11 },
-            //         { ticketTypeId: 2, showTimeId: 5, seatId: 12 },
-            //         // { ticketTypeId: 1, showTimeId: 5, seatId: 20 },
-            //         // { ticketTypeId: 2, showTimeId: 5, seatId: 21 },
-            //         // { ticketTypeId: 2, showTimeId: 5, seatId: 22 },
-            //     ],
-            //     combos: [
-            //         { comboId: 1, quantity: 2 },
-            //         { comboId: 3, quantity: 1 },
-            //     ],
-            // });
             let res = await checkoutService.createCheckout(checkoutPayload);
             return res.result;
         } catch (error) {
@@ -113,7 +99,7 @@ const Booking = () => {
         } else {
             const urlPayment = await getOrder();
             if (!urlPayment) return;
-            
+
             console.log(urlPayment);
             window.location.href = urlPayment;
         }

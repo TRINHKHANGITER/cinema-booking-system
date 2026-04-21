@@ -57,7 +57,7 @@ public class Order {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    OrderStatus status = OrderStatus.CREATED;
+    OrderStatus status = OrderStatus.PENDING;
 }
 
 

@@ -24,19 +24,14 @@ public class TicketService {
     SeatRepository seatRepository;
     TicketTypeRepository ticketTypeRepository;
     PriceTicketRepository priceTicketRepository;
-    ShowTimeService showTimeService;
     RoomService roomService;
-    SeatService seatService;
 
     public TicketResponse createTicket(TicketCreationRequest ticketCreationRequest) {
-        System.out.println("in createTicket: " + ticketCreationRequest);
-
         Order order = orderRepository.findById(ticketCreationRequest.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Order not exists!"));
 
         ShowTime showTime = showTimeRepository.findById(ticketCreationRequest.getShowTimeId())
                 .orElseThrow(() -> new RuntimeException("ShowTime not exists!"));
-//        System.out.println("in createTicket - showTime: " + showTime);
 
         Seat seat = seatRepository.findById(ticketCreationRequest.getSeatId())
                 .orElseThrow(() -> new RuntimeException("Seat not exists!"));
@@ -44,17 +39,15 @@ public class TicketService {
         TicketType ticketType = ticketTypeRepository.findById(ticketCreationRequest.getTicketTypeId())
                 .orElseThrow(() -> new RuntimeException("TicketType not exists!"));
 
-        // TicketCreationRequest(orderId=15, showTimeId=1, seatId=1, ticketTypeId=1)
-
         int roomId = showTime.getRoom().getRoomId();
         int roomTypeId = roomService.getRoomById(roomId).getRoomTypeId();
-
         PriceTicket priceTicket =
                 priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeIdAndTicketType_TicketTypeId(roomTypeId, seat.getSeatType().getSeatTypeId(), ticketType.getTicketTypeId());
 
         Ticket ticket = ticketMapper.toTicket(ticketCreationRequest);
         ticket.setShow(showTime);
         ticket.setSeat(seat);
+        ticket.setOrder(order);
         ticket.setTicketType(ticketType);
         ticket.setPriceTicket(priceTicket);
 
@@ -73,12 +66,12 @@ public class TicketService {
                 ? ticketRepository.findAll()
                 : ticketRepository.findAllByStatus(status);
 
-        return tickets.stream().map(ticket -> ticketMapper.toTicketResponse(ticket)).toList();
+        return tickets.stream().map(ticketMapper::toTicketResponse).toList();
     }
 
     public List<TicketResponse> getTicketsByOrderId(int orderId) {
         List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(orderId);
-        return tickets.stream().map(ticket -> ticketMapper.toTicketResponse(ticket)).toList();
+        return tickets.stream().map(ticketMapper::toTicketResponse).toList();
     }
 
 }

@@ -51,6 +51,7 @@ public class CheckoutService {
 
     @Transactional
     public String checkout(CheckoutRequest checkoutRequest, String clientIp) {
+        System.out.println("in checkout request - checkoutRequest: " + checkoutRequest);
 
         // 1. create order
         OrderResponse orderResponse =
@@ -91,9 +92,7 @@ public class CheckoutService {
         order.setTotalAmount(totalAmount);
         orderRepository.save(order);
 
-        System.out.println("amountCombos: " + amountCombos);
-        System.out.println("amountTickets: " + amountTickets);
-        System.out.println("totalAmount: " + totalAmount);
+        System.out.println("in checkout request - totalAmount: " + totalAmount);
 
         // 5. create payment
         paymentService.createPayment(new PaymentCreationRequest(orderId, totalAmount));
@@ -123,14 +122,6 @@ public class CheckoutService {
         } else {
             orderService.updateStatusOrder(paymentId, OrderStatus.CANCELLED);
         }
-    }
-
-    public void markSuccess(Integer paymentId, PaymentResponse paymentResponse) {
-        updateCheckout(paymentId, paymentResponse, true);
-    }
-
-    public void markFailed(Integer paymentId, PaymentResponse paymentResponse) {
-        updateCheckout(paymentId, paymentResponse, false);
     }
 
     // kiểm tra chữ ký của vnPay
