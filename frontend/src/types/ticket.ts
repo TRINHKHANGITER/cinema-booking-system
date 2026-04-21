@@ -1,10 +1,10 @@
-import type { OrderEntity } from "./orders";
+import type { OrderEntity } from "./order";
 import type { PriceTicketEntity } from "./price-ticket";
 import type { SeatEntity } from "./seat";
 import type { ShowTimeEntity } from "./showtime";
 import type { TicketTypeEntity } from "./ticket-type";
 
-export type TicketStatus = "AVAILABLE" | "HELD" | "BOOKED" | "CHECKED_IN" | "CANCELLED" | "EXPIRED";
+export type TicketStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED";
 
 export type TicketEntity = {
     ticketId: number;
@@ -22,6 +22,12 @@ export type TicketEntity = {
     createdAt: string;
     updatedAt: string;
     status: TicketStatus;
+};
+
+export type TicketCreationRequest = {
+    showTimeId: number;
+    seatId: number;
+    ticketTypeId: number;
 };
 
 export type Ticket = TicketEntity;

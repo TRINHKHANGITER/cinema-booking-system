@@ -23,7 +23,7 @@ const ChoiceSeat = ({ startTime, roomId }: Props) => {
     const toggle = (seatIds: number[]) => {
         const targets = seatIds
             .map((id) => seats.find((s) => s.seatId === id))
-            .filter((item): item is NonNullable<typeof item> => Boolean(item));
+            .filter((item) => item !== undefined && item !== null);
 
         if (targets.length > 0) {
             dispatch(toggleSeat(targets));

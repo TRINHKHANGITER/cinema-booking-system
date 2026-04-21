@@ -1,8 +1,8 @@
 package com.dev.cinemasystem.configuration.security;
 
 
-import com.dev.cinemasystem.Entity.User;
-import com.dev.cinemasystem.Repository.UserRepository;
+import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.repository.UserRepository;
 import com.dev.cinemasystem.enums.Role;
 import com.dev.cinemasystem.enums.UserStatus;
 import lombok.AccessLevel;

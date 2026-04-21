@@ -9,5 +9,10 @@ export type ComboEntity = {
     status: ComboStatus;
 };
 
+export type ComboRequest = {
+    comboId: number;
+    quantity: number;
+};
+
 export type Combo = ComboEntity;
 export type SelectedCombo = ComboEntity & { quantity: number };

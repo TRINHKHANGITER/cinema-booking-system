@@ -1,0 +1,27 @@
+package com.dev.cinemasystem.dto.orderCombo;
+
+import com.dev.cinemasystem.enums.OrderComboStatus;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class OrderComboResponse {
+    int orderComboId;
+
+    int orderId;
+
+    int comboId;
+
+    int quantity;
+
+    BigDecimal unitPrice;
+
+    OrderComboStatus status;
+
+}

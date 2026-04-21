@@ -169,45 +169,62 @@ const seatSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchSeatsByRoomThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Seat[]>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.seats = action.payload.result ?? [];
-            })
-            .addCase(fetchSeatByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Seat>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.currentSeat = action.payload.result ?? null;
-            })
-            .addCase(fetchAllSeatsThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<Seat>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.seats = action.payload.result?.items ?? [];
-            })
-            .addCase(createSeatThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Seat>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                if (action.payload.result) {
-                    state.seats.push(action.payload.result);
+            .addCase(
+                fetchSeatsByRoomThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Seat[]>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.seats = action.payload.result ?? [];
                 }
-            })
-            .addCase(updateSeatThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Seat>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                const updated = action.payload.result;
-                if (!updated) return;
+            )
+            .addCase(
+                fetchSeatByIdThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Seat>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.currentSeat = action.payload.result ?? null;
+                }
+            )
+            .addCase(
+                fetchAllSeatsThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<Seat>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.seats = action.payload.result?.items ?? [];
+                }
+            )
+            .addCase(
+                createSeatThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Seat>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    if (action.payload.result) {
+                        state.seats.push(action.payload.result);
+                    }
+                }
+            )
+            .addCase(
+                updateSeatThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Seat>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    const updated = action.payload.result;
+                    if (!updated) return;
 
-                state.seats = state.seats.map((item) => (item.seatId === updated.seatId ? updated : item));
-                if (state.currentSeat?.seatId === updated.seatId) {
-                    state.currentSeat = updated;
+                    state.seats = state.seats.map((item) =>
+                        item.seatId === updated.seatId ? updated : item
+                    );
+                    if (state.currentSeat?.seatId === updated.seatId) {
+                        state.currentSeat = updated;
+                    }
                 }
-            })
+            )
             .addCase(deleteSeatThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.code = action.payload.code;
@@ -226,7 +243,8 @@ const seatSlice = createSlice({
                 (state, action: { payload?: ApiErrorPayload; error?: { message?: string } }) => {
                     state.loading = false;
                     state.code = action.payload?.code ?? "UNKNOWN_ERROR";
-                    state.message = action.payload?.message ?? action.error?.message ?? "Request failed";
+                    state.message =
+                        action.payload?.message ?? action.error?.message ?? "Request failed";
                 }
             );
     },

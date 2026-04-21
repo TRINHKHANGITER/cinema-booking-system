@@ -1,4 +1,4 @@
-use `cinema-booking-system`;
+use `cinema_booking_system`;
 
 -- DROP TABLE IF EXISTS order_detail;
 
@@ -27,7 +27,7 @@ use `cinema-booking-system`;
 
 SET SQL_SAFE_UPDATES = 0;
 DELETE FROM order_combo;
-DELETE FROM combo_detail;
+-- DELETE FROM combo_detail;
 DELETE FROM combo;
 DELETE FROM ticket;
 DELETE FROM price_ticket;
@@ -36,8 +36,8 @@ DELETE FROM seat;
 DELETE FROM room;
 DELETE FROM cinema;
 DELETE FROM movie;
-DELETE FROM product;
-DELETE FROM product_type;
+-- DELETE FROM product;
+-- DELETE FROM product_type;
 DELETE FROM movie_type;
 DELETE FROM ticket_type;
 DELETE FROM room_type;
@@ -51,7 +51,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 
 TRUNCATE TABLE order_combo;
-TRUNCATE TABLE combo_detail;
+-- TRUNCATE TABLE combo_detail;
 TRUNCATE TABLE combo;
 TRUNCATE TABLE ticket;
 TRUNCATE TABLE price_ticket;
@@ -60,8 +60,8 @@ TRUNCATE TABLE seat;
 TRUNCATE TABLE room;
 TRUNCATE TABLE cinema;
 TRUNCATE TABLE movie;
-TRUNCATE TABLE product;
-TRUNCATE TABLE product_type;
+-- TRUNCATE TABLE product;
+-- TRUNCATE TABLE product_type;
 TRUNCATE TABLE movie_type;
 TRUNCATE TABLE ticket_type;
 TRUNCATE TABLE room_type;
@@ -99,15 +99,6 @@ INSERT INTO seat_type (seat_type_name, description, status) VALUES
 ('Thường',   'Ghế ngồi tiêu chuẩn',               'ACTIVE'),
 ('VIP',      'Ghế VIP rộng hơn, êm hơn',           'ACTIVE'),
 ('Đôi',      'Ghế đôi dành cho cặp đôi',           'INACTIVE');
-
-
--- product_type
-INSERT INTO product_type (product_type_name, description, status) VALUES
-('Bắp rang',    'Các loại bắp rang bơ',            'ACTIVE'),
-('Nước uống',   'Các loại đồ uống',                'ACTIVE'),
-('Snack',       'Các loại bánh snack ăn vặt',      'ACTIVE'),
-('Combo đồ ăn', 'Combo suất ăn kết hợp',           'INACTIVE');
-
 
 INSERT INTO province (province_name, status) VALUES
 ('TP.HCM',  'ACTIVE'),
@@ -760,7 +751,7 @@ NOW(), NOW());
 -- -- show_time
 -- Xóa data cũ nếu cần
 -- TRUNCATE TABLE show_time;
-ALTER TABLE show_time 
+ALTER TABLE show_time
 MODIFY COLUMN start_time TIME NOT NULL,
 MODIFY COLUMN end_time TIME NOT NULL;
 INSERT INTO show_time (movie_id, room_id, release_date, start_time, end_time, status) VALUES
@@ -1400,22 +1391,6 @@ INSERT INTO price_ticket (room_type_id, seat_type_id, ticket_type_id, price, sta
 (3, 2, 1, 200000, 'ACTIVE'),
 (3, 2, 2, 170000, 'ACTIVE');
 
-
--- product
-INSERT INTO product (product_type_id, product_name, image, price, status) VALUES
-(1, 'Bắp rang bơ nhỏ',     'https://example.com/products/popcorn_s.jpg', 45000, 'AVAILABLE'),
-(1, 'Bắp rang bơ vừa',     'https://example.com/products/popcorn_m.jpg', 55000, 'AVAILABLE'),
-(1, 'Bắp rang bơ lớn',     'https://example.com/products/popcorn_l.jpg', 65000, 'AVAILABLE'),
-(1, 'Bắp rang vị caramel', 'https://example.com/products/popcorn_c.jpg', 60000, 'AVAILABLE'),
-(2, 'Pepsi lon 330ml',      'https://example.com/products/pepsi_can.jpg', 35000, 'AVAILABLE'),
-(2, 'Pepsi cốc lớn 600ml',  'https://example.com/products/pepsi_l.jpg',  45000, 'AVAILABLE'),
-(2, '7UP cốc vừa 500ml',    'https://example.com/products/7up.jpg',       40000, 'AVAILABLE'),
-(2, 'Nước suối',            'https://example.com/products/water.jpg',     20000, 'AVAILABLE'),
-(3, 'Nachos phô mai',       'https://example.com/products/nachos.jpg',    45000, 'AVAILABLE'),
-(3, 'Kẹo dẻo gấu',         'https://example.com/products/gummy.jpg',     30000, 'AVAILABLE'),
-(3, 'Bánh que Pocky',       'https://example.com/products/pocky.jpg',     25000, 'AVAILABLE'),
-(4, 'Hot Dog',              'https://example.com/products/hotdog.jpg',    55000, 'AVAILABLE');
-
 -- combo
 INSERT INTO combo (combo_name, image, description, price, status) VALUES
 ('Combo 1',        'https://example.com/combos/combo1.jpg', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
@@ -1425,59 +1400,160 @@ INSERT INTO combo (combo_name, image, description, price, status) VALUES
 ('Combo Gia Đình', 'https://example.com/combos/combo5.jpg', '1 Bắp lớn + 2 Pepsi + Nachos + Gummy',          310000, 'AVAILABLE'),
 ('Combo Nhẹ',      'https://example.com/combos/combo6.jpg', 'Bắp nhỏ + Nước suối',                            80000, 'AVAILABLE');
 
--- combo_detail
-INSERT INTO combo_detail (combo_id, product_id, quantity, status) VALUES
-(1, 2, 1, 'ACTIVE'),(1, 6, 1, 'ACTIVE'),
-(2, 3, 1, 'ACTIVE'),(2, 6, 2, 'ACTIVE'),
-(3, 4, 1, 'ACTIVE'),(3, 7, 1, 'ACTIVE'),(3, 9, 1, 'ACTIVE'),
-(4, 2, 2, 'ACTIVE'),(4, 6, 2, 'ACTIVE'),
-(5, 3, 1, 'ACTIVE'),(5, 6, 2, 'ACTIVE'),(5, 9, 1, 'ACTIVE'),(5, 10, 1, 'ACTIVE'),
-(6, 1, 1, 'ACTIVE'),(6, 8, 1, 'ACTIVE');
 
 -- order
-INSERT INTO orders (user_id, ticket_total, combo_total, discount_amount, total_amount, hold_expires_at, note, created_at, updated_at, status) VALUES
-(3, 170000, 125000, 10000, 285000, NULL,                  'Voucher WELCOME10',              '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'PAID'),
-(4, 170000, 230000,     0, 400000, NULL,                  NULL,                             '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'PAID'),
-(5, 150000,      0,     0, 150000, NULL,                  NULL,                             '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'PAID'),
-(6,      0, 125000,     0, 125000, '2026-03-25 20:15:00', 'Dang giu don cho thanh toan',    '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'AWAITING_PAYMENT'),
-(7, 380000, 310000, 180000, 510000, NULL,                 'Khuyen mai cuoi tuan',           '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'PAID'),
-(1,  95000,      0,     0,  95000, NULL,                  'Don da huy theo yeu cau khach',  '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
-(3, 190000, 175000, 25000, 340000, NULL,                  'Ap ma giam 25k',                 '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'PAID'),
-(4, 255000,      0, 80000, 175000, '2026-03-28 15:45:00', 'Giu ghe 15 phut',                '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'HOLDING');
+-- INSERT INTO orders (user_id, ticket_total, combo_total, discount_amount, total_amount, hold_expires_at, note, created_at, updated_at, status) VALUES
+-- (3, 170000, 125000, 10000, 285000, NULL,                  'Voucher WELCOME10',              '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'PAID'),
+-- (4, 170000, 230000,     0, 400000, NULL,                  NULL,                             '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'PAID'),
+-- (5, 150000,      0,     0, 150000, NULL,                  NULL,                             '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'PAID'),
+-- (6,      0, 125000,     0, 125000, '2026-03-25 20:15:00', 'Dang giu don cho thanh toan',    '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'AWAITING_PAYMENT'),
+-- (7, 380000, 310000, 180000, 510000, NULL,                 'Khuyen mai cuoi tuan',           '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'PAID'),
+-- (1,  95000,      0,     0,  95000, NULL,                  'Don da huy theo yeu cau khach',  '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
+-- (3, 190000, 175000, 25000, 340000, NULL,                  'Ap ma giam 25k',                 '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'PAID'),
+-- (4, 255000,      0, 80000, 175000, '2026-03-28 15:45:00', 'Giu ghe 15 phut',                '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'HOLDING');
 
--- OrderCombo
+-- order
+INSERT INTO orders (
+    user_id,
+    ticket_total,
+    combo_total,
+    discount_amount,
+    total_amount,
+    net_amount,
+    created_at,
+    updated_at,
+    status
+) VALUES
+      (3, 170000, 125000, 10000, 285000, 285000, '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'CONFIRMED'),
+      (4, 170000, 230000,     0, 400000, 400000, '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'EXPIRED'),
+      (5, 150000,      0,     0, 150000, 150000, '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'CONFIRMED'),
+      (6,      0, 125000,     0, 125000, 125000, '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'PENDING'),
+      (7, 380000, 310000, 180000, 510000, 510000, '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'CONFIRMED'),
+      (1,  95000,      0,     0,  95000,  95000, '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
+      (3, 190000, 175000, 25000, 340000, 340000, '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'CONFIRMED'),
+      (4, 255000,      0, 80000, 175000, 175000, '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'CANCELLED'),
+      (4, 255000,      0, 80000, 175000, 175000, '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'CREATED');
+
+-- orderCombo
 INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, status) VALUES
-(1, 1, 1, 125000, 'ACTIVE'),
-(2, 4, 1, 230000, 'ACTIVE'),
-(4, 1, 1, 125000, 'ACTIVE'),
-(5, 5, 1, 310000, 'ACTIVE'),
-(7, 3, 1, 175000, 'ACTIVE');
+(1, 1, 1, 125000, 'PENDING'),
+(2, 4, 1, 230000, 'PENDING'),
+(4, 1, 1, 125000, 'PENDING'),
+(5, 5, 1, 310000, 'PENDING'),
+(7, 3, 1, 175000, 'PENDING');
 
 -- payment
-INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
-(1, 285000, 'E_WALLET',    'MOMO-20260325-001',  '{"provider":"MOMO","result":"SUCCESS"}',    '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'SUCCESS'),
-(2, 400000, 'QR_CODE',     'VNPAY-20260325-001', '{"provider":"VNPAY","result":"SUCCESS"}',   '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'SUCCESS'),
-(3, 150000, 'E_WALLET',    'ZALO-20260325-001',  '{"provider":"ZALOPAY","result":"SUCCESS"}', '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'SUCCESS'),
-(5, 510000, 'E_WALLET',    'MOMO-20260326-001',  '{"provider":"MOMO","result":"SUCCESS"}',    '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'SUCCESS'),
-(7, 340000, 'CREDIT_CARD', 'CARD-20260327-001',  '{"provider":"CARD","result":"SUCCESS"}',    '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'SUCCESS');
+-- INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
+-- (1, 285000, 'E_WALLET',    'MOMO-20260325-001',  '{"provider":"MOMO","result":"SUCCESS"}',    '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'SUCCESS'),
+-- (2, 400000, 'QR_CODE',     'VNPAY-20260325-001', '{"provider":"VNPAY","result":"SUCCESS"}',   '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'SUCCESS'),
+-- (3, 150000, 'E_WALLET',    'ZALO-20260325-001',  '{"provider":"ZALOPAY","result":"SUCCESS"}', '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'SUCCESS'),
+-- (5, 510000, 'E_WALLET',    'MOMO-20260326-001',  '{"provider":"MOMO","result":"SUCCESS"}',    '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'SUCCESS'),
+-- (7, 340000, 'CREDIT_CARD', 'CARD-20260327-001',  '{"provider":"CARD","result":"SUCCESS"}',    '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'SUCCESS');
+
+-- payment
+INSERT INTO payment (
+    order_id,
+    amount,
+    method,
+    bank_code,
+    bank_transaction_no,
+    transaction_id,
+    info_transaction,
+    paid_at,
+    created_at,
+    updated_at,
+    status
+) VALUES
+-- MOMO
+(1, 285000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-001', 'MOMO-20260325-001',
+ 'Thanh toan qua MOMO',
+ '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'PAID'),
+
+-- VNPAY (bank transfer)
+(2, 400000.00, 'BANK_TRANSFER', 'VNPAY', 'VNPAY-TXN-001', 'VNPAY-20260325-001',
+ 'Thanh toan qua VNPAY',
+ '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'PAID'),
+
+-- ZALOPAY
+(3, 150000.00, 'E_WALLET', 'ZALOPAY', 'ZALO-TXN-001', 'ZALO-20260325-001',
+ 'Thanh toan qua ZALOPAY',
+ '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'PAID'),
+
+-- MOMO lần 2
+(5, 510000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-002', 'MOMO-20260326-001',
+ 'Thanh toan qua MOMO',
+ '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'PAID'),
+
+-- Thanh toán thẻ
+(7, 340000.00, 'CARD', 'VISA', 'CARD-TXN-001', 'CARD-20260327-001',
+ 'Thanh toan bang the',
+ '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'PAID');
 
 -- ticket
-INSERT INTO ticket (order_id, ticket_type_id, show_id, seat_id, price_ticket_id, unit_price, qr_code, held_at, held_until, booked_at, checked_in_at, created_at, updated_at, status) VALUES
-(1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
-(1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
-(2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
-(2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
-(3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
-(3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
-(5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
-(5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
-(5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
-(5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
-(6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL,                  NULL,                  '2026-03-26 14:01:00', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'CANCELLED'),
-(7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
-(7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
-(8, 1, 8,   3,  1,  85000, 'QR-20260326-001', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
-(8, 1, 9,  13,  1,  85000, 'QR-20260326-002', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
-(8, 1, 9,  14,  1,  85000, 'QR-20260326-003', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD');
+-- INSERT INTO ticket (order_id, ticket_type_id, show_id, seat_id, price_ticket_id, unit_price, qr_code, held_at, held_until, booked_at, checked_in_at, created_at, updated_at, status) VALUES
+-- (1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
+-- (1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
+-- (2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
+-- (2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
+-- (3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
+-- (3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
+-- (5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
+-- (5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
+-- (5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
+-- (5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
+-- (6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL,                  NULL,                  '2026-03-26 14:01:00', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'CANCELLED'),
+-- (7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
+-- (7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
+-- (8, 1, 8,   3,  1,  85000, 'QR-20260326-001', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
+-- (8, 1, 9,  13,  1,  85000, 'QR-20260326-002', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
+-- (8, 1, 9,  14,  1,  85000, 'QR-20260326-003', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD');
 
+INSERT INTO ticket (
+    order_id,
+    ticket_type_id,
+    show_id,
+    seat_id,
+    price_ticket_id,
+    unit_price,
+    qr_code,
+    checked_in_at,
+    created_at,
+    updated_at,
+    status
+) VALUES
+(1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'),
+(1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'),
+(2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'),
+(2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'),
+(3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
+(3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
+(5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
+(5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
+(5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'),
+(5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'),
+(6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'PENDING'),
+(7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'),
+(7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'),
+(8, 1, 8,   3,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'),
+(8, 1, 9,  13,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'),
+(8, 1, 9,  14,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING');
 
+-- (1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'CONFIRMED'),
+-- (1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'CONFIRMED'),
+-- (2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'CONFIRMED'),
+-- (2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'CONFIRMED'),
+-- (3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
+-- (3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'CONFIRMED'),
+-- (5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
+-- (5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'CONFIRMED'),
+-- (5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'CONFIRMED'),
+-- (5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'CONFIRMED'),
+-- (6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'CANCELLED'),
+-- (7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'CONFIRMED'),
+-- (7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'CONFIRMED'),
+-- (8, 1, 8,   3,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED'),
+-- (8, 1, 9,  13,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED'),
+-- (8, 1, 9,  14,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED');
+
+update show_time
+set show_time.release_date = now(6)

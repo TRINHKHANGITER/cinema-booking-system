@@ -5,12 +5,11 @@ import Pay from "../../components/ui/Pay";
 import ChoiceSeat from "../../components/ui/ChoiceSeat";
 import type { SelectedCombo } from "../../types/combo";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
-import {
-    clearCurrentShowtime,
-    fetchShowTimeByIdThunk,
-} from "../../stores/slices/showtimeSlice";
+import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slices/showtimeSlice";
 import { resetSelectedSeats } from "../../stores/slices/seatSlice";
-import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
+import { calculateAgeFromDate, calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
+import { checkoutService } from "../../services/checkout.service";
+import { ur } from "zod/v4/locales";
 
 const STEPS = ["Chon phim / Rap / Suat", "Chon ghe", "Chon thuc an", "Thanh toan", "Xac nhan"];
 
@@ -18,6 +17,7 @@ const Booking = () => {
     const dispatch = useAppDispatch();
     const { state } = useLocation();
 
+    const user = useAppSelector((store) => store.auth.user)
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
     const selectedSeats = useAppSelector((store) => store.seat.selectedSeats);
 
@@ -62,9 +62,60 @@ const Booking = () => {
 
     const groupedSelected = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
 
-    const handleNext = () => {
+    const checkoutPayload = useMemo(() => {
+        if (!user?.userId || !showTimeId || selectedSeats.length === 0) return null;
+
+        let age = calculateAgeFromDate(user.dateOfBirth);
+        age = age !== null ? age : 24;
+        return {
+            userId: user.userId,
+            tickets: selectedSeats.map((seat) => ({
+                ticketTypeId: age <= 22 ? 1 : 2,
+                showTimeId,
+                seatId: seat.seatId,
+            })),
+            combos: selectedCombos.filter((combo) => combo.quantity > 0).map((combo) => ({
+                comboId: combo.comboId,
+                quantity: combo.quantity
+            }))
+        }
+    }, [user, showTimeId, selectedSeats, selectedCombos]);
+
+    const getOrder = async () => {
+        if (!checkoutPayload) return null;
+
+        try {
+            // let res = await checkoutService.createCheckout({
+            //     userId: 1,
+            //     tickets: [
+            //         { ticketTypeId: 1, showTimeId: 5, seatId: 10 },
+            //         { ticketTypeId: 2, showTimeId: 5, seatId: 11 },
+            //         { ticketTypeId: 2, showTimeId: 5, seatId: 12 },
+            //         // { ticketTypeId: 1, showTimeId: 5, seatId: 20 },
+            //         // { ticketTypeId: 2, showTimeId: 5, seatId: 21 },
+            //         // { ticketTypeId: 2, showTimeId: 5, seatId: 22 },
+            //     ],
+            //     combos: [
+            //         { comboId: 1, quantity: 2 },
+            //         { comboId: 3, quantity: 1 },
+            //     ],
+            // });
+            let res = await checkoutService.createCheckout(checkoutPayload);
+            return res.result;
+        } catch (error) {
+            console.log("Error: ", error);
+        }
+    };
+
+    const handleNext = async () => {
         if (step < 3) {
             setStep((current) => (current + 1) as 1 | 2 | 3);
+        } else {
+            const urlPayment = await getOrder();
+            if (!urlPayment) return;
+            
+            console.log(urlPayment);
+            window.location.href = urlPayment;
         }
     };
 
@@ -76,7 +127,10 @@ const Booking = () => {
 
     return (
         <div>
-            <div className="block border-b border-[#f4f4f4]" style={{ transform: "matrix(1, 0, 0, -1, 0, 0)" }} />
+            <div
+                className="block border-b border-[#f4f4f4]"
+                style={{ transform: "matrix(1, 0, 0, -1, 0, 0)" }}
+            />
 
             <main className="booking__wrapper bg-[rgb(249,249,249)] md:pb-0">
                 <div className="booking__progress-bar flex justify-center items-center flex-nowrap bg-white relative md:mb-8 mb-0 w-full overflow-auto">
@@ -86,7 +140,12 @@ const Booking = () => {
                                 key={label}
                                 className="pt-4 mb-4 pl-0"
                                 style={{
-                                    color: i === step || i < step ? "rgb(3,78,162)" : i === 0 ? "rgb(88,142,202)" : "#d3d0d0",
+                                    color:
+                                        i === step || i < step
+                                            ? "rgb(3,78,162)"
+                                            : i === 0
+                                              ? "rgb(88,142,202)"
+                                              : "#d3d0d0",
                                 }}
                             >
                                 <button className="md:mx-3 mx-1">{label}</button>
@@ -105,17 +164,27 @@ const Booking = () => {
                 <div className="md:container md:mx-auto xl:max-w-[1390px] lg:max-w-4xl md:max-w-4xl md:px-0 sm:px-[45px] grid xl:grid-cols-3 grid-cols-1">
                     <div className="col-span-2 xl:order-first order-last xl:h-full h-full overflow-hidden xl:overflow-auto xl:pb-10 md:pb-32 pb-10">
                         {!showDetail && (
-                            <div className="bg-white p-6 rounded">Dang tai thong tin suat chieu...</div>
+                            <div className="bg-white p-6 rounded">
+                                Dang tai thong tin suat chieu...
+                            </div>
                         )}
 
-                        {step === 1 && showDetail && selectedShowTime && (selectedShowTime.room?.roomId ?? selectedShowTime.roomId) && (
-                            <ChoiceSeat
-                                startTime={selectedShowTime.startTime}
-                                roomId={selectedShowTime.room?.roomId ?? selectedShowTime.roomId}
-                            />
-                        )}
+                        {step === 1 &&
+                            showDetail &&
+                            selectedShowTime &&
+                            (selectedShowTime.room?.roomId ?? selectedShowTime.roomId) && (
+                                <ChoiceSeat
+                                    startTime={selectedShowTime.startTime}
+                                    roomId={
+                                        selectedShowTime.room?.roomId ?? selectedShowTime.roomId
+                                    }
+                                />
+                            )}
                         {step === 2 && (
-                            <ChoiceFood selectedCombos={selectedCombos} onChange={setSelectedCombos} />
+                            <ChoiceFood
+                                selectedCombos={selectedCombos}
+                                onChange={setSelectedCombos}
+                            />
                         )}
                         {step === 3 && <Pay />}
                     </div>
@@ -136,8 +205,12 @@ const Booking = () => {
                                 </div>
 
                                 <div className="flex-1 col-span-2 md:col-span-1 xl:col-span-2">
-                                    <h3 className="text-sm xl:text-base font-bold xl:mb-2">{showDetail?.movieName}</h3>
-                                    <p className="text-sm inline-block">{selectedShowTime?.room?.roomType?.roomTypeName}</p>
+                                    <h3 className="text-sm xl:text-base font-bold xl:mb-2">
+                                        {showDetail?.movieName}
+                                    </h3>
+                                    <p className="text-sm inline-block">
+                                        {selectedShowTime?.room?.roomType?.roomTypeName}
+                                    </p>
                                     {(showDetail?.minimumAge ?? 0) > 0 && (
                                         <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold ml-2">
                                             T{showDetail?.minimumAge}
@@ -147,20 +220,27 @@ const Booking = () => {
 
                                 <div className="col-span-2 md:col-span-1 xl:col-span-3">
                                     <div className="xl:mt-4 text-sm xl:text-base">
-                                        <strong>{selectedShowTime?.room?.cinema?.cinemaName}</strong>
+                                        <strong>
+                                            {selectedShowTime?.room?.cinema?.cinemaName}
+                                        </strong>
                                         <span> - </span>
                                         <span>{selectedShowTime?.room?.roomName}</span>
                                     </div>
                                     <div className="xl:mt-2 text-sm xl:text-base">
                                         <span>Suat: </span>
-                                        <strong>{formatTime(selectedShowTime?.startTime ?? "")}</strong>
+                                        <strong>
+                                            {formatTime(selectedShowTime?.startTime ?? "")}
+                                        </strong>
                                     </div>
 
                                     {groupedSelected.length > 0 && (
                                         <>
                                             <div className="my-4 border-t border-dashed border-gray-200" />
                                             {groupedSelected.map((group) => (
-                                                <div key={group.label} className="flex justify-between text-sm mt-2">
+                                                <div
+                                                    key={group.label}
+                                                    className="flex justify-between text-sm mt-2"
+                                                >
                                                     <div>
                                                         <strong>{group.count}x </strong>
                                                         <span>{group.label}</span>
@@ -181,13 +261,19 @@ const Booking = () => {
                                         <>
                                             <div className="my-4 border-t border-dashed border-gray-200" />
                                             {selectedCombos.map((combo) => (
-                                                <div key={combo.comboId} className="flex justify-between text-sm mt-2">
+                                                <div
+                                                    key={combo.comboId}
+                                                    className="flex justify-between text-sm mt-2"
+                                                >
                                                     <div>
                                                         <strong>{combo.quantity}x </strong>
                                                         <span>{combo.comboName}</span>
                                                     </div>
                                                     <span className="font-bold">
-                                                        {(Number(combo.price) * combo.quantity).toLocaleString("vi-VN")} d
+                                                        {(
+                                                            Number(combo.price) * combo.quantity
+                                                        ).toLocaleString("vi-VN")}{" "}
+                                                        d
                                                     </span>
                                                 </div>
                                             ))}
@@ -198,13 +284,21 @@ const Booking = () => {
                                 <div className="xl:flex hidden justify-between col-span-3">
                                     <strong className="text-base">Tong cong</strong>
                                     <span className="font-bold text-[rgb(245,128,32)]">
-                                        {calculateTotalPrice(selectedSeats, selectedCombos).toLocaleString("vi-VN")} d
+                                        {calculateTotalPrice(
+                                            selectedSeats,
+                                            selectedCombos
+                                        ).toLocaleString("vi-VN")}{" "}
+                                        d
                                     </span>
                                 </div>
                             </div>
 
                             <div className="mt-8 xl:flex hidden gap-2">
-                                <button className="w-1/2 py-2 text-[rgb(245,128,32)]" onClick={handleBack} disabled={step === 1}>
+                                <button
+                                    className="w-1/2 py-2 text-[rgb(245,128,32)]"
+                                    onClick={handleBack}
+                                    disabled={step === 1}
+                                >
                                     Quay lai
                                 </button>
                                 <button
@@ -212,7 +306,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="w-1/2 py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
+                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>
@@ -221,11 +315,19 @@ const Booking = () => {
                             <div className="flex items-center gap-1">
                                 <span className="text-sm text-gray-500">Tong cong:</span>
                                 <span className="font-bold text-[rgb(245,128,32)]">
-                                    {calculateTotalPrice(selectedSeats, selectedCombos).toLocaleString("vi-VN")} d
+                                    {calculateTotalPrice(
+                                        selectedSeats,
+                                        selectedCombos
+                                    ).toLocaleString("vi-VN")}{" "}
+                                    d
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <button className="px-4 h-10 text-[rgb(245,128,32)] text-sm" onClick={handleBack} disabled={step === 1}>
+                                <button
+                                    className="px-4 h-10 text-[rgb(245,128,32)] text-sm"
+                                    onClick={handleBack}
+                                    disabled={step === 1}
+                                >
                                     Quay lai
                                 </button>
                                 <button
@@ -233,7 +335,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="px-4 h-10 bg-[rgb(245,128,32)] text-white text-sm rounded-md disabled:opacity-40"
                                 >
-                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
+                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>

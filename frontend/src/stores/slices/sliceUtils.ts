@@ -18,12 +18,7 @@ export const rejectIfNotSuccess = <T>(response: ApiResponse<T>): ApiErrorPayload
 };
 
 export const mapUnknownError = (error: unknown): ApiErrorPayload => {
-    if (
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        "message" in error
-    ) {
+    if (typeof error === "object" && error !== null && "code" in error && "message" in error) {
         return {
             code: String((error as { code: unknown }).code ?? "UNKNOWN_ERROR"),
             message: String((error as { message: unknown }).message ?? "Unknown error"),

@@ -1,0 +1,62 @@
+package com.dev.cinemasystem.service;
+
+import com.dev.cinemasystem.configuration.payment.VnPayConfig;
+import com.dev.cinemasystem.constant.VnpayParamsRequest;
+import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
+import com.dev.cinemasystem.dto.vnpayDTO.VnpayRequest;
+import com.dev.cinemasystem.utils.VnPayUtil;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class VnpayService {
+    static final DateTimeFormatter VNP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
+    final VnPayConfig vnPayConfig;
+
+    public String buildVnpayUrl(VnpayRequest vnpayRequest, String clientIp) {
+        String infoTransactionOrder = buildTransferContent(vnpayRequest.getOrderId());
+        ZonedDateTime now = ZonedDateTime.now(VIETNAM_ZONE);
+        ZonedDateTime expireAt = now.plusMinutes(15);
+
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put(VnpayParamsRequest.VERSION, vnPayConfig.getVersion());
+        params.put(VnpayParamsRequest.COMMAND, vnPayConfig.getCommand());
+        params.put(VnpayParamsRequest.TERMINAL_CODE, vnPayConfig.getTmnCode());
+        params.put(VnpayParamsRequest.AMOUNT, vnpayRequest.getAmount().multiply(BigDecimal.valueOf(100)).toBigInteger().toString());
+        params.put(VnpayParamsRequest.CURRENCY_CODE, vnPayConfig.getCurrCode());
+        params.put(VnpayParamsRequest.TRANSACTION_REFERENCE, String.valueOf(vnpayRequest.getOrderId()));
+        params.put(VnpayParamsRequest.ORDER_INFORMATION, infoTransactionOrder);
+        params.put(VnpayParamsRequest.ORDER_TYPE, vnPayConfig.getOrderType());
+        params.put(VnpayParamsRequest.LOCALE, vnPayConfig.getLocale());
+        params.put(VnpayParamsRequest.RETURN_URL, vnPayConfig.getReturnUrl());
+        params.put(VnpayParamsRequest.IP_ADDRESS, clientIp);
+        params.put(VnpayParamsRequest.CREATE_DATE, now.format(VNP_DATE_FORMAT));
+        params.put(VnpayParamsRequest.EXPIRE_DATE, expireAt.format(VNP_DATE_FORMAT));
+
+        System.out.println(params);
+
+        String hashData = VnPayUtil.buildQueryData(params, true);
+        String secureHas = VnPayUtil.hmacSha512(vnPayConfig.getHashSecret(), hashData);
+        String queryString = hashData + "&vnp_SecureHash=" + secureHas;
+
+        return vnPayConfig.getPayUrl() + "?" + queryString;
+    }
+
+    private String buildTransferContent(Integer orderId) {
+        return "THANH TOAN DH" + String.format("%04d", orderId);
+    }
+
+}

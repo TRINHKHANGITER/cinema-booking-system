@@ -2,7 +2,7 @@ package com.dev.cinemasystem.configuration.security;
 
 
 
-import com.dev.cinemasystem.Service.AuthenticationService;
+import com.dev.cinemasystem.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

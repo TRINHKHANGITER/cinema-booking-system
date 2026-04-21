@@ -52,12 +52,15 @@ const provinceSlice = createSlice({
                 state.code = null;
                 state.message = null;
             })
-            .addCase(fetchProvincesThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Province[]>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.provinces = action.payload.result ?? [];
-            })
+            .addCase(
+                fetchProvincesThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Province[]>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.provinces = action.payload.result ?? [];
+                }
+            )
             .addCase(fetchProvincesThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.code = action.payload?.code ?? "UNKNOWN_ERROR";

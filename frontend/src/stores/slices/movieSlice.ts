@@ -124,41 +124,53 @@ const movieSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchMovieByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Movie>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.currentMovie = action.payload.result ?? null;
-            })
-            .addCase(fetchMoviesThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<Movie>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.movies = action.payload.result?.items ?? [];
-            })
-            .addCase(createMovieThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Movie>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                if (action.payload.result) {
-                    state.movies.unshift(action.payload.result);
+            .addCase(
+                fetchMovieByIdThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Movie>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.currentMovie = action.payload.result ?? null;
                 }
-            })
-            .addCase(updateMovieThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Movie>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                const updated = action.payload.result;
-                if (!updated) return;
+            )
+            .addCase(
+                fetchMoviesThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<Movie>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.movies = action.payload.result?.items ?? [];
+                }
+            )
+            .addCase(
+                createMovieThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Movie>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    if (action.payload.result) {
+                        state.movies.unshift(action.payload.result);
+                    }
+                }
+            )
+            .addCase(
+                updateMovieThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Movie>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    const updated = action.payload.result;
+                    if (!updated) return;
 
-                state.movies = state.movies.map((item) =>
-                    item.movieId === updated.movieId ? updated : item
-                );
-                if (state.currentMovie?.movieId === updated.movieId) {
-                    state.currentMovie = updated;
+                    state.movies = state.movies.map((item) =>
+                        item.movieId === updated.movieId ? updated : item
+                    );
+                    if (state.currentMovie?.movieId === updated.movieId) {
+                        state.currentMovie = updated;
+                    }
                 }
-            })
+            )
             .addCase(deleteMovieThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.code = action.payload.code;
@@ -177,7 +189,8 @@ const movieSlice = createSlice({
                 (state, action: { payload?: ApiErrorPayload; error?: { message?: string } }) => {
                     state.loading = false;
                     state.code = action.payload?.code ?? "UNKNOWN_ERROR";
-                    state.message = action.payload?.message ?? action.error?.message ?? "Request failed";
+                    state.message =
+                        action.payload?.message ?? action.error?.message ?? "Request failed";
                 }
             );
     },
