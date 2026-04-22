@@ -84,7 +84,7 @@ public class CheckoutService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Integer orderId = Integer.parseInt(params.get(VnpayParamsRequest.TRANSACTION_REFERENCE));
+        Integer orderId = extractOrderIdFromTxnRef(params.get(VnpayParamsRequest.TRANSACTION_REFERENCE));
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -129,7 +129,7 @@ public class CheckoutService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Integer orderId = Integer.parseInt(params.get(VnpayParamsRequest.TRANSACTION_REFERENCE));
+        Integer orderId = extractOrderIdFromTxnRef(params.get(VnpayParamsRequest.TRANSACTION_REFERENCE));
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -172,6 +172,31 @@ public class CheckoutService {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             bookingService.markOrderFailed(orderId, OrderStatus.FAILED);
+        }
+    }
+
+    private Integer extractOrderIdFromTxnRef(String transactionReference) {
+        if (transactionReference == null || transactionReference.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        StringBuilder orderDigits = new StringBuilder();
+        for (char ch : transactionReference.toCharArray()) {
+            if (Character.isDigit(ch)) {
+                orderDigits.append(ch);
+                continue;
+            }
+            break;
+        }
+
+        if (orderDigits.isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        try {
+            return Integer.parseInt(orderDigits.toString());
+        } catch (NumberFormatException ex) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
         }
     }
 }
