@@ -69,7 +69,9 @@ public class BookingService {
 
         Order order = resolveOrderForHold(request, showTime);
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime holdExpiresAt = now.plusMinutes(HOLD_MINUTES);
+        LocalDateTime holdExpiresAt = order.getExpiredAt() != null
+                ? order.getExpiredAt()
+                : now.plusMinutes(HOLD_MINUTES);
 
         List<Integer> normalizedSeatIds = request.getSeatIds().stream()
                 .filter(Objects::nonNull)
@@ -91,7 +93,10 @@ public class BookingService {
 
             if (targetSeat.getStatus() == ShowTimeSeatStatus.HELD) {
                 if (targetSeat.getOrder() != null && Objects.equals(targetSeat.getOrder().getOrderId(), order.getOrderId())) {
-                    targetSeat.setHoldExpiresAt(holdExpiresAt);
+                    // Khong gia han bo dem cho nhung lan chon tiep theo.
+                    if (targetSeat.getHoldExpiresAt() == null) {
+                        targetSeat.setHoldExpiresAt(holdExpiresAt);
+                    }
                     continue;
                 }
 
@@ -111,7 +116,9 @@ public class BookingService {
 
         showTimeSeatRepository.saveAll(targetSeats);
 
-        order.setExpiredAt(holdExpiresAt);
+        if (order.getExpiredAt() == null) {
+            order.setExpiredAt(holdExpiresAt);
+        }
         order.setStatus(OrderStatus.PAYING);
         recalculateOrderTotals(order);
 

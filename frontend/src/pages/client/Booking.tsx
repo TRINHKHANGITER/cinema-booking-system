@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import ChoiceFood from "../../components/ui/ChoiceFood";
 import Pay from "../../components/ui/Pay";
@@ -10,6 +10,8 @@ import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slice
 import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
 import { checkoutService } from "../../services/checkout.service";
 import { bookingService } from "../../services/booking.service";
+import { toast } from "sonner";
+import axios from "axios";
 
 const STEPS = ["Chon phim / Rap / Suat", "Chon ghe", "Chon thuc an", "Thanh toan", "Xac nhan"];
 
@@ -40,6 +42,32 @@ const Booking = () => {
         return null;
     }, [state]);
 
+    const orderStorageKey = useMemo(
+        () => (showTimeId ? `BOOKING_ORDER_${showTimeId}` : null),
+        [showTimeId]
+    );
+
+    const clearOrderSession = useCallback(() => {
+        if (orderStorageKey) {
+            sessionStorage.removeItem(orderStorageKey);
+        }
+    }, [orderStorageKey]);
+
+    const resetBookingState = useCallback(() => {
+        setSelectedSeats([]);
+        setSelectedCombos([]);
+        setOrderId(null);
+        setOrderExpiredAt(null);
+        setStep(1);
+        clearOrderSession();
+    }, [clearOrderSession]);
+
+    const extractApiError = (error: unknown): { code?: string; message?: string } => {
+        if (!axios.isAxiosError(error)) return {};
+        const payload = error.response?.data as { code?: string; message?: string } | undefined;
+        return payload ?? {};
+    };
+
     useEffect(() => {
         if (showTimeId) {
             dispatch(fetchShowTimeByIdThunk(showTimeId));
@@ -47,13 +75,44 @@ const Booking = () => {
 
         setSelectedSeats([]);
         setSelectedCombos([]);
-        setOrderId(null);
-        setOrderExpiredAt(null);
+        setStep(1);
+
+        if (orderStorageKey) {
+            const raw = sessionStorage.getItem(orderStorageKey);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw) as { orderId?: number; expiredAt?: string };
+                    const isValid =
+                        !!parsed.orderId &&
+                        !!parsed.expiredAt &&
+                        new Date(parsed.expiredAt).getTime() > Date.now();
+
+                    if (isValid) {
+                        setOrderId(parsed.orderId ?? null);
+                        setOrderExpiredAt(parsed.expiredAt ?? null);
+                    } else {
+                        sessionStorage.removeItem(orderStorageKey);
+                        setOrderId(null);
+                        setOrderExpiredAt(null);
+                    }
+                } catch {
+                    sessionStorage.removeItem(orderStorageKey);
+                    setOrderId(null);
+                    setOrderExpiredAt(null);
+                }
+            } else {
+                setOrderId(null);
+                setOrderExpiredAt(null);
+            }
+        } else {
+            setOrderId(null);
+            setOrderExpiredAt(null);
+        }
 
         return () => {
             dispatch(clearCurrentShowtime());
         };
-    }, [dispatch, showTimeId]);
+    }, [dispatch, orderStorageKey, showTimeId]);
 
     const selectedShowTime = useMemo(() => {
         if (!showDetail) return null;
@@ -68,19 +127,62 @@ const Booking = () => {
 
     const groupedSelected = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
 
-    const handleOrderChange = (id: number, expiredAt?: string) => {
-        setOrderId(id);
-        setOrderExpiredAt(expiredAt ?? null);
-    };
+    const handleOrderChange = useCallback(
+        (id: number, expiredAt?: string) => {
+            const normalizedExpiredAt = expiredAt ?? null;
+            setOrderId(id);
+            setOrderExpiredAt(normalizedExpiredAt);
+
+            if (orderStorageKey && normalizedExpiredAt) {
+                sessionStorage.setItem(
+                    orderStorageKey,
+                    JSON.stringify({ orderId: id, expiredAt: normalizedExpiredAt })
+                );
+            }
+        },
+        [orderStorageKey]
+    );
+
+    const handleOrderExpired = useCallback(() => {
+        resetBookingState();
+    }, [resetBookingState]);
+
+    useEffect(() => {
+        if (!orderExpiredAt) return;
+
+        const expiredAtMs = new Date(orderExpiredAt).getTime();
+        if (Number.isNaN(expiredAtMs)) return;
+
+        const timer = setInterval(() => {
+            if (Date.now() >= expiredAtMs) {
+                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                handleOrderExpired();
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [handleOrderExpired, orderExpiredAt]);
 
     const syncCombosToOrder = async () => {
-        if (!orderId) return;
+        if (!orderId) return true;
 
-        await bookingService.updateOrderCombos(orderId, {
-            combos: selectedCombos
-                .filter((combo) => combo.quantity > 0)
-                .map((combo) => ({ comboId: combo.comboId, quantity: combo.quantity })),
-        });
+        try {
+            await bookingService.updateOrderCombos(orderId, {
+                combos: selectedCombos
+                    .filter((combo) => combo.quantity > 0)
+                    .map((combo) => ({ comboId: combo.comboId, quantity: combo.quantity })),
+            });
+            return true;
+        } catch (error) {
+            const { code, message } = extractApiError(error);
+            if (code === "ORDER_EXPIRED") {
+                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                handleOrderExpired();
+                return false;
+            }
+            toast.error(message || "Khong cap nhat duoc combo. Vui long thu lai.");
+            return false;
+        }
     };
 
     const createCheckout = async () => {
@@ -90,7 +192,13 @@ const Booking = () => {
             const res = await checkoutService.createCheckout({ orderId });
             return res.result;
         } catch (error) {
-            console.log("Error: ", error);
+            const { code, message } = extractApiError(error);
+            if (code === "ORDER_EXPIRED") {
+                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                handleOrderExpired();
+                return null;
+            }
+            toast.error(message || "Khong tao duoc giao dich thanh toan.");
             return null;
         }
     };
@@ -103,8 +211,15 @@ const Booking = () => {
         }
 
         if (step === 2) {
-            await syncCombosToOrder();
+            const synced = await syncCombosToOrder();
+            if (!synced) return;
             setStep(3);
+            return;
+        }
+
+        if (orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now()) {
+            toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+            handleOrderExpired();
             return;
         }
 
@@ -169,9 +284,11 @@ const Booking = () => {
                                 showTimeId={showTimeId}
                                 userId={user?.userId}
                                 orderId={orderId}
+                                orderExpiredAt={orderExpiredAt}
                                 selectedSeats={selectedSeats}
                                 onSelectedSeatsChange={setSelectedSeats}
                                 onOrderChange={handleOrderChange}
+                                onOrderExpired={handleOrderExpired}
                             />
                         )}
                         {step === 2 && (

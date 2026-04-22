@@ -3,15 +3,19 @@ import { showTimeSeatService } from "../../services/showtimeSeat.service";
 import type { ShowTimeSeat } from "../../types/showtime-seat";
 import type { Seat } from "../../types/seat";
 import { formatTime, seatUnitPrice } from "../../utils/utils";
+import { toast } from "sonner";
+import axios from "axios";
 
 type Props = {
     startTime: string;
     showTimeId: number;
     userId?: number;
     orderId: number | null;
+    orderExpiredAt?: string | null;
     selectedSeats: Seat[];
     onSelectedSeatsChange: (seats: Seat[]) => void;
     onOrderChange: (orderId: number, expiredAt?: string) => void;
+    onOrderExpired: () => void;
 };
 
 const ChoiceSeat = ({
@@ -19,16 +23,19 @@ const ChoiceSeat = ({
     showTimeId,
     userId,
     orderId,
+    orderExpiredAt,
     selectedSeats,
     onSelectedSeatsChange,
     onOrderChange,
+    onOrderExpired,
 }: Props) => {
     const [seatMap, setSeatMap] = useState<ShowTimeSeat[]>([]);
     const [loading, setLoading] = useState(false);
 
     const selectedIds = useMemo(() => new Set(selectedSeats.map((s) => s.seatId)), [selectedSeats]);
 
-    const toSeat = useCallback((item: ShowTimeSeat, isPrimary = true): Seat => {
+    const toSeat = useCallback((item: ShowTimeSeat): Seat => {
+        const isPrimary = item.seatTypeId === 3 ? item.seatColumn % 2 !== 0 : true;
         return {
             seatId: item.seatId,
             seatRow: item.seatRow,
@@ -56,8 +63,10 @@ const ChoiceSeat = ({
                             if (a.seatRow === b.seatRow) return a.seatColumn - b.seatColumn;
                             return a.seatRow.localeCompare(b.seatRow);
                         })
-                        .map((item, index) => toSeat(item, index === 0));
+                        .map((item) => toSeat(item));
                     onSelectedSeatsChange(mapped);
+                } else {
+                    onSelectedSeatsChange([]);
                 }
             }
         } finally {
@@ -86,7 +95,7 @@ const ChoiceSeat = ({
                 return a.seatRow.localeCompare(b.seatRow);
             });
 
-            const mapped = normalized.map((item, index) => toSeat(item, index === 0));
+            const mapped = normalized.map((item) => toSeat(item));
             onSelectedSeatsChange(mapped);
         },
         [onOrderChange, onSelectedSeatsChange, toSeat]
@@ -94,6 +103,14 @@ const ChoiceSeat = ({
 
     const toggle = async (seatIds: number[]) => {
         const isAllSelected = seatIds.every((id) => selectedIds.has(id));
+        const isExpiredNow =
+            !!orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now();
+
+        if (isExpiredNow) {
+            toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+            onOrderExpired();
+            return;
+        }
 
         try {
             if (isAllSelected) {
@@ -119,7 +136,18 @@ const ChoiceSeat = ({
             }
             await fetchSeatMap();
         } catch (error) {
-            console.log("Toggle seat failed", error);
+            if (axios.isAxiosError(error)) {
+                const data = error.response?.data as { code?: string; message?: string } | undefined;
+                if (data?.code === "ORDER_EXPIRED") {
+                    toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                    onOrderExpired();
+                    await fetchSeatMap();
+                    return;
+                }
+                toast.error(data?.message || "Khong the cap nhat ghe. Vui long thu lai.");
+                return;
+            }
+            toast.error("Khong the cap nhat ghe. Vui long thu lai.");
         }
     };
 
@@ -169,7 +197,10 @@ const ChoiceSeat = ({
                                                 : [seat.seatId];
 
                                             const isHeldByOther =
-                                                seat.status === "HELD" && (!!seat.orderId && seat.orderId !== orderId);
+                                                seat.status === "HELD" &&
+                                                orderId !== null &&
+                                                !!seat.orderId &&
+                                                seat.orderId !== orderId;
                                             const isBlocked =
                                                 seat.status === "SOLD" ||
                                                 seat.status === "BLOCKED" ||
