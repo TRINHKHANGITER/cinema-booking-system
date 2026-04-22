@@ -14,6 +14,4 @@ public class TicketCreationRequest {
     int showTimeId;
 
     int seatId;
-
-    int ticketTypeId;
 }

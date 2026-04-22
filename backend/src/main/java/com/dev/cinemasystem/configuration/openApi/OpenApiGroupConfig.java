@@ -91,15 +91,6 @@ public class OpenApiGroupConfig {
     }
 
     @Bean
-    public GroupedOpenApi ticketTypeGroup() {
-        return GroupedOpenApi.builder()
-                .group("ticket-type")
-                .pathsToMatch("/ticket-type/**")
-                .build();
-    }
-
-
-    @Bean
     public GroupedOpenApi showTimeGroup() {
         return GroupedOpenApi.builder()
                 .group("show-time")

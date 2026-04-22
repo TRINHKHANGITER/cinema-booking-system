@@ -84,17 +84,11 @@ public enum ErrorCode {
     DURATION_MINUTES_BLANK("DURATION_MINUTES_BLANK", HttpStatus.BAD_REQUEST, "Duration minutes is required"),
     MOVIE_TYPE_ID_BLANK("MOVIE_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Movie type ID is required"),
 
-
-    TICKET_TYPE_NAME_BLANK("TICKET_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "ticket type name is required"),
-    TICKET_TYPE_NOT_FOUND("TICKET_TYPE_NOT_FOUND",  HttpStatus.NOT_FOUND, "ticket type not found"),
-    TICKET_TYPE_NAME_EXISTS("TICKET_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "ticket type name already exists"),
     TICKET_NOT_FOUND("TICKET_NOT_FOUND", HttpStatus.NOT_FOUND, "ticket not found"),
     PRICE_BLANK("PRICE_BLANK", HttpStatus.BAD_REQUEST, "Price is required"),
     PRICE_INVALID("PRICE_INVALID", HttpStatus.BAD_REQUEST, "Price must be at least 0"),
     ROOM_TYPE_ID_BLANK("ROOM_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Room type ID is required"),
     SEAT_TYPE_ID_BLANK("SEAT_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Seat type ID is required"),
-    TICKET_TYPE_ID_INVALID("TICKET_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "ticket type ID must be at least 1"),
-    TICKET_TYPE_ID_BLANK("TICKET_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "ticket type ID is required"),
     PRICE_TICKET_NOT_FOUND("PRICE_TICKET_NOT_FOUND", HttpStatus.NOT_FOUND, "Price ticket not found"),
     PRICE_TICKET_EXISTS("PRICE_TICKET_EXISTS", HttpStatus.BAD_REQUEST, "Price ticket already exists for given combination"),
 

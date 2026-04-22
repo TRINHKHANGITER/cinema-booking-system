@@ -7,9 +7,8 @@ import type { SelectedCombo } from "../../types/combo";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slices/showtimeSlice";
 import { resetSelectedSeats } from "../../stores/slices/seatSlice";
-import { calculateAgeFromDate, calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
+import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
 import { checkoutService } from "../../services/checkout.service";
-import { ur } from "zod/v4/locales";
 
 const STEPS = ["Chon phim / Rap / Suat", "Chon ghe", "Chon thuc an", "Thanh toan", "Xac nhan"];
 
@@ -65,13 +64,9 @@ const Booking = () => {
     const checkoutPayload = useMemo(() => {
         if (!user?.userId || !showTimeId || selectedSeats.length === 0) return null;
 
-        // let age = calculateAgeFromDate(user.dateOfBirth);
-        // age = age !== null ? age : 24;
         return {
             userId: user.userId,
             tickets: selectedSeats.map((seat) => ({
-                // ticketTypeId: age <= 22 ? 1 : 2,
-                ticketTypeId: 1,
                 showTimeId,
                 seatId: seat.seatId,
             })),

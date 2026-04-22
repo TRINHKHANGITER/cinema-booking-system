@@ -2,12 +2,14 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.entity.PriceTicket;
+import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
+import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PriceTicketMapper;
-import com.dev.cinemasystem.repository.*;
-import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
-import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
+import com.dev.cinemasystem.repository.PriceTicketRepository;
+import com.dev.cinemasystem.repository.RoomTypeRepository;
+import com.dev.cinemasystem.repository.SeatTypeRepository;
 import com.dev.cinemasystem.enums.PriceTicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.print.DocFlavor;
 import java.math.BigDecimal;
 
 @Service
@@ -27,12 +28,7 @@ public class PriceTicketService {
     PriceTicketRepository priceTicketRepository;
     RoomTypeRepository roomTypeRepository;
     SeatTypeRepository seatTypeRepository;
-    TicketTypeRepository ticketTypeRepository;
     PriceTicketMapper priceTicketMapper;
-
-
-
-
 
     public PriceTicketResponse getPriceTicketById(Integer priceTicketId){
         var priceTicket = priceTicketRepository.findById(priceTicketId)
@@ -60,33 +56,24 @@ public class PriceTicketService {
             return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
         });
 
-        var ticketType = ticketTypeRepository.findById(request.getTicketTypeId()).orElseThrow(() -> {
-            log.error("ticket type with id {} not found", request.getTicketTypeId());
-            return new AppException(ErrorCode.TICKET_TYPE_NOT_FOUND);
-        });
-
-        if(priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeIdAndTicketType_TicketTypeId(
+        if(priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
                 request.getRoomTypeId(),
-                request.getSeatTypeId(),
-                request.getTicketTypeId()
+                request.getSeatTypeId()
         ) != null){
-            log.error("PriceTicket with RoomTypeId {}, SeatTypeId {} and TicketTypeId {} already exists",
+            log.error("PriceTicket with RoomTypeId {} and SeatTypeId {} already exists",
                     request.getRoomTypeId(),
-                    request.getSeatTypeId(),
-                    request.getTicketTypeId()
+                    request.getSeatTypeId()
             );
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
         }
-        var priceTicketType = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
-        priceTicketType.setStatus(PriceTicketStatus.ACTIVE);
-        priceTicketType.setRoomType(roomType);
-        priceTicketType.setSeatType(seatType);
-        priceTicketType.setTicketType(ticketType);
-        log.info("Creating priceTicket with RoomTypeId {}, SeatTypeId {} and TicketTypeId {}",
+        var priceTicket = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
+        priceTicket.setStatus(PriceTicketStatus.ACTIVE);
+        priceTicket.setRoomType(roomType);
+        priceTicket.setSeatType(seatType);
+        log.info("Creating priceTicket with RoomTypeId {} and SeatTypeId {}",
                 request.getRoomTypeId(),
-                request.getSeatTypeId(),
-                request.getTicketTypeId());
-        return priceTicketMapper.toPriceTicketResponse(priceTicketRepository.save(priceTicketType));
+                request.getSeatTypeId());
+        return priceTicketMapper.toPriceTicketResponse(priceTicketRepository.save(priceTicket));
     }
 
 
@@ -111,21 +98,14 @@ public class PriceTicketService {
             return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
         });
 
-        var ticketType = ticketTypeRepository.findById(request.getTicketTypeId()).orElseThrow(() -> {
-            log.error("ticket type with id {} not found", request.getTicketTypeId());
-            return new AppException(ErrorCode.TICKET_TYPE_NOT_FOUND);
-        });
-
-        var existingPriceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeIdAndTicketType_TicketTypeId(
+        var existingPriceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
                 request.getRoomTypeId(),
-                request.getSeatTypeId(),
-                request.getTicketTypeId()
+                request.getSeatTypeId()
         );
         if( existingPriceTicket!= null && existingPriceTicket.getPriceTicketId() != priceTicketId){
-            log.error("PriceTicket with RoomTypeId {}, SeatTypeId {} and TicketTypeId {} already exists",
+            log.error("PriceTicket with RoomTypeId {} and SeatTypeId {} already exists",
                     request.getRoomTypeId(),
-                    request.getSeatTypeId(),
-                    request.getTicketTypeId()
+                    request.getSeatTypeId()
             );
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
 
@@ -133,7 +113,6 @@ public class PriceTicketService {
         priceTicket.setPrice(request.getPrice());
         priceTicket.setRoomType(roomType);
         priceTicket.setSeatType(seatType);
-        priceTicket.setTicketType(ticketType);
         log.info("Updating priceTicket with id: {}", priceTicketId);
         return priceTicketMapper.toPriceTicketResponse(priceTicketRepository.save(priceTicket));
     }
@@ -150,8 +129,8 @@ public class PriceTicketService {
         return true;
     }
 
-    public BigDecimal getPriceByRoomTypeIdAndSeatTypeIdAndTicketTypeId(int roomTypeId, int seatTypeId, int ticketTypeId) {
-        PriceTicket ticket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeIdAndTicketType_TicketTypeId(roomTypeId, seatTypeId, ticketTypeId);
+    public BigDecimal getPriceByRoomTypeIdAndSeatTypeId(int roomTypeId, int seatTypeId) {
+        PriceTicket ticket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seatTypeId);
         return BigDecimal.valueOf(ticket.getPrice());
     }
 

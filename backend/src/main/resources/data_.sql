@@ -1,4 +1,6 @@
-use `cinema_booking_system`;
+use `cinema_booking_system_test`;
+
+
 
 -- DROP TABLE IF EXISTS order_detail;
 
@@ -17,7 +19,6 @@ use `cinema_booking_system`;
 -- DROP TABLE IF EXISTS product;
 -- DROP TABLE IF EXISTS product_type;
 -- DROP TABLE IF EXISTS movie_type;
--- DROP TABLE IF EXISTS ticket_type;
 -- DROP TABLE IF EXISTS room_type;
 -- DROP TABLE IF EXISTS seat_type;
 -- DROP TABLE IF EXISTS province;
@@ -39,7 +40,6 @@ DELETE FROM movie;
 -- DELETE FROM product;
 -- DELETE FROM product_type;
 DELETE FROM movie_type;
-DELETE FROM ticket_type;
 DELETE FROM room_type;
 DELETE FROM seat_type;
 DELETE FROM province;
@@ -63,7 +63,6 @@ TRUNCATE TABLE movie;
 -- TRUNCATE TABLE product;
 -- TRUNCATE TABLE product_type;
 TRUNCATE TABLE movie_type;
-TRUNCATE TABLE ticket_type;
 TRUNCATE TABLE room_type;
 TRUNCATE TABLE seat_type;
 TRUNCATE TABLE province;
@@ -80,13 +79,6 @@ INSERT INTO movie_type (movie_type_name, description, status) VALUES
 ('Hoạt hình',           'Phim hoạt hình cho mọi lứa tuổi',         'ACTIVE'),
 ('Tình cảm',            'Phim tình cảm, lãng mạn',                 'INACTIVE'),
 ('Khoa học viễn tưởng', 'Phim sci-fi, vũ trụ, tương lai',          'INACTIVE');
-
--- ticket_type
-INSERT INTO ticket_type (ticket_type_name, description, status) VALUES
-('Người lớn',    'Vé dành cho người lớn (trên 22 tuổi)',   'ACTIVE'),
-('U22 và người cao tuổi',       'Vé dành cho người dưới 22 tuổi và trên 60 tuổi'  ,    'ACTIVE'),
-('Sinh viên',    'Vé ưu đãi cho sinh viên có thẻ',         'ACTIVE'),
-('Người cao tuổi','Vé ưu đãi cho người trên 60 tuổi',      'INACTIVE');
 
 -- room_type
 INSERT INTO room_type (room_type_name, description, status) VALUES
@@ -1359,38 +1351,23 @@ INSERT INTO show_time (movie_id, room_id, release_date, start_time, end_time, st
 
 
 -- price_ticket
-INSERT INTO price_ticket (room_type_id, seat_type_id, ticket_type_id, price, status) VALUES
--- 2D + Thường
-(1, 1, 1, 85000,  'ACTIVE'),
-(1, 1, 2, 65000,  'ACTIVE'),
-
+INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
+-- 2D + Thuong
+(1, 1, 85000,  'ACTIVE'),
 -- 2D + VIP
-(1, 2, 1, 110000, 'ACTIVE'),
-(1, 2, 2, 90000,  'ACTIVE'),
-
--- 2D + Đôi
-(1, 3, 1, 200000, 'ACTIVE'),
-(1, 3, 2, 160000, 'ACTIVE'),
--- 3D + Thường
-(2, 1, 1, 105000, 'ACTIVE'),
-(2, 1, 2, 85000,  'ACTIVE'),
-
+(1, 2, 110000, 'ACTIVE'),
+-- 2D + Doi
+(1, 3, 200000, 'ACTIVE'),
+-- 3D + Thuong
+(2, 1, 105000, 'ACTIVE'),
 -- 3D + VIP
-(2, 2, 1, 130000, 'ACTIVE'),
-(2, 2, 2, 110000, 'ACTIVE'),
-
--- 3D + Đôi
-(2, 3, 1, 240000, 'ACTIVE'),
-(2, 3, 2, 200000, 'ACTIVE'),
-
--- IMAX + Thường
-(3, 1, 1, 150000, 'ACTIVE'),
-(3, 1, 2, 120000, 'ACTIVE'),
-
+(2, 2, 130000, 'ACTIVE'),
+-- 3D + Doi
+(2, 3, 240000, 'ACTIVE'),
+-- IMAX + Thuong
+(3, 1, 150000, 'ACTIVE'),
 -- IMAX + VIP
-(3, 2, 1, 200000, 'ACTIVE'),
-(3, 2, 2, 170000, 'ACTIVE');
-
+(3, 2, 200000, 'ACTIVE');
 -- combo
 INSERT INTO combo (combo_name, image, description, price, status) VALUES
 ('Combo 1',        'https://example.com/combos/combo1.jpg', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
@@ -1490,27 +1467,8 @@ INSERT INTO payment (
  '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'PAID');
 
 -- ticket
--- INSERT INTO ticket (order_id, ticket_type_id, show_id, seat_id, price_ticket_id, unit_price, qr_code, held_at, held_until, booked_at, checked_in_at, created_at, updated_at, status) VALUES
--- (1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
--- (1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL,                  NULL,                  '2026-03-25 10:31:00', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'BOOKED'),
--- (2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
--- (2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL,                  NULL,                  '2026-03-25 13:01:00', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'BOOKED'),
--- (3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
--- (3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL,                  NULL,                  '2026-03-25 16:46:00', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'BOOKED'),
--- (5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
--- (5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL,                  NULL,                  '2026-03-26 09:16:00', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'BOOKED'),
--- (5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
--- (5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL,                  NULL,                  '2026-03-26 09:17:00', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'BOOKED'),
--- (6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL,                  NULL,                  '2026-03-26 14:01:00', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'CANCELLED'),
--- (7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
--- (7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL,                  NULL,                  '2026-03-27 10:01:00', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'BOOKED'),
--- (8, 1, 8,   3,  1,  85000, 'QR-20260326-001', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
--- (8, 1, 9,  13,  1,  85000, 'QR-20260326-002', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD'),
--- (8, 1, 9,  14,  1,  85000, 'QR-20260326-003', '2026-03-28 15:31:00', '2026-03-28 15:45:00', NULL,                  NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'HELD');
-
 INSERT INTO ticket (
     order_id,
-    ticket_type_id,
     show_id,
     seat_id,
     price_ticket_id,
@@ -1520,40 +1478,39 @@ INSERT INTO ticket (
     created_at,
     updated_at,
     status
-) VALUES
-(1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'),
-(1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'),
-(2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'),
-(2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'),
-(3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
-(3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
-(5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
-(5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
-(5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'),
-(5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'),
-(6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'PENDING'),
-(7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'),
-(7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'),
-(8, 1, 8,   3,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'),
-(8, 1, 9,  13,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'),
-(8, 1, 9,  14,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING');
-
--- (1, 1, 1,  73,  1,  85000, 'QR-20260325-001', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'CONFIRMED'),
--- (1, 1, 1,  74,  1,  85000, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'CONFIRMED'),
--- (2, 1, 1,   1,  1,  85000, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'CONFIRMED'),
--- (2, 1, 1,   2,  1,  85000, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'CONFIRMED'),
--- (3, 2, 2,  25,  2,  65000, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'),
--- (3, 1, 2,  26,  1,  85000, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'CONFIRMED'),
--- (5, 1, 3,  85,  5,  85000, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'),
--- (5, 1, 3,  86,  5,  85000, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'CONFIRMED'),
--- (5, 1, 4, 120, 11, 105000, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'CONFIRMED'),
--- (5, 1, 4, 121, 11, 105000, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'CONFIRMED'),
--- (6, 3, 5, 130, 13,  95000, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'CANCELLED'),
--- (7, 1, 6,  49,  1,  85000, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'CONFIRMED'),
--- (7, 1, 7, 140, 11, 105000, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'CONFIRMED'),
--- (8, 1, 8,   3,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED'),
--- (8, 1, 9,  13,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED'),
--- (8, 1, 9,  14,  1,  85000, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'EXPIRED');
-
+) 
+SELECT
+    src.order_id,
+    src.show_id,
+    src.seat_id,
+    pt.price_ticket_id,
+    pt.price AS unit_price,
+    src.qr_code,
+    src.checked_in_at,
+    src.created_at,
+    src.updated_at,
+    src.status
+FROM (
+    SELECT 1 AS order_id, 1 AS show_id, 73 AS seat_id, 'QR-20260325-001' AS qr_code, NULL AS checked_in_at, '2026-03-25 10:31:00' AS created_at, '2026-03-25 10:31:00' AS updated_at, 'PENDING' AS status
+    UNION ALL SELECT 1, 1, 74, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'
+    UNION ALL SELECT 2, 1, 1, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'
+    UNION ALL SELECT 2, 1, 2, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'
+    UNION ALL SELECT 3, 2, 25, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'
+    UNION ALL SELECT 3, 2, 26, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'
+    UNION ALL SELECT 5, 3, 85, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'
+    UNION ALL SELECT 5, 3, 86, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'
+    UNION ALL SELECT 5, 4, 120, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'
+    UNION ALL SELECT 5, 4, 121, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'
+    UNION ALL SELECT 6, 5, 130, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'PENDING'
+    UNION ALL SELECT 7, 6, 49, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'
+    UNION ALL SELECT 7, 7, 140, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'
+    UNION ALL SELECT 8, 8, 3, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
+    UNION ALL SELECT 8, 9, 13, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
+    UNION ALL SELECT 8, 9, 14, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
+) src
+JOIN show_time st ON st.show_time_id = src.show_id
+JOIN room r ON r.room_id = st.room_id
+JOIN seat s ON s.seat_id = src.seat_id AND s.room_id = st.room_id
+JOIN price_ticket pt ON pt.room_type_id = r.room_type_id AND pt.seat_type_id = s.seat_type_id;
 update show_time
 set show_time.release_date = now(6)

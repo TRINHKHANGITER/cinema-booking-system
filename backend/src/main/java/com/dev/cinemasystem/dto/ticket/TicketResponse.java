@@ -21,8 +21,6 @@ public class TicketResponse {
 
     int seatId;
 
-    int ticketTypeId;
-
     int priceTicketId;
 
     BigDecimal unitPrice;

@@ -25,9 +25,4 @@ public class PriceTicketCreationResquest {
     @Min(value = 1, message = "SEAT_TYPE_ID_INVALID")
     @NotNull(message = "SEAT_TYPE_ID_BLANK")
     Integer seatTypeId;
-
-    @Min(value = 1, message = "TICKET_TYPE_ID_INVALID")
-    @NotNull(message = "TICKET_TYPE_ID_BLANK")
-    Integer ticketTypeId;
-
 }

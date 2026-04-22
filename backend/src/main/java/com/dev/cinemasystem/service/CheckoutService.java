@@ -69,7 +69,7 @@ public class CheckoutService {
                     int roomId = showTime.getRoom().getRoomId();
                     int roomTypeId = roomService.getRoomById(roomId).getRoomTypeId();
                     int seatTypeId = seatService.getSeatById(ticketCreationRequest.getSeatId()).getSeatTypeId();
-                    return priceTicketService.getPriceByRoomTypeIdAndSeatTypeIdAndTicketTypeId(roomTypeId, seatTypeId, ticketCreationRequest.getTicketTypeId());
+                    return priceTicketService.getPriceByRoomTypeIdAndSeatTypeId(roomTypeId, seatTypeId);
                 }
         ).reduce(BigDecimal.ZERO, BigDecimal::add);
 

@@ -41,7 +41,6 @@ public class SecurityConfig {
             "/movie/**",
             "/movie-type/**",
             "/ticket/**",
-            "/ticket-type/**",
             "/price-ticket/**",
             "/show-time/**",
             "/showtime/**",

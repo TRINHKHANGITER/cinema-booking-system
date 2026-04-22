@@ -34,10 +34,6 @@ public class PriceTicket {
     @JoinColumn(name = "seat_type_id",nullable = false)
     SeatType seatType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ticket_type_id",nullable = false)
-    TicketType ticketType;
-
 }
 
 

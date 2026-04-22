@@ -22,7 +22,6 @@ public class TicketService {
     OrderRepository orderRepository;
     ShowTimeRepository showTimeRepository;
     SeatRepository seatRepository;
-    TicketTypeRepository ticketTypeRepository;
     PriceTicketRepository priceTicketRepository;
     RoomService roomService;
 
@@ -36,19 +35,15 @@ public class TicketService {
         Seat seat = seatRepository.findById(ticketCreationRequest.getSeatId())
                 .orElseThrow(() -> new RuntimeException("Seat not exists!"));
 
-        TicketType ticketType = ticketTypeRepository.findById(ticketCreationRequest.getTicketTypeId())
-                .orElseThrow(() -> new RuntimeException("TicketType not exists!"));
-
         int roomId = showTime.getRoom().getRoomId();
         int roomTypeId = roomService.getRoomById(roomId).getRoomTypeId();
         PriceTicket priceTicket =
-                priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeIdAndTicketType_TicketTypeId(roomTypeId, seat.getSeatType().getSeatTypeId(), ticketType.getTicketTypeId());
+                priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seat.getSeatType().getSeatTypeId());
 
         Ticket ticket = ticketMapper.toTicket(ticketCreationRequest);
         ticket.setShow(showTime);
         ticket.setSeat(seat);
         ticket.setOrder(order);
-        ticket.setTicketType(ticketType);
         ticket.setPriceTicket(priceTicket);
 
         return ticketMapper.toTicketResponse(ticketRepository.save(ticket));
