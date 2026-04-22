@@ -24,7 +24,7 @@ backend/target/
 
 .env
 
-**/resources/application.yml
+# **/resources/application.yml
 
 
 **package-lock.json
@@ -34,4 +34,4 @@ backend/target/
 
 **/.M2
 
-backend/src/main/resources/
+# backend/src/main/resources/
