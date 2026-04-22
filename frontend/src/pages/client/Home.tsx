@@ -77,7 +77,7 @@ const Home = () => {
 
     const displayedMovies = useMemo(() => moviesFromShowtimes.slice(0, 8), [moviesFromShowtimes]);
     const emptyMessage =
-        activeTab === 1 ? "Chua co phim sap chieu theo suat chieu." : "Chua co phim theo suat chieu hom nay.";
+        activeTab === 1 ? "Chưa có phim sắp chiếu theo suất chiếu." : "Chưa có phim theo suất chiếu hôm nay.";
 
     return (
         <div>
@@ -155,7 +155,7 @@ const Home = () => {
                                     setSelectedProvinceId(value ? Number(value) : undefined);
                                 }}
                             >
-                                <option value="">Toan quoc</option>
+                                <option value="">Toàn quốc</option>
                                 {provinces.map((province) => (
                                     <option key={province.provinceId} value={province.provinceId}>
                                         {province.provinceName}
@@ -169,7 +169,7 @@ const Home = () => {
                         <div>
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-6 mb-10">
                                 {isLoadingMovies ? (
-                                    <p className="col-span-full text-sm text-gray-500">Dang tai phim...</p>
+                                    <p className="col-span-full text-sm text-gray-500">Đang tải phim...</p>
                                 ) : displayedMovies.length > 0 ? (
                                     displayedMovies.map((movie) => <CardHome key={movie.movieId} movie={movie} />)
                                 ) : (
@@ -182,7 +182,7 @@ const Home = () => {
                                     to="/phim-dang-chieu"
                                     className="text-[#f26b38] hover:text-white w-40 border border-[#fb9440] hover:bg-[#fb9440] transition-all duration-300 focus:ring-1 focus:outline-none focus:ring-[#fb9440] rounded text-sm px-5 py-2.5 text-center inline-flex items-center dark:hover:bg-[#fb9440] dark:focus:ring-[#fb9440] mr-2 mb-2 justify-center"
                                 >
-                                    Xem them
+                                    Xem thêm
                                     <ArrowRight />
                                 </Link>
                             </div>

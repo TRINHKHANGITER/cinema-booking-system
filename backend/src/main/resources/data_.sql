@@ -1353,7 +1353,7 @@ INSERT INTO show_time (movie_id, room_id, release_date, start_time, end_time, st
 
 
 
--- show_time_seat: tao ton kho ghe theo tung suat chieu
+-- show_time_seat: tạo tồn kho ghế theo từng suất chiếu
 INSERT INTO show_time_seat (
     show_time_id,
     seat_id,
@@ -1378,19 +1378,19 @@ FROM show_time st
 JOIN seat s ON s.room_id = st.room_id;
 -- price_ticket
 INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
--- 2D + Thuong
+-- 2D + Thường
 (1, 1, 85000,  'ACTIVE'),
 -- 2D + VIP
 (1, 2, 110000, 'ACTIVE'),
--- 2D + Doi
+-- 2D + Đôi
 (1, 3, 200000, 'ACTIVE'),
--- 3D + Thuong
+-- 3D + Thường
 (2, 1, 105000, 'ACTIVE'),
 -- 3D + VIP
 (2, 2, 130000, 'ACTIVE'),
--- 3D + Doi
+-- 3D + Đôi
 (2, 3, 240000, 'ACTIVE'),
--- IMAX + Thuong
+-- IMAX + Thường
 (3, 1, 150000, 'ACTIVE'),
 -- IMAX + VIP
 (3, 2, 200000, 'ACTIVE');
@@ -1409,11 +1409,11 @@ INSERT INTO combo (combo_name, image, description, price, status) VALUES
 -- (3, 170000, 125000, 10000, 285000, NULL,                  'Voucher WELCOME10',              '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'PAID'),
 -- (4, 170000, 230000,     0, 400000, NULL,                  NULL,                             '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'PAID'),
 -- (5, 150000,      0,     0, 150000, NULL,                  NULL,                             '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'PAID'),
--- (6,      0, 125000,     0, 125000, '2026-03-25 20:15:00', 'Dang giu don cho thanh toan',    '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'AWAITING_PAYMENT'),
--- (7, 380000, 310000, 180000, 510000, NULL,                 'Khuyen mai cuoi tuan',           '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'PAID'),
--- (1,  95000,      0,     0,  95000, NULL,                  'Don da huy theo yeu cau khach',  '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
--- (3, 190000, 175000, 25000, 340000, NULL,                  'Ap ma giam 25k',                 '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'PAID'),
--- (4, 255000,      0, 80000, 175000, '2026-03-28 15:45:00', 'Giu ghe 15 phut',                '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'HOLDING');
+-- (6,      0, 125000,     0, 125000, '2026-03-25 20:15:00', 'Đang giữ đơn chờ thanh toán',     '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'AWAITING_PAYMENT'),
+-- (7, 380000, 310000, 180000, 510000, NULL,                 'Khuyến mãi cuối tuần',           '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'PAID'),
+-- (1,  95000,      0,     0,  95000, NULL,                  'Đơn đã huỷ theo yêu cầu khách',  '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
+-- (3, 190000, 175000, 25000, 340000, NULL,                  'Áp mã giảm 25k',                 '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'PAID'),
+-- (4, 255000,      0, 80000, 175000, '2026-03-28 15:45:00', 'Giữ ghế 15 phút',                '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'HOLDING');
 
 -- order
 INSERT INTO orders (
@@ -1471,27 +1471,27 @@ INSERT INTO payment (
 ) VALUES
 -- MOMO
 (1, 285000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-001', 'MOMO-20260325-001',
- 'Thanh toan qua MOMO',
+ 'Thanh toán qua MOMO',
  '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'SUCCESS'),
 
 -- VNPAY (bank transfer)
 (2, 400000.00, 'BANK_TRANSFER', 'VNPAY', 'VNPAY-TXN-001', 'VNPAY-20260325-001',
- 'Thanh toan qua VNPAY',
+ 'Thanh toán qua VNPAY',
  '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'SUCCESS'),
 
 -- ZALOPAY
 (3, 150000.00, 'E_WALLET', 'ZALOPAY', 'ZALO-TXN-001', 'ZALO-20260325-001',
- 'Thanh toan qua ZALOPAY',
+ 'Thanh toán qua ZALOPAY',
  '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'SUCCESS'),
 
 -- MOMO lần 2
 (5, 510000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-002', 'MOMO-20260326-001',
- 'Thanh toan qua MOMO',
+ 'Thanh toán qua MOMO',
  '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'SUCCESS'),
 
 -- Thanh toán thẻ
 (7, 340000.00, 'CARD', 'VISA', 'CARD-TXN-001', 'CARD-20260327-001',
- 'Thanh toan bang the',
+ 'Thanh toán bằng thẻ',
  '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'SUCCESS');
 
 -- ticket

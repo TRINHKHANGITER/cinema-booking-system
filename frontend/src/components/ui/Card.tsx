@@ -26,7 +26,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
             >
               <span className="text-white bg-[#f26b38] w-[120px] h-[40px] hover:bg-[#fb9440] rounded text-sm px-5 py-2.5 text-center inline-flex items-center gap-x-2">
                 <BuyTicket />
-                <span>Mua ve</span>
+                <span>Mua vé</span>
               </span>
             </Link>
           </div>

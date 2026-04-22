@@ -93,7 +93,7 @@ public class BookingService {
 
             if (targetSeat.getStatus() == ShowTimeSeatStatus.HELD) {
                 if (targetSeat.getOrder() != null && Objects.equals(targetSeat.getOrder().getOrderId(), order.getOrderId())) {
-                    // Khong gia han bo dem cho nhung lan chon tiep theo.
+                    // Không gia hạn bộ đếm cho những lần chọn tiếp theo.
                     if (targetSeat.getHoldExpiresAt() == null) {
                         targetSeat.setHoldExpiresAt(holdExpiresAt);
                     }

@@ -181,7 +181,7 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
             }
 
             const errorMessage =
-                action.payload?.message ?? action.error?.message ?? "Dang nhap that bai";
+                action.payload?.message ?? action.error?.message ?? "Đăng nhập thất bại";
             throw new Error(errorMessage);
         },
         signOut: async () => {

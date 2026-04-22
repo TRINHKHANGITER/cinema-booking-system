@@ -33,7 +33,7 @@ export default function VnpayReturn() {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
             } catch (error) {
-                console.log("Loi kiem tra thanh toan: ", error);
+                console.log("Lỗi kiểm tra thanh toán: ", error);
                 if (isMounted) {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
@@ -44,7 +44,7 @@ export default function VnpayReturn() {
             try {
                 await checkoutService.handleReturn(location.search);
             } catch (error) {
-                console.log("Khong goi duoc return callback backend: ", error);
+                console.log("Không gọi được return callback backend: ", error);
             }
 
             await pollOrder();
@@ -72,7 +72,7 @@ export default function VnpayReturn() {
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="rounded-2xl bg-white px-8 py-6 shadow-lg border border-gray-200">
                     <p className="text-lg font-medium text-gray-700 animate-pulse">
-                        Dang tai thong tin don hang...
+                        Đang tải thông tin đơn hàng...
                     </p>
                 </div>
             </div>
@@ -86,9 +86,9 @@ export default function VnpayReturn() {
             <div className="mx-auto max-w-4xl">
                 <div className="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200">
                     <div className="bg-slate-900 px-8 py-6 text-white">
-                        <h1 className="text-2xl font-bold">Ket qua thanh toan VNPAY</h1>
+                        <h1 className="text-2xl font-bold">Kết quả thanh toán VNPAY</h1>
                         <p className="mt-2 text-sm text-slate-300">
-                            Thong tin chi tiet don hang sau khi thanh toan
+                            Thông tin chi tiết đơn hàng sau khi thanh toán
                         </p>
                     </div>
 
@@ -101,8 +101,8 @@ export default function VnpayReturn() {
                             }`}
                         >
                             {isPaid
-                                ? "Don hang da duoc thanh toan thanh cong."
-                                : "Giao dich khong thanh cong hoac da het han."}
+                                ? "Đơn hàng đã được thanh toán thành công."
+                                : "Giao dịch không thành công hoặc đã hết hạn."}
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-gray-200">
@@ -130,14 +130,14 @@ export default function VnpayReturn() {
                                 to="/"
                                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                             >
-                                Quay lai trang chu
+                                Quay lại trang chủ
                             </Link>
 
                             <Link
                                 to="/phim-dang-chieu"
                                 className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                             >
-                                Tao giao dich moi
+                                Tạo giao dịch mới
                             </Link>
                         </div>
                     </div>

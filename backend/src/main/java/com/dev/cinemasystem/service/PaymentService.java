@@ -78,6 +78,6 @@ public class PaymentService {
     }
 
     public static String buildTransferContent(int orderId) {
-        return "THANH TOAN DH" + String.format("%04d", orderId);
+        return "THANH TOÁN ĐH" + String.format("%04d", orderId);
     }
 }

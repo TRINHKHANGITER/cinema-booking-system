@@ -13,7 +13,7 @@ import { bookingService } from "../../services/booking.service";
 import { toast } from "sonner";
 import axios from "axios";
 
-const STEPS = ["Chon phim / Rap / Suat", "Chon ghe", "Chon thuc an", "Thanh toan", "Xac nhan"];
+const STEPS = ["Chọn phim / Rạp / Suất", "Chọn ghế", "Chọn thức ăn", "Thanh toán", "Xác nhận"];
 
 const Booking = () => {
     const dispatch = useAppDispatch();
@@ -155,7 +155,7 @@ const Booking = () => {
 
         const timer = setInterval(() => {
             if (Date.now() >= expiredAtMs) {
-                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                 handleOrderExpired();
             }
         }, 1000);
@@ -176,11 +176,11 @@ const Booking = () => {
         } catch (error) {
             const { code, message } = extractApiError(error);
             if (code === "ORDER_EXPIRED") {
-                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                 handleOrderExpired();
                 return false;
             }
-            toast.error(message || "Khong cap nhat duoc combo. Vui long thu lai.");
+            toast.error(message || "Không cập nhật được combo. Vui lòng thử lại.");
             return false;
         }
     };
@@ -194,11 +194,11 @@ const Booking = () => {
         } catch (error) {
             const { code, message } = extractApiError(error);
             if (code === "ORDER_EXPIRED") {
-                toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                 handleOrderExpired();
                 return null;
             }
-            toast.error(message || "Khong tao duoc giao dich thanh toan.");
+            toast.error(message || "Không tạo được giao dịch thanh toán.");
             return null;
         }
     };
@@ -218,7 +218,7 @@ const Booking = () => {
         }
 
         if (orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now()) {
-            toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+            toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
             handleOrderExpired();
             return;
         }
@@ -274,7 +274,7 @@ const Booking = () => {
                     <div className="col-span-2 xl:order-first order-last xl:h-full h-full overflow-hidden xl:overflow-auto xl:pb-10 md:pb-32 pb-10">
                         {!showDetail && (
                             <div className="bg-white p-6 rounded">
-                                Dang tai thong tin suat chieu...
+                                Đang tải thông tin suất chiếu...
                             </div>
                         )}
 
@@ -338,14 +338,14 @@ const Booking = () => {
                                         <span>{selectedShowTime?.room?.roomName}</span>
                                     </div>
                                     <div className="xl:mt-2 text-sm xl:text-base">
-                                        <span>Suat: </span>
+                                        <span>Suất: </span>
                                         <strong>
                                             {formatTime(selectedShowTime?.startTime ?? "")}
                                         </strong>
                                     </div>
                                     {orderExpiredAt && (
                                         <div className="xl:mt-2 text-xs text-orange-500">
-                                            Giu ghe den: {new Date(orderExpiredAt).toLocaleTimeString("vi-VN")}
+                                            Giữ ghế đến: {new Date(orderExpiredAt).toLocaleTimeString("vi-VN")}
                                         </div>
                                     )}
 
@@ -361,7 +361,7 @@ const Booking = () => {
                                                         <strong>{group.count}x </strong>
                                                         <span>{group.label}</span>
                                                         <div>
-                                                            <span>Ghe: </span>
+                                                            <span>Ghế: </span>
                                                             <strong>{group.seatLabel}</strong>
                                                         </div>
                                                     </div>
@@ -398,7 +398,7 @@ const Booking = () => {
                                 </div>
 
                                 <div className="xl:flex hidden justify-between col-span-3">
-                                    <strong className="text-base">Tong cong</strong>
+                                    <strong className="text-base">Tổng cộng</strong>
                                     <span className="font-bold text-[rgb(245,128,32)]">
                                         {calculateTotalPrice(
                                             selectedSeats,
@@ -415,21 +415,21 @@ const Booking = () => {
                                     onClick={handleBack}
                                     disabled={step === 1}
                                 >
-                                    Quay lai
+                                    Quay lại
                                 </button>
                                 <button
                                     disabled={selectedSeats.length === 0 && step === 1}
                                     onClick={handleNext}
                                     className="w-1/2 py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
+                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>
 
                         <div className="fixed bottom-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 border-t border-gray-100 xl:hidden">
                             <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-500">Tong cong:</span>
+                                <span className="text-sm text-gray-500">Tổng cộng:</span>
                                 <span className="font-bold text-[rgb(245,128,32)]">
                                     {calculateTotalPrice(
                                         selectedSeats,
@@ -444,14 +444,14 @@ const Booking = () => {
                                     onClick={handleBack}
                                     disabled={step === 1}
                                 >
-                                    Quay lai
+                                    Quay lại
                                 </button>
                                 <button
                                     disabled={selectedSeats.length === 0 && step === 1}
                                     onClick={handleNext}
                                     className="px-4 h-10 bg-[rgb(245,128,32)] text-white text-sm rounded-md disabled:opacity-40"
                                 >
-                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
+                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>

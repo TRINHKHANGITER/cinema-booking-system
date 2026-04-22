@@ -197,7 +197,7 @@ const IsShowing = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-6 mb-10">
                                 {isLoadingMovies ? (
                                     <p className="col-span-full text-sm text-gray-500">
-                                        Dang tai phim...
+                                        Đang tải phim...
                                     </p>
                                 ) : moviesFromShowtimes.length > 0 ? (
                                     moviesFromShowtimes.map((movie, index) => (
@@ -206,8 +206,8 @@ const IsShowing = () => {
                                 ) : (
                                     <p className="col-span-full text-sm text-gray-500">
                                         {activeTab === 1
-                                            ? "Chua co phim sap chieu theo suat chieu."
-                                            : "Chua co phim theo suat chieu hom nay."}
+                                            ? "Chưa có phim sắp chiếu theo suất chiếu."
+                                            : "Chưa có phim theo suất chiếu hôm nay."}
                                     </p>
                                 )}
                             </div>
@@ -220,7 +220,7 @@ const IsShowing = () => {
                                         onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                                         disabled={currentPage === 1 || isLoadingMovies}
                                     >
-                                        Truoc
+                                        Trước
                                     </button>
 
                                     {visiblePageButtons.map((page) => (
@@ -257,7 +257,7 @@ const IsShowing = () => {
                     <div className="pb-12 pt-6 my-0 mx-auto xl:max-w-screen-xl lg:max-w-4xl md:max-w-4xl md:px-4 sm:px-[45px] px-[16px]">
                         <div className="mb-8">
                             <span className="border-l-4 border-solid border-[rgb(3,78,162)] mr-2"></span>
-                            <h1 className="md:mb-4 text-xl inline-block uppercase font-medium">Phim Dang Chieu</h1>
+                            <h1 className="md:mb-4 text-xl inline-block uppercase font-medium">Phim Đang Chiếu</h1>
                         </div>
 
                         <div className="leading-5 content__data__full">
@@ -307,7 +307,7 @@ const IsShowing = () => {
                                                     letterSpacing: ".15pt",
                                                 }}
                                             >
-                                                {movie.description || "Chua co mo ta"}
+                                                {movie.description || "Chưa có mô tả"}
                                             </span>
                                         </p>
                                     </div>

@@ -95,7 +95,7 @@ public class CheckoutService {
         boolean success = "00".equals(params.get(VnpayParamsResponse.RESPONSE_CODE))
                 && "00".equals(params.get(VnpayParamsResponse.TRANSACTION_STATUS));
 
-        // Fallback: neu IPN khong ve duoc backend, return callback van co the chot don.
+        // Fallback: nếu IPN không về được backend, return callback vẫn có thể chốt đơn.
         if (order.getStatus() == OrderStatus.PAYING) {
             payment.setMethod(params.get(VnpayParamsResponse.CARD_TYPE));
             payment.setBankCode(params.get(VnpayParamsResponse.BANK_CODE));

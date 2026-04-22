@@ -107,7 +107,7 @@ const ChoiceSeat = ({
             !!orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now();
 
         if (isExpiredNow) {
-            toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+            toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
             onOrderExpired();
             return;
         }
@@ -139,15 +139,15 @@ const ChoiceSeat = ({
             if (axios.isAxiosError(error)) {
                 const data = error.response?.data as { code?: string; message?: string } | undefined;
                 if (data?.code === "ORDER_EXPIRED") {
-                    toast.error("Don giu ghe da het han, vui long chon lai ghe.");
+                    toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                     onOrderExpired();
                     await fetchSeatMap();
                     return;
                 }
-                toast.error(data?.message || "Khong the cap nhat ghe. Vui long thu lai.");
+                toast.error(data?.message || "Không thể cập nhật ghế. Vui lòng thử lại.");
                 return;
             }
-            toast.error("Khong the cap nhat ghe. Vui long thu lai.");
+            toast.error("Không thể cập nhật ghế. Vui lòng thử lại.");
         }
     };
 
@@ -155,7 +155,7 @@ const ChoiceSeat = ({
         <div>
             <div className="bg-white px-6 py-4 rounded md:mb-8 mb-4 w-full">
                 <div className="flex gap-8 items-center">
-                    <label className="text-sm font-semibold">Suat chieu</label>
+                    <label className="text-sm font-semibold">Suất chiếu</label>
                     <button className="py-2 px-4 border border-gray-300 rounded text-sm bg-[#034ea2] text-white">
                         {formatTime(startTime)}
                     </button>
@@ -165,11 +165,11 @@ const ChoiceSeat = ({
             <div className="bg-white py-6 px-4 rounded md:mb-8 w-full">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-3/5 h-1 bg-[#034ea2] rounded-full opacity-50" />
-                    <p className="text-xs text-gray-400 mt-2 tracking-widest">Man hinh</p>
+                    <p className="text-xs text-gray-400 mt-2 tracking-widest">Màn hình</p>
                 </div>
 
                 {loading && (
-                    <div className="text-center text-sm text-gray-500 mb-4">Dang tai so do ghe...</div>
+                    <div className="text-center text-sm text-gray-500 mb-4">Đang tải sơ đồ ghế...</div>
                 )}
 
                 <div className="flex flex-col items-center gap-1.5 overflow-auto">
@@ -251,18 +251,18 @@ const ChoiceSeat = ({
                     <div className="flex gap-4 flex-wrap justify-center">
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-gray-100 border border-gray-200 inline-block" />
-                            <span className="text-xs text-gray-500">Da ban / Dang giu</span>
+                            <span className="text-xs text-gray-500">Đã bán / Đang giữ</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-[#034ea2] inline-block" />
-                            <span className="text-xs text-gray-500">Dang chon</span>
+                            <span className="text-xs text-gray-500">Đang chọn</span>
                         </div>
                     </div>
 
                     <div className="flex gap-4 flex-wrap justify-center">
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded border border-gray-300 bg-white inline-block" />
-                            <span className="text-xs text-gray-500">Ghe don</span>
+                            <span className="text-xs text-gray-500">Ghế đơn</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded bg-[#FAEEDA] border border-[#EF9F27] inline-block" />
@@ -270,7 +270,7 @@ const ChoiceSeat = ({
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-10 h-5 rounded border border-[#ED93B1] bg-[#FBEAF0] inline-block" />
-                            <span className="text-xs text-gray-500">Ghe doi</span>
+                            <span className="text-xs text-gray-500">Ghế đôi</span>
                         </div>
                     </div>
                 </div>
