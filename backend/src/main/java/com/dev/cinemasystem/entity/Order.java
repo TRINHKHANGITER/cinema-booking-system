@@ -23,8 +23,12 @@ public class Order {
     Integer orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "show_time_id", nullable = false)
+    ShowTime showTime;
 
     @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
@@ -43,8 +47,11 @@ public class Order {
     BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal netAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    LocalDateTime expiredAt;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -57,7 +64,5 @@ public class Order {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    OrderStatus status = OrderStatus.PENDING;
+    OrderStatus status = OrderStatus.PAYING;
 }
-
-

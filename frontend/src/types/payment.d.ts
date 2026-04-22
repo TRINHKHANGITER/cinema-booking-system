@@ -2,13 +2,14 @@ export type PaymentMethod =
     | "CASH"
     | "CARD"
     | "BANK_TRANSFER"
-    | "E_WALLET";
+    | "E_WALLET"
+    | string;
 
 export const PaymentMethodDescription: Record<PaymentMethod, string>;
 
 export type PaymentStatus =
     | "PENDING"
-    | "PAID"
+    | "SUCCESS"
     | "FAILED"
     | "EXPIRED"
     | "CANCELLED";
@@ -20,9 +21,10 @@ export type PaymentEntity = {
     orderId: number;
     amount: number;
     method: PaymentMethod;
+    bankCode?: string | null;
+    bankTransactionNo?: string | null;
     transactionId: string | null;
     infoTransaction: string | null;
-    providerPayload: string | null;
     paidAt: string | null;
     createdAt: string;
     updatedAt: string;

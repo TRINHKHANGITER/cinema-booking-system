@@ -1,6 +1,5 @@
 package com.dev.cinemasystem.entity;
 
-import com.dev.cinemasystem.enums.PaymentMethod;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,25 +30,16 @@ public class Payment {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal amount;
 
-    // @Enumerated(EnumType.STRING)
-    // @Column(nullable = false, length = 30)
-    // Loại tài khoản/thẻ khách hàng sử dụng:ATM,QRCODE
     String method;
 
-    // Mã Ngân hàng thanh toán. Ví dụ: NCB,...
     String bankCode;
 
-    // mã giao dịch ngân hàng, ví điện tử, ....
     String bankTransactionNo;
 
     @Column(length = 200, unique = true)
-    // Mã giao dịch ghi nhận tại hệ thống VNPAY. (bên thứ 3)
     String transactionId;
 
     String infoTransaction;
-
-    // @Column(columnDefinition = "TEXT")
-    // String providerPayload;
 
     LocalDateTime paidAt;
 
@@ -66,5 +56,3 @@ public class Payment {
     @Column(nullable = false)
     PaymentStatus status = PaymentStatus.PENDING;
 }
-
-

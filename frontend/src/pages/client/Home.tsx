@@ -38,7 +38,7 @@ const Home = () => {
 
                 const filters = {
                     provinceId: selectedProvinceId,
-                    status: "SCHEDULED",
+                    status: "SELLING",
                     page: 1,
                     size: 200,
                     sortBy: "startTime",
@@ -197,3 +197,4 @@ const Home = () => {
 };
 
 export default Home;
+

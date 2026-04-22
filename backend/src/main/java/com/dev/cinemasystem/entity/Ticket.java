@@ -30,7 +30,7 @@ public class Ticket {
     Integer ticketId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,17 +45,11 @@ public class Ticket {
     @JoinColumn(name = "price_ticket_id")
     PriceTicket priceTicket;
 
-    @Column(precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal unitPrice;
 
     @Column(length = 255)
     String qrCode;
-
-//    LocalDateTime heldAt;
-//
-//    LocalDateTime heldUntil;
-//
-//    LocalDateTime bookedAt;
 
     LocalDateTime checkedInAt;
 
@@ -70,7 +64,5 @@ public class Ticket {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    TicketStatus status = TicketStatus.PENDING;
+    TicketStatus status = TicketStatus.ACTIVE;
 }
-
-

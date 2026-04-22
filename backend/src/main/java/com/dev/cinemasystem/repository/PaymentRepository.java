@@ -12,7 +12,13 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     Optional<Payment> findByOrder_OrderId(Integer orderId);
 
+    Optional<Payment> findTopByOrder_OrderIdOrderByPaymentIdDesc(Integer orderId);
+
+    Optional<Payment> findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(Integer orderId, PaymentStatus status);
+
     boolean existsPaymentByPaymentId(Integer paymentId);
 
     List<Payment> findAllByStatus(PaymentStatus status);
+
+    List<Payment> findAllByOrder_OrderIdAndStatus(Integer orderId, PaymentStatus status);
 }

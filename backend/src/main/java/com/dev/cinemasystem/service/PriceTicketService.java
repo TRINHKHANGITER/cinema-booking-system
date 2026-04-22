@@ -131,7 +131,10 @@ public class PriceTicketService {
 
     public BigDecimal getPriceByRoomTypeIdAndSeatTypeId(int roomTypeId, int seatTypeId) {
         PriceTicket ticket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seatTypeId);
-        return BigDecimal.valueOf(ticket.getPrice());
+        if (ticket == null) {
+            throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
+        }
+        return ticket.getPrice();
     }
 
 

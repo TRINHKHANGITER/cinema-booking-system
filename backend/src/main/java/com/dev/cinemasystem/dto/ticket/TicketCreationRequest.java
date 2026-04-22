@@ -9,9 +9,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TicketCreationRequest {
-    int orderId;
-
-    int showTimeId;
-
-    int seatId;
+    Integer orderId;
+    Integer showTimeId;
+    Integer seatId;
 }

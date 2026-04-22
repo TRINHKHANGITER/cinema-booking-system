@@ -1,5 +1,7 @@
 package com.dev.cinemasystem.dto.orderDTO;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class OrderCreationRequest {
     Integer userId;
 
-//    List<TicketCreationRequest> tickets;
-//
-//    List<OrderComboCreationRequest> combos;
+    @NotNull(message = "INVALID_REQUEST")
+    @Min(value = 1, message = "INVALID_REQUEST")
+    Integer showTimeId;
 }

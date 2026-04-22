@@ -28,7 +28,7 @@ public class VnpayService {
     public String buildVnpayUrl(VnpayRequest vnpayRequest, String clientIp) {
         String infoTransactionOrder = PaymentService.buildTransferContent(vnpayRequest.getOrderId());
         ZonedDateTime now = ZonedDateTime.now(VIETNAM_ZONE);
-        ZonedDateTime expireAt = now.plusMinutes(15);
+        ZonedDateTime expireAt = now.plusMinutes(5);
 
         Map<String, String> params = new LinkedHashMap<>();
         params.put(VnpayParamsRequest.VERSION, vnPayConfig.getVersion());

@@ -9,9 +9,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderComboCreationRequest {
-    int orderId;
-
-    int comboId;
-
-    int quantity;
+    Integer orderId;
+    Integer comboId;
+    Integer quantity;
 }

@@ -39,7 +39,7 @@ const IsShowing = () => {
 
                 const filters = {
                     provinceId: selectedProvinceId,
-                    status: "SCHEDULED",
+                    status: "SELLING",
                     page: currentPage,
                     size: PAGE_SIZE,
                     sortBy: "startTime",
@@ -324,3 +324,4 @@ const IsShowing = () => {
 };
 
 export default IsShowing;
+

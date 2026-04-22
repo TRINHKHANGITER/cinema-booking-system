@@ -11,6 +11,7 @@ use `cinema_booking_system_test`;
 -- DROP TABLE IF EXISTS ticket;
 -- DROP TABLE IF EXISTS price_ticket;
 -- DROP TABLE IF EXISTS show_time;
+-- DROP TABLE IF EXISTS show_time_seat;
 -- DROP TABLE IF EXISTS seat;
 -- DROP TABLE IF EXISTS room;
 -- DROP TABLE IF EXISTS cinema;
@@ -32,6 +33,7 @@ DELETE FROM order_combo;
 DELETE FROM combo;
 DELETE FROM ticket;
 DELETE FROM price_ticket;
+DELETE FROM show_time_seat;
 DELETE FROM show_time;
 DELETE FROM seat;
 DELETE FROM room;
@@ -55,6 +57,7 @@ TRUNCATE TABLE order_combo;
 TRUNCATE TABLE combo;
 TRUNCATE TABLE ticket;
 TRUNCATE TABLE price_ticket;
+TRUNCATE TABLE show_time_seat;
 TRUNCATE TABLE show_time;
 TRUNCATE TABLE seat;
 TRUNCATE TABLE room;
@@ -1350,6 +1353,29 @@ INSERT INTO show_time (movie_id, room_id, release_date, start_time, end_time, st
 
 
 
+-- show_time_seat: tao ton kho ghe theo tung suat chieu
+INSERT INTO show_time_seat (
+    show_time_id,
+    seat_id,
+    status,
+    hold_expires_at,
+    order_id,
+    created_at,
+    updated_at
+)
+SELECT
+    st.show_time_id,
+    s.seat_id,
+    CASE
+        WHEN s.status = 'ACTIVE' THEN 'AVAILABLE'
+        ELSE 'BLOCKED'
+        END AS status,
+    NULL,
+    NULL,
+    NOW(),
+    NOW()
+FROM show_time st
+JOIN seat s ON s.room_id = st.room_id;
 -- price_ticket
 INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
 -- 2D + Thuong
@@ -1392,32 +1418,34 @@ INSERT INTO combo (combo_name, image, description, price, status) VALUES
 -- order
 INSERT INTO orders (
     user_id,
+    show_time_id,
     ticket_total,
     combo_total,
     discount_amount,
     total_amount,
     net_amount,
+    expired_at,
     created_at,
     updated_at,
     status
 ) VALUES
-      (3, 170000, 125000, 10000, 285000, 285000, '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'CONFIRMED'),
-      (4, 170000, 230000,     0, 400000, 400000, '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'EXPIRED'),
-      (5, 150000,      0,     0, 150000, 150000, '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'CONFIRMED'),
-      (6,      0, 125000,     0, 125000, 125000, '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'PENDING'),
-      (7, 380000, 310000, 180000, 510000, 510000, '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'CONFIRMED'),
-      (1,  95000,      0,     0,  95000,  95000, '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
-      (3, 190000, 175000, 25000, 340000, 340000, '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'CONFIRMED'),
-      (4, 255000,      0, 80000, 175000, 175000, '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'CANCELLED'),
-      (4, 255000,      0, 80000, 175000, 175000, '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'PENDING');
+      (3, 1, 170000, 125000, 10000, 285000, 285000, '2026-03-25 10:35:00', '2026-03-25 10:30:00', '2026-03-25 10:35:00', 'PAID'),
+      (4, 1, 170000, 230000,     0, 400000, 400000, '2026-03-25 13:05:00', '2026-03-25 13:00:00', '2026-03-25 13:05:00', 'PAID'),
+      (5, 2, 150000,      0,     0, 150000, 150000, '2026-03-25 16:50:00', '2026-03-25 16:45:00', '2026-03-25 16:50:00', 'PAID'),
+      (6, 5,      0, 125000,     0, 125000, 125000, '2026-03-25 20:05:00', '2026-03-25 20:00:00', '2026-03-25 20:00:00', 'PAYING'),
+      (7, 3, 380000, 310000, 180000, 510000, 510000, '2026-03-26 09:20:00', '2026-03-26 09:15:00', '2026-03-26 09:20:00', 'PAID'),
+      (1, 5,  95000,      0,     0,  95000,  95000, '2026-03-26 14:05:00', '2026-03-26 14:00:00', '2026-03-26 14:30:00', 'CANCELLED'),
+      (3, 6, 190000, 175000, 25000, 340000, 340000, '2026-03-27 10:05:00', '2026-03-27 10:00:00', '2026-03-27 10:05:00', 'PAID'),
+      (4, 8, 255000,      0, 80000, 175000, 175000, '2026-03-28 15:35:00', '2026-03-28 15:30:00', '2026-03-28 15:30:00', 'CANCELLED'),
+      (4, 9, 255000,      0, 80000, 175000, 175000, DATE_ADD(NOW(), INTERVAL 5 MINUTE), NOW(), NOW(), 'PAYING');
 
 -- orderCombo
 INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, status) VALUES
-(1, 1, 1, 125000, 'PENDING'),
-(2, 4, 1, 230000, 'PENDING'),
-(4, 1, 1, 125000, 'PENDING'),
-(5, 5, 1, 310000, 'PENDING'),
-(7, 3, 1, 175000, 'PENDING');
+(1, 1, 1, 125000, 'ACTIVE'),
+(2, 4, 1, 230000, 'ACTIVE'),
+(4, 1, 1, 125000, 'ACTIVE'),
+(5, 5, 1, 310000, 'ACTIVE'),
+(7, 3, 1, 175000, 'ACTIVE');
 
 -- payment
 -- INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
@@ -1444,27 +1472,27 @@ INSERT INTO payment (
 -- MOMO
 (1, 285000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-001', 'MOMO-20260325-001',
  'Thanh toan qua MOMO',
- '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'PAID'),
+ '2026-03-25 10:35:00', '2026-03-25 10:33:00', '2026-03-25 10:35:00', 'SUCCESS'),
 
 -- VNPAY (bank transfer)
 (2, 400000.00, 'BANK_TRANSFER', 'VNPAY', 'VNPAY-TXN-001', 'VNPAY-20260325-001',
  'Thanh toan qua VNPAY',
- '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'PAID'),
+ '2026-03-25 13:05:00', '2026-03-25 13:02:00', '2026-03-25 13:05:00', 'SUCCESS'),
 
 -- ZALOPAY
 (3, 150000.00, 'E_WALLET', 'ZALOPAY', 'ZALO-TXN-001', 'ZALO-20260325-001',
  'Thanh toan qua ZALOPAY',
- '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'PAID'),
+ '2026-03-25 16:50:00', '2026-03-25 16:47:00', '2026-03-25 16:50:00', 'SUCCESS'),
 
 -- MOMO lần 2
 (5, 510000.00, 'E_WALLET', 'MOMO', 'MOMO-TXN-002', 'MOMO-20260326-001',
  'Thanh toan qua MOMO',
- '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'PAID'),
+ '2026-03-26 09:20:00', '2026-03-26 09:17:00', '2026-03-26 09:20:00', 'SUCCESS'),
 
 -- Thanh toán thẻ
 (7, 340000.00, 'CARD', 'VISA', 'CARD-TXN-001', 'CARD-20260327-001',
  'Thanh toan bang the',
- '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'PAID');
+ '2026-03-27 10:05:00', '2026-03-27 10:02:00', '2026-03-27 10:05:00', 'SUCCESS');
 
 -- ticket
 INSERT INTO ticket (
@@ -1491,26 +1519,45 @@ SELECT
     src.updated_at,
     src.status
 FROM (
-    SELECT 1 AS order_id, 1 AS show_id, 73 AS seat_id, 'QR-20260325-001' AS qr_code, NULL AS checked_in_at, '2026-03-25 10:31:00' AS created_at, '2026-03-25 10:31:00' AS updated_at, 'PENDING' AS status
-    UNION ALL SELECT 1, 1, 74, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'PENDING'
-    UNION ALL SELECT 2, 1, 1, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'
-    UNION ALL SELECT 2, 1, 2, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'PENDING'
-    UNION ALL SELECT 3, 2, 25, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'
-    UNION ALL SELECT 3, 2, 26, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'PENDING'
-    UNION ALL SELECT 5, 3, 85, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'
-    UNION ALL SELECT 5, 3, 86, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'PENDING'
-    UNION ALL SELECT 5, 4, 120, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'
-    UNION ALL SELECT 5, 4, 121, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'PENDING'
-    UNION ALL SELECT 6, 5, 130, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'PENDING'
-    UNION ALL SELECT 7, 6, 49, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'
-    UNION ALL SELECT 7, 7, 140, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'PENDING'
-    UNION ALL SELECT 8, 8, 3, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
-    UNION ALL SELECT 8, 9, 13, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
-    UNION ALL SELECT 8, 9, 14, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'PENDING'
+    SELECT 1 AS order_id, 1 AS show_id, 73 AS seat_id, 'QR-20260325-001' AS qr_code, NULL AS checked_in_at, '2026-03-25 10:31:00' AS created_at, '2026-03-25 10:31:00' AS updated_at, 'ACTIVE' AS status
+    UNION ALL SELECT 1, 1, 74, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'ACTIVE'
+    UNION ALL SELECT 2, 1, 1, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'ACTIVE'
+    UNION ALL SELECT 2, 1, 2, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'ACTIVE'
+    UNION ALL SELECT 3, 2, 25, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'ACTIVE'
+    UNION ALL SELECT 3, 2, 26, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'ACTIVE'
+    UNION ALL SELECT 5, 3, 85, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'ACTIVE'
+    UNION ALL SELECT 5, 3, 86, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'ACTIVE'
+    UNION ALL SELECT 5, 4, 120, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'ACTIVE'
+    UNION ALL SELECT 5, 4, 121, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'ACTIVE'
+    UNION ALL SELECT 6, 5, 130, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'ACTIVE'
+    UNION ALL SELECT 7, 6, 49, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'ACTIVE'
+    UNION ALL SELECT 7, 7, 140, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'ACTIVE'
+    UNION ALL SELECT 8, 8, 3, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
+    UNION ALL SELECT 8, 9, 13, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
+    UNION ALL SELECT 8, 9, 14, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
 ) src
 JOIN show_time st ON st.show_time_id = src.show_id
 JOIN room r ON r.room_id = st.room_id
 JOIN seat s ON s.seat_id = src.seat_id AND s.room_id = st.room_id
 JOIN price_ticket pt ON pt.room_type_id = r.room_type_id AND pt.seat_type_id = s.seat_type_id;
 update show_time
-set show_time.release_date = now(6)
+set show_time.release_date = now(6),
+    show_time.status = 'SELLING';
+
+UPDATE show_time_seat sts
+JOIN ticket t ON t.show_id = sts.show_time_id AND t.seat_id = sts.seat_id
+SET sts.status = 'SOLD',
+    sts.order_id = t.order_id,
+    sts.hold_expires_at = NULL,
+    sts.updated_at = NOW()
+WHERE t.status IN ('ACTIVE', 'USED');
+
+UPDATE show_time_seat
+SET status = 'HELD',
+    order_id = 9,
+    hold_expires_at = DATE_ADD(NOW(), INTERVAL 5 MINUTE),
+    updated_at = NOW()
+WHERE show_time_id = 9
+  AND seat_id IN (3, 13, 14);
+
+

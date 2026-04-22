@@ -12,4 +12,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
     List<Ticket> findAllByStatus(TicketStatus status);
 
     List<Ticket> findAllByOrder_OrderId(int orderId);
+
+    boolean existsByShow_ShowTimeIdAndSeat_SeatId(Integer showTimeId, Integer seatId);
 }

@@ -209,7 +209,7 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
             if (response.code === "SUCCESS") {
                 await dispatch(
                     loginThunk({
-                        emailOrUsername: email,
+                        email,
                         password,
                     })
                 );
@@ -231,3 +231,4 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
 };
 
 export default authSlice.reducer;
+

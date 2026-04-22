@@ -12,16 +12,10 @@ import java.math.BigDecimal;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderComboResponse {
-    int orderComboId;
-
-    int orderId;
-
-    int comboId;
-
-    int quantity;
-
+    Integer orderComboId;
+    Integer orderId;
+    Integer comboId;
+    Integer quantity;
     BigDecimal unitPrice;
-
     OrderComboStatus status;
-
 }

@@ -4,7 +4,7 @@ import type { ProvinceResponse } from "./province";
 import type { RoomResponse } from "./room";
 import type { RoomTypeResponse } from "./room-type";
 
-export type ShowTimeStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED";
+export type ShowTimeStatus = "SCHEDULED" | "SELLING" | "STOPPED" | "COMPLETED" | "CANCELLED";
 
 export type ShowTimeEntity = {
     showTimeId: number;

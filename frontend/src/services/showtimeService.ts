@@ -79,7 +79,7 @@ export const showTimeService = {
     getShowTimesByCinema: async (cinemaId: number, params?: ShowTimeByCinemaParams) => {
         const res = await api.get<ApiResponse<PagingDto<ShowtimeMovieResponse>>>(`/showtime/cinema/${cinemaId}`, {
             params: {
-                status: params?.status ?? "SCHEDULED",
+                status: params?.status ?? "SELLING",
                 page: params?.page ?? 0,
                 size: params?.size ?? 10,
                 sortBy: params?.sortBy ?? "showtimeId",
@@ -112,7 +112,7 @@ export const showTimeService = {
 
     getShowTimesByMovieId: async (
         movieId: number,
-        status: ShowTimeStatus = "SCHEDULED",
+        status: ShowTimeStatus = "SELLING",
         page = 1,
         size = 10,
         sortBy = "showtimeId",
@@ -166,7 +166,7 @@ export const showTimeService = {
             releaseDate,
             releaseDateCondition: "EQ",
             provinceId: filters?.provinceId,
-            status: filters?.status ?? "SCHEDULED",
+            status: filters?.status ?? "SELLING",
             page: filters?.page ?? 1,
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",
@@ -184,3 +184,4 @@ export const showTimeService = {
         });
     },
 };
+

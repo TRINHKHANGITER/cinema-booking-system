@@ -2,12 +2,12 @@ import { Link, useLocation } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { orderService } from "../../services/order.service";
+import { checkoutService } from "../../services/checkout.service";
 import type { Order } from "../../types/order";
 
 export default function VnpayReturn() {
     const [order, setOrder] = useState<Order | null>(null);
     const location: Location = useLocation();
-    // console.log("location: ", location);
 
     const params = new URLSearchParams(location.search);
     const txnRef = params.get("vnp_TxnRef");
@@ -20,7 +20,6 @@ export default function VnpayReturn() {
 
         const getOrder = async () => {
             const resOrder = await orderService.getOrderByOrderId(Number(txnRef));
-            // console.log("resOrder.data: ", resOrder.data);
             return resOrder.result;
         };
 
@@ -30,31 +29,34 @@ export default function VnpayReturn() {
                 if (!isMounted) return;
                 setOrder(orderData);
 
-                if (orderData.status !== "PAID") {
+                if (orderData.status === "PAYING") {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
             } catch (error) {
-                console.log("Lỗi kiểm tra thanh toán: ", error);
-                // nếu lỗi mà chưa unmount thì polling lại
+                console.log("Loi kiem tra thanh toan: ", error);
                 if (isMounted) {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
             }
         };
 
-        pollOrder();
+        const syncReturnThenPoll = async () => {
+            try {
+                await checkoutService.handleReturn(location.search);
+            } catch (error) {
+                console.log("Khong goi duoc return callback backend: ", error);
+            }
+
+            await pollOrder();
+        };
+
+        syncReturnThenPoll();
 
         return () => {
             isMounted = false;
             if (timeoutId) clearTimeout(timeoutId);
-            // Nó chạy khi:
-            //     Component bị unmount (rời trang)
-            //     Hoặc trước khi useEffect chạy lại do dependency (txnRef) thay đổi
-            // Tác dụng
-            //     tránh bị gọi API liên tục dù người dùng đã rời trang
-            //     tránh memory leak, tức là rò rỉ bộ nhớ
         };
-    }, [txnRef]);
+    }, [location.search, txnRef]);
 
     const orderParams = useMemo(() => {
         if (!order) return [];
@@ -70,23 +72,23 @@ export default function VnpayReturn() {
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="rounded-2xl bg-white px-8 py-6 shadow-lg border border-gray-200">
                     <p className="text-lg font-medium text-gray-700 animate-pulse">
-                        Đang tải thông tin đơn hàng...
+                        Dang tai thong tin don hang...
                     </p>
                 </div>
             </div>
         );
     }
 
-    const isPaid = order.status === "CONFIRMED";
+    const isPaid = order.status === "PAID";
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 py-10 px-4">
             <div className="mx-auto max-w-4xl">
                 <div className="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200">
                     <div className="bg-slate-900 px-8 py-6 text-white">
-                        <h1 className="text-2xl font-bold">Kết quả thanh toán VNPAY</h1>
+                        <h1 className="text-2xl font-bold">Ket qua thanh toan VNPAY</h1>
                         <p className="mt-2 text-sm text-slate-300">
-                            Thông tin chi tiết đơn hàng sau khi thanh toán
+                            Thong tin chi tiet don hang sau khi thanh toan
                         </p>
                     </div>
 
@@ -99,8 +101,8 @@ export default function VnpayReturn() {
                             }`}
                         >
                             {isPaid
-                                ? "Đơn hàng đã được thanh toán thành công."
-                                : "Giao dịch đang được xử lý hoặc chưa thanh toán thành công."}
+                                ? "Don hang da duoc thanh toan thanh cong."
+                                : "Giao dich khong thanh cong hoac da het han."}
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-gray-200">
@@ -128,14 +130,14 @@ export default function VnpayReturn() {
                                 to="/"
                                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                             >
-                                Quay lại trang chủ
+                                Quay lai trang chu
                             </Link>
 
                             <Link
-                                to="/checkout"
+                                to="/phim-dang-chieu"
                                 className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                             >
-                                Tạo giao dịch mới
+                                Tao giao dich moi
                             </Link>
                         </div>
                     </div>

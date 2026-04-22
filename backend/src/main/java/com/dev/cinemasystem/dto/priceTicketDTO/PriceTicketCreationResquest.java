@@ -1,11 +1,12 @@
 package com.dev.cinemasystem.dto.priceTicketDTO;
 
-
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -15,8 +16,8 @@ import lombok.experimental.FieldDefaults;
 public class PriceTicketCreationResquest {
 
     @NotNull(message = "PRICE_BLANK")
-    @Min(value = 0, message = "PRICE_INVALID")
-    Integer price;
+    @DecimalMin(value = "0", message = "PRICE_INVALID")
+    BigDecimal price;
 
     @Min(value = 1, message = "ROOM_TYPE_ID_INVALID")
     @NotNull(message = "ROOM_TYPE_ID_BLANK")

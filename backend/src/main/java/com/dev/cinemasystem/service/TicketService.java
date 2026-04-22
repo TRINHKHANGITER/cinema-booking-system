@@ -3,14 +3,17 @@ package com.dev.cinemasystem.service;
 import com.dev.cinemasystem.dto.ticket.TicketCreationRequest;
 import com.dev.cinemasystem.dto.ticket.TicketResponse;
 import com.dev.cinemasystem.entity.*;
+import com.dev.cinemasystem.enums.TicketStatus;
+import com.dev.cinemasystem.exception.AppException;
+import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.TicketMapper;
 import com.dev.cinemasystem.repository.*;
-import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,37 +26,78 @@ public class TicketService {
     ShowTimeRepository showTimeRepository;
     SeatRepository seatRepository;
     PriceTicketRepository priceTicketRepository;
-    RoomService roomService;
 
     public TicketResponse createTicket(TicketCreationRequest ticketCreationRequest) {
         Order order = orderRepository.findById(ticketCreationRequest.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not exists!"));
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         ShowTime showTime = showTimeRepository.findById(ticketCreationRequest.getShowTimeId())
-                .orElseThrow(() -> new RuntimeException("ShowTime not exists!"));
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
 
         Seat seat = seatRepository.findById(ticketCreationRequest.getSeatId())
-                .orElseThrow(() -> new RuntimeException("Seat not exists!"));
+                .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
 
-        int roomId = showTime.getRoom().getRoomId();
-        int roomTypeId = roomService.getRoomById(roomId).getRoomTypeId();
-        PriceTicket priceTicket =
-                priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seat.getSeatType().getSeatTypeId());
+        PriceTicket priceTicket = priceTicketRepository
+                .findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+                        showTime.getRoom().getRoomType().getRoomTypeId(),
+                        seat.getSeatType().getSeatTypeId()
+                );
+        if (priceTicket == null) {
+            throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
+        }
 
         Ticket ticket = ticketMapper.toTicket(ticketCreationRequest);
         ticket.setShow(showTime);
         ticket.setSeat(seat);
         ticket.setOrder(order);
         ticket.setPriceTicket(priceTicket);
+        ticket.setUnitPrice(priceTicket.getPrice());
+        ticket.setQrCode(buildQr(order.getOrderId(), showTime.getShowTimeId(), seat.getSeatId()));
+        ticket.setStatus(TicketStatus.ACTIVE);
 
         return ticketMapper.toTicketResponse(ticketRepository.save(ticket));
     }
 
+    public List<TicketResponse> createTicketsFromSoldSeats(Order order, List<ShowTimeSeat> soldSeats) {
+        List<TicketResponse> responses = new ArrayList<>();
+        for (ShowTimeSeat soldSeat : soldSeats) {
+            Integer showTimeId = soldSeat.getShowTime().getShowTimeId();
+            Integer seatId = soldSeat.getSeat().getSeatId();
+
+            if (ticketRepository.existsByShow_ShowTimeIdAndSeat_SeatId(showTimeId, seatId)) {
+                continue;
+            }
+
+            PriceTicket priceTicket = priceTicketRepository
+                    .findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+                            soldSeat.getShowTime().getRoom().getRoomType().getRoomTypeId(),
+                            soldSeat.getSeat().getSeatType().getSeatTypeId()
+                    );
+            if (priceTicket == null) {
+                throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
+            }
+
+            Ticket ticket = Ticket.builder()
+                    .order(order)
+                    .show(soldSeat.getShowTime())
+                    .seat(soldSeat.getSeat())
+                    .priceTicket(priceTicket)
+                    .unitPrice(priceTicket.getPrice())
+                    .qrCode(buildQr(order.getOrderId(), showTimeId, seatId))
+                    .status(TicketStatus.ACTIVE)
+                    .build();
+
+            responses.add(ticketMapper.toTicketResponse(ticketRepository.save(ticket)));
+        }
+
+        return responses;
+    }
+
     public TicketResponse getTicketById(int ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("TicketId not exists!"));
+                .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
 
-        return  ticketMapper.toTicketResponse(ticket);
+        return ticketMapper.toTicketResponse(ticket);
     }
 
     public List<TicketResponse> getTickets(TicketStatus status) {
@@ -69,4 +113,7 @@ public class TicketService {
         return tickets.stream().map(ticketMapper::toTicketResponse).toList();
     }
 
+    private String buildQr(Integer orderId, Integer showTimeId, Integer seatId) {
+        return "QR-" + orderId + "-" + showTimeId + "-" + seatId;
+    }
 }

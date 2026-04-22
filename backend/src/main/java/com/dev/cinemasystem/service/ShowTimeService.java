@@ -5,16 +5,20 @@ import com.dev.cinemasystem.dto.roomDTO.RoomResponse;
 import com.dev.cinemasystem.entity.Movie;
 import com.dev.cinemasystem.entity.Room;
 import com.dev.cinemasystem.entity.ShowTime;
+import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.ShowTimeMapper;
 import com.dev.cinemasystem.repository.MovieRepository;
 import com.dev.cinemasystem.repository.RoomRepository;
 import com.dev.cinemasystem.repository.SeatRepository;
+import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
 import com.dev.cinemasystem.repository.ShowTimeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
+import com.dev.cinemasystem.enums.SeatStatus;
+import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.enums.SortDirection;
 import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.utils.ParseTime;
@@ -46,6 +50,7 @@ public class ShowTimeService {
     RoomRepository roomRepository;
     MovieRepository movieRepository;
     SeatRepository seatRepository;
+    ShowTimeSeatRepository showTimeSeatRepository;
     ShowTimeMapper showTimeMapper;
 
     private void validateShowTimeRange(LocalDateTime startTime, LocalDateTime endTime){
@@ -144,9 +149,14 @@ public class ShowTimeService {
         var showTime = showTimeMapper.toShowTimeFromShowTimeCreationRequest(request);
         showTime.setRoom(room);
         showTime.setMovie(movie);
-        showTime.setStatus(ShowTimeStatus.SCHEDULED);
+        if (showTime.getReleaseDate() != null && !showTime.getReleaseDate().isAfter(LocalDate.now())) {
+            showTime.setStatus(ShowTimeStatus.SELLING);
+        } else {
+            showTime.setStatus(ShowTimeStatus.SCHEDULED);
+        }
         log.info("Creating showTime for movie id {} in room id {} at time {}", request.getMovieId(), request.getRoomId(), request.getStartTime());
         ShowTime savedShowTime = showTimeRepository.save(showTime);
+        initializeSeatInventoryForShowTime(savedShowTime);
         List<ShowTime> movieShowTimes = showTimeRepository
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
         return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
@@ -165,6 +175,7 @@ public class ShowTimeService {
                     log.error("ShowTime with id {} not found", showTimeId);
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
+        Integer previousRoomId = showTime.getRoom().getRoomId();
         Movie movie = null;
         if(request.getMovieId() != null){
             movie = movieRepository.findById(request.getMovieId()).orElseThrow(() -> {
@@ -203,6 +214,9 @@ public class ShowTimeService {
         }
         log.info("Updating showTime with id: {}", showTimeId);
         ShowTime savedShowTime = showTimeRepository.save(showTime);
+        if (!previousRoomId.equals(savedShowTime.getRoom().getRoomId())) {
+            initializeSeatInventoryForShowTime(savedShowTime);
+        }
         List<ShowTime> movieShowTimes = showTimeRepository
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
         return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
@@ -219,6 +233,27 @@ public class ShowTimeService {
         showTimeRepository.save(showTime);
         log.info("Deleted showTime with id: {}", showTimeId);
         return true;
+    }
+
+    private void initializeSeatInventoryForShowTime(ShowTime showTime) {
+        var roomSeats = seatRepository.findAllByRoom_RoomId(showTime.getRoom().getRoomId());
+        if (roomSeats.isEmpty()) {
+            throw new AppException(ErrorCode.ROOM_HAS_NO_SEATS);
+        }
+
+        showTimeSeatRepository.deleteByShowTime_ShowTimeId(showTime.getShowTimeId());
+        List<ShowTimeSeat> showTimeSeats = roomSeats.stream()
+                .map(seat -> ShowTimeSeat.builder()
+                        .showTime(showTime)
+                        .seat(seat)
+                        .status(seat.getStatus() == SeatStatus.ACTIVE
+                                ? ShowTimeSeatStatus.AVAILABLE
+                                : ShowTimeSeatStatus.BLOCKED)
+                        .order(null)
+                        .holdExpiresAt(null)
+                        .build())
+                .toList();
+        showTimeSeatRepository.saveAll(showTimeSeats);
     }
 
     public PagingDto<ShowtimeMovieResponse> getShowTimes(

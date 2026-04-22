@@ -4,11 +4,12 @@ import ChoiceFood from "../../components/ui/ChoiceFood";
 import Pay from "../../components/ui/Pay";
 import ChoiceSeat from "../../components/ui/ChoiceSeat";
 import type { SelectedCombo } from "../../types/combo";
+import type { Seat } from "../../types/seat";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slices/showtimeSlice";
-import { resetSelectedSeats } from "../../stores/slices/seatSlice";
 import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
 import { checkoutService } from "../../services/checkout.service";
+import { bookingService } from "../../services/booking.service";
 
 const STEPS = ["Chon phim / Rap / Suat", "Chon ghe", "Chon thuc an", "Thanh toan", "Xac nhan"];
 
@@ -16,11 +17,13 @@ const Booking = () => {
     const dispatch = useAppDispatch();
     const { state } = useLocation();
 
-    const user = useAppSelector((store) => store.auth.user)
+    const user = useAppSelector((store) => store.auth.user);
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
-    const selectedSeats = useAppSelector((store) => store.seat.selectedSeats);
 
+    const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
     const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
+    const [orderId, setOrderId] = useState<number | null>(null);
+    const [orderExpiredAt, setOrderExpiredAt] = useState<string | null>(null);
     const [step, setStep] = useState<1 | 2 | 3>(1);
 
     const showTimeId = useMemo(() => {
@@ -42,9 +45,13 @@ const Booking = () => {
             dispatch(fetchShowTimeByIdThunk(showTimeId));
         }
 
+        setSelectedSeats([]);
+        setSelectedCombos([]);
+        setOrderId(null);
+        setOrderExpiredAt(null);
+
         return () => {
             dispatch(clearCurrentShowtime());
-            dispatch(resetSelectedSeats());
         };
     }, [dispatch, showTimeId]);
 
@@ -61,43 +68,49 @@ const Booking = () => {
 
     const groupedSelected = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
 
-    const checkoutPayload = useMemo(() => {
-        if (!user?.userId || !showTimeId || selectedSeats.length === 0) return null;
+    const handleOrderChange = (id: number, expiredAt?: string) => {
+        setOrderId(id);
+        setOrderExpiredAt(expiredAt ?? null);
+    };
 
-        return {
-            userId: user.userId,
-            tickets: selectedSeats.map((seat) => ({
-                showTimeId,
-                seatId: seat.seatId,
-            })),
-            combos: selectedCombos.filter((combo) => combo.quantity > 0).map((combo) => ({
-                comboId: combo.comboId,
-                quantity: combo.quantity
-            }))
-        }
-    }, [user, showTimeId, selectedSeats, selectedCombos]);
+    const syncCombosToOrder = async () => {
+        if (!orderId) return;
 
-    const getOrder = async () => {
-        if (!checkoutPayload) return null;
+        await bookingService.updateOrderCombos(orderId, {
+            combos: selectedCombos
+                .filter((combo) => combo.quantity > 0)
+                .map((combo) => ({ comboId: combo.comboId, quantity: combo.quantity })),
+        });
+    };
+
+    const createCheckout = async () => {
+        if (!orderId) return null;
 
         try {
-            let res = await checkoutService.createCheckout(checkoutPayload);
+            const res = await checkoutService.createCheckout({ orderId });
             return res.result;
         } catch (error) {
             console.log("Error: ", error);
+            return null;
         }
     };
 
     const handleNext = async () => {
-        if (step < 3) {
-            setStep((current) => (current + 1) as 1 | 2 | 3);
-        } else {
-            const urlPayment = await getOrder();
-            if (!urlPayment) return;
-
-            console.log(urlPayment);
-            window.location.href = urlPayment;
+        if (step === 1) {
+            if (selectedSeats.length === 0 || !orderId) return;
+            setStep(2);
+            return;
         }
+
+        if (step === 2) {
+            await syncCombosToOrder();
+            setStep(3);
+            return;
+        }
+
+        const urlPayment = await createCheckout();
+        if (!urlPayment) return;
+        window.location.href = urlPayment;
     };
 
     const handleBack = () => {
@@ -125,8 +138,8 @@ const Booking = () => {
                                         i === step || i < step
                                             ? "rgb(3,78,162)"
                                             : i === 0
-                                              ? "rgb(88,142,202)"
-                                              : "#d3d0d0",
+                                                ? "rgb(88,142,202)"
+                                                : "#d3d0d0",
                                 }}
                             >
                                 <button className="md:mx-3 mx-1">{label}</button>
@@ -150,17 +163,17 @@ const Booking = () => {
                             </div>
                         )}
 
-                        {step === 1 &&
-                            showDetail &&
-                            selectedShowTime &&
-                            (selectedShowTime.room?.roomId ?? selectedShowTime.roomId) && (
-                                <ChoiceSeat
-                                    startTime={selectedShowTime.startTime}
-                                    roomId={
-                                        selectedShowTime.room?.roomId ?? selectedShowTime.roomId
-                                    }
-                                />
-                            )}
+                        {step === 1 && showDetail && selectedShowTime && showTimeId && (
+                            <ChoiceSeat
+                                startTime={selectedShowTime.startTime}
+                                showTimeId={showTimeId}
+                                userId={user?.userId}
+                                orderId={orderId}
+                                selectedSeats={selectedSeats}
+                                onSelectedSeatsChange={setSelectedSeats}
+                                onOrderChange={handleOrderChange}
+                            />
+                        )}
                         {step === 2 && (
                             <ChoiceFood
                                 selectedCombos={selectedCombos}
@@ -213,6 +226,11 @@ const Booking = () => {
                                             {formatTime(selectedShowTime?.startTime ?? "")}
                                         </strong>
                                     </div>
+                                    {orderExpiredAt && (
+                                        <div className="xl:mt-2 text-xs text-orange-500">
+                                            Giu ghe den: {new Date(orderExpiredAt).toLocaleTimeString("vi-VN")}
+                                        </div>
+                                    )}
 
                                     {groupedSelected.length > 0 && (
                                         <>
@@ -287,7 +305,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="w-1/2 py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
+                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
                                 </button>
                             </div>
                         </div>
@@ -316,7 +334,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="px-4 h-10 bg-[rgb(245,128,32)] text-white text-sm rounded-md disabled:opacity-40"
                                 >
-                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
+                                    {step === 3 ? "Xac nhan" : "Tiep tuc"}
                                 </button>
                             </div>
                         </div>

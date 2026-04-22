@@ -100,6 +100,13 @@ public enum ErrorCode {
     ROOM_HAS_NO_SEATS("ROOM_HAS_NO_SEATS", HttpStatus.BAD_REQUEST, "Cannot create showtime because room has no seats"),
     TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Time is hh:mm:ss or hh:mm"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Request is invalid"),
+    ORDER_NOT_FOUND("ORDER_NOT_FOUND", HttpStatus.NOT_FOUND, "Order not found"),
+    ORDER_STATUS_INVALID("ORDER_STATUS_INVALID", HttpStatus.BAD_REQUEST, "Order status is not valid for this action"),
+    ORDER_EXPIRED("ORDER_EXPIRED", HttpStatus.BAD_REQUEST, "Order has expired"),
+    SHOWTIME_SEAT_NOT_AVAILABLE("SHOWTIME_SEAT_NOT_AVAILABLE", HttpStatus.BAD_REQUEST, "One or more selected seats are not available"),
+    INVALID_SEAT_SELECTION("INVALID_SEAT_SELECTION", HttpStatus.BAD_REQUEST, "Invalid seat selection"),
+    PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", HttpStatus.NOT_FOUND, "Payment not found"),
+    COMBO_NOT_FOUND("COMBO_NOT_FOUND", HttpStatus.NOT_FOUND, "Combo not found"),
 
     FILE_UPLOAD_FAILED("FILE_UPLOAD_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, "File upload failed"),
     IMAGE_BLANK("IMAGE_BLANK", HttpStatus.BAD_REQUEST, "Image is required"),

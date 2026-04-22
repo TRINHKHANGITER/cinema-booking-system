@@ -1,29 +1,29 @@
-import type { ComboRequest } from "./combo";
 import type { Ticket, TicketCreationRequest } from "./ticket";
 
-export type OrderStatus = "CREATED" | "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED";
+export type OrderStatus = "PAYING" | "PAID" | "CANCELLED" | "EXPIRED" | "FAILED";
 
 export type OrderEntity = {
     orderId: number;
-    userId: number;
+    userId: number | null;
+    showTimeId: number;
     ticketTotal: number;
     comboTotal: number;
     discountAmount: number;
     totalAmount: number;
     netAmount: number;
+    expiredAt: string;
     createdAt: string;
     updatedAt: string;
     status: OrderStatus;
 };
 
 export type OrderCreationRequest = {
-    userId: number;
-    // tickets: TicketCreationRequest[];
-    // combos: ComboRequest[];
+    userId?: number;
+    showTimeId: number;
 };
 
 export type OrderUpdateRequest = {
-    status: OrderStatus;
+    status?: OrderStatus;
 };
 
 export type Order = OrderEntity;

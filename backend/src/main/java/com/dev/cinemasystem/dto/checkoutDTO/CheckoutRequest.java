@@ -1,11 +1,9 @@
 package com.dev.cinemasystem.dto.checkoutDTO;
 
-import com.dev.cinemasystem.dto.orderCombo.OrderComboCreationRequest;
-import com.dev.cinemasystem.dto.ticket.TicketCreationRequest;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -13,9 +11,7 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CheckoutRequest {
-    Integer userId;
-
-    List<TicketCreationRequest> tickets;
-
-    List<OrderComboCreationRequest> combos;
+    @NotNull(message = "INVALID_REQUEST")
+    @Min(value = 1, message = "INVALID_REQUEST")
+    Integer orderId;
 }

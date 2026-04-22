@@ -20,7 +20,7 @@ public class TicketController {
     TicketService ticketService;
 
     @PostMapping
-    public ApiResponse<TicketResponse> createTicket(TicketCreationRequest ticketCreationRequest) {
+    public ApiResponse<TicketResponse> createTicket(@RequestBody TicketCreationRequest ticketCreationRequest) {
         return ApiResponse.<TicketResponse>builder()
                 .result(ticketService.createTicket(ticketCreationRequest))
                 .build();

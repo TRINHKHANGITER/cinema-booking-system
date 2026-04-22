@@ -6,6 +6,7 @@ import com.dev.cinemasystem.enums.PriceTicketStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -15,12 +16,10 @@ import lombok.experimental.FieldDefaults;
 public class PriceTicketResponse {
 
     Integer priceTicketId;
-    Integer price;
+    BigDecimal price;
     RoomTypeResponse roomType;
     SeatTypeResponse seatType;
     Integer roomTypeId;
     Integer seatTypeId;
     PriceTicketStatus status;
-
 }
-

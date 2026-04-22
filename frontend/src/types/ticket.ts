@@ -3,7 +3,7 @@ import type { PriceTicketEntity } from "./price-ticket";
 import type { SeatEntity } from "./seat";
 import type { ShowTimeEntity } from "./showtime";
 
-export type TicketStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED";
+export type TicketStatus = "ACTIVE" | "USED" | "CANCELLED" | "EXPIRED";
 
 export type TicketEntity = {
     ticketId: number;
@@ -13,9 +13,6 @@ export type TicketEntity = {
     priceTicket: PriceTicketEntity | null;
     unitPrice: number | null;
     qrCode: string | null;
-    heldAt: string | null;
-    heldUntil: string | null;
-    bookedAt: string | null;
     checkedInAt: string | null;
     createdAt: string;
     updatedAt: string;

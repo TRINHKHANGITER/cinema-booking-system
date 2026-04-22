@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -60,7 +61,11 @@ public class MovieService {
 
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
-        movie.setStatus(MovieStatus.ACTIVE);
+        if (movie.getReleaseDate() != null && movie.getReleaseDate().isAfter(LocalDate.now())) {
+            movie.setStatus(MovieStatus.COMING_SOON);
+        } else {
+            movie.setStatus(MovieStatus.ACTIVE);
+        }
         if (movie.getSlug() == null || movie.getSlug().isBlank()) {
             movie.setSlug(toSlug(movie.getMovieName()));
         }

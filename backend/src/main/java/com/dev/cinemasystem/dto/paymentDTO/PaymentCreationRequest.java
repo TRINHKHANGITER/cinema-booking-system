@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PaymentCreationRequest {
-    int orderId;
-
+    Integer orderId;
     BigDecimal amount;
 }

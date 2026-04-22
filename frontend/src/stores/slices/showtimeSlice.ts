@@ -131,7 +131,7 @@ export const fetchShowTimesByMovieIdThunk = createAsyncThunk<
     try {
         const response = await showTimeService.getShowTimesByMovieId(
             movieId,
-            status ?? "SCHEDULED",
+            status ?? "SELLING",
             page ?? 1,
             size ?? 10
         );
@@ -313,3 +313,4 @@ const showtimeSlice = createSlice({
 
 export const { setSelectedDate, clearCurrentShowtime } = showtimeSlice.actions;
 export default showtimeSlice.reducer;
+

@@ -4,6 +4,7 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.checkoutDTO.CheckoutRequest;
 import com.dev.cinemasystem.service.CheckoutService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,12 +21,10 @@ public class CheckoutController {
 
     @PostMapping
     public ApiResponse<String> checkout (
-            @RequestBody CheckoutRequest checkoutRequest,
+            @RequestBody @Valid CheckoutRequest checkoutRequest,
             HttpServletRequest request
     ) {
         String ipAddress = extractClientIp(request);
-
-        System.out.println("In checkout: " + checkoutRequest);
 
         return ApiResponse.<String>builder()
                 .result(checkoutService.checkout(checkoutRequest, ipAddress))

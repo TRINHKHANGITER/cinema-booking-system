@@ -37,7 +37,5 @@ public class OrderCombo {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    OrderComboStatus status = OrderComboStatus.PENDING;
+    OrderComboStatus status = OrderComboStatus.ACTIVE;
 }
-
-

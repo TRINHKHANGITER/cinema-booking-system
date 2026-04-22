@@ -5,10 +5,12 @@ import com.dev.cinemasystem.dto.paymentDTO.PaymentResponse;
 import com.dev.cinemasystem.dto.paymentDTO.PaymentUpdateRequest;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.Payment;
+import com.dev.cinemasystem.enums.PaymentStatus;
+import com.dev.cinemasystem.exception.AppException;
+import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PaymentMapper;
 import com.dev.cinemasystem.repository.OrderRepository;
 import com.dev.cinemasystem.repository.PaymentRepository;
-import com.dev.cinemasystem.enums.PaymentStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,28 +22,38 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentService {
-    final PaymentRepository paymentRepository;
-    final PaymentMapper paymentMapper;
-    final OrderRepository orderRepository;
+    PaymentRepository paymentRepository;
+    PaymentMapper paymentMapper;
+    OrderRepository orderRepository;
 
     public PaymentResponse createPayment(PaymentCreationRequest paymentCreationRequest) {
-        Payment payment = paymentMapper.toPayment(paymentCreationRequest);
-
         Order order = orderRepository.findById(paymentCreationRequest.getOrderId())
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        Payment payment = paymentRepository.findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(
+                        order.getOrderId(),
+                        PaymentStatus.PENDING
+                )
+                .orElseGet(() -> paymentMapper.toPayment(paymentCreationRequest));
+
         payment.setOrder(order);
-        payment.setInfoTransaction(buildTransferContent(order.getOrderId()));
+        payment.setAmount(paymentCreationRequest.getAmount());
+        if (payment.getInfoTransaction() == null || payment.getInfoTransaction().isBlank()) {
+            payment.setInfoTransaction(buildTransferContent(order.getOrderId()));
+        }
+        if (payment.getStatus() == null) {
+            payment.setStatus(PaymentStatus.PENDING);
+        }
 
         return paymentMapper.toPaymentResponse(paymentRepository.save(payment));
     }
 
     public void updatePayment(int paymentId, PaymentUpdateRequest paymentUpdateRequest) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not exists!"));
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
 
         paymentMapper.updatePayment(payment, paymentUpdateRequest);
         paymentRepository.save(payment);
-        // paymentMapper.toPaymentResponse(payment);
     }
 
     public List<PaymentResponse> getPayments() {
@@ -50,21 +62,22 @@ public class PaymentService {
 
     public PaymentResponse getPaymentById(Integer paymentId) {
         return paymentMapper.toPaymentResponse(paymentRepository.findById(paymentId)
-                .orElseThrow(RuntimeException::new));
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND)));
     }
 
     public void cancelPayment(Integer orderId, PaymentStatus paymentStatus) {
-        Payment payment = paymentRepository.findByOrder_OrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Payment not found!"));
+        List<Payment> pendingPayments = paymentRepository.findAllByOrder_OrderIdAndStatus(orderId, PaymentStatus.PENDING);
+        if (pendingPayments.isEmpty()) {
+            return;
+        }
 
-        payment.setStatus(paymentStatus);
-        paymentRepository.save(payment);
+        for (Payment payment : pendingPayments) {
+            payment.setStatus(paymentStatus);
+        }
+        paymentRepository.saveAll(pendingPayments);
     }
 
     public static String buildTransferContent(int orderId) {
         return "THANH TOAN DH" + String.format("%04d", orderId);
     }
-
 }
-
-

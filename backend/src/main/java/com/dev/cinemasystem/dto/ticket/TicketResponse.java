@@ -14,24 +14,14 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TicketResponse {
     Integer ticketId;
-
-    int orderId;
-
-    int showTimeId;
-
-    int seatId;
-
-    int priceTicketId;
-
+    Integer orderId;
+    Integer showTimeId;
+    Integer seatId;
+    Integer priceTicketId;
     BigDecimal unitPrice;
-
     String qrCode;
-
     LocalDateTime checkedInAt;
-
     LocalDateTime createdAt;
-
     LocalDateTime updatedAt;
-
     TicketStatus status;
 }

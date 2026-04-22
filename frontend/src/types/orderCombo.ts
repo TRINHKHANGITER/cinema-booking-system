@@ -1,7 +1,7 @@
 import type { ComboEntity } from "./combo";
-import type { OrderEntity } from "./orders";
+import type { OrderEntity } from "./order";
 
-export type OrderComboStatus = "ACTIVE" | "CANCELLED" | "REFUNDED";
+export type OrderComboStatus = "ACTIVE" | "CANCELLED";
 
 export type OrderComboEntity = {
     orderComboId: number;
@@ -10,6 +10,12 @@ export type OrderComboEntity = {
     quantity: number;
     unitPrice: number;
     status: OrderComboStatus;
+};
+
+export type OrderComboRequest = {
+    orderId: number;
+    comboId: number;
+    quantity: number;
 };
 
 export type OrderCombo = OrderComboEntity;
