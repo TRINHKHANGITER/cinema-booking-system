@@ -15,6 +15,15 @@ import axios from "axios";
 
 const STEPS = ["Chọn phim / Rạp / Suất", "Chọn ghế", "Chọn thức ăn", "Thanh toán", "Xác nhận"];
 
+const formatCountdown = (totalSeconds: number) => {
+    const safeSeconds = Math.max(0, totalSeconds);
+    const hours = Math.floor(safeSeconds / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+    const seconds = safeSeconds % 60;
+
+    return [hours, minutes, seconds].map((unit) => String(unit).padStart(2, "0")).join(":");
+};
+
 const Booking = () => {
     const dispatch = useAppDispatch();
     const { state } = useLocation();
@@ -26,6 +35,7 @@ const Booking = () => {
     const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
     const [orderId, setOrderId] = useState<number | null>(null);
     const [orderExpiredAt, setOrderExpiredAt] = useState<string | null>(null);
+    const [holdRemainingSeconds, setHoldRemainingSeconds] = useState<number | null>(null);
     const [step, setStep] = useState<1 | 2 | 3>(1);
 
     const showTimeId = useMemo(() => {
@@ -58,6 +68,7 @@ const Booking = () => {
         setSelectedCombos([]);
         setOrderId(null);
         setOrderExpiredAt(null);
+        setHoldRemainingSeconds(null);
         setStep(1);
         clearOrderSession();
     }, [clearOrderSession]);
@@ -162,6 +173,29 @@ const Booking = () => {
 
         return () => clearInterval(timer);
     }, [handleOrderExpired, orderExpiredAt]);
+
+    useEffect(() => {
+        if (!orderExpiredAt) {
+            setHoldRemainingSeconds(null);
+            return;
+        }
+
+        const expiredAtMs = new Date(orderExpiredAt).getTime();
+        if (Number.isNaN(expiredAtMs)) {
+            setHoldRemainingSeconds(null);
+            return;
+        }
+
+        const updateRemainingTime = () => {
+            const remainingSeconds = Math.max(0, Math.ceil((expiredAtMs - Date.now()) / 1000));
+            setHoldRemainingSeconds(remainingSeconds);
+        };
+
+        updateRemainingTime();
+        const timer = setInterval(updateRemainingTime, 1000);
+
+        return () => clearInterval(timer);
+    }, [orderExpiredAt]);
 
     const syncCombosToOrder = async () => {
         if (!orderId) return true;
@@ -301,6 +335,14 @@ const Booking = () => {
                     </div>
 
                     <div className="col-span-1 xl:pl-4 xl:order-0 order-first py-4">
+                        {orderExpiredAt && (
+                            <div className="xl:mt-2 text-center text-xl font-semibold text-orange-500">
+                                Giữ ghế còn:{" "}
+                                {holdRemainingSeconds !== null
+                                    ? formatCountdown(holdRemainingSeconds)
+                                    : "--:--:--"}
+                            </div>
+                        )}
                         <div className="booking__summary md:mb-4">
                             <div className="h-[6px] bg-[rgb(245,128,32)] rounded-t-lg" />
                             <div className="bg-white p-4 grid grid-cols-3 xl:gap-2 items-center">
@@ -330,6 +372,8 @@ const Booking = () => {
                                 </div>
 
                                 <div className="col-span-2 md:col-span-1 xl:col-span-3">
+
+                                    
                                     <div className="xl:mt-4 text-sm xl:text-base">
                                         <strong>
                                             {selectedShowTime?.room?.cinema?.cinemaName}
@@ -343,11 +387,7 @@ const Booking = () => {
                                             {formatTime(selectedShowTime?.startTime ?? "")}
                                         </strong>
                                     </div>
-                                    {orderExpiredAt && (
-                                        <div className="xl:mt-2 text-xs text-orange-500">
-                                            Giữ ghế đến: {new Date(orderExpiredAt).toLocaleTimeString("vi-VN")}
-                                        </div>
-                                    )}
+                                   
 
                                     {groupedSelected.length > 0 && (
                                         <>
