@@ -33,5 +33,6 @@ backend/target/
 **/note.md
 
 **/.M2
+**/dist/
 
 # backend/src/main/resources/

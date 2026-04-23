@@ -138,7 +138,11 @@ const ChoiceSeat = ({
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const data = error.response?.data as { code?: string; message?: string } | undefined;
-                if (data?.code === "ORDER_EXPIRED") {
+                if (
+                    data?.code === "ORDER_EXPIRED" ||
+                    data?.code === "ORDER_STATUS_INVALID" ||
+                    data?.code === "ORDER_NOT_FOUND"
+                ) {
                     toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                     onOrderExpired();
                     await fetchSeatMap();

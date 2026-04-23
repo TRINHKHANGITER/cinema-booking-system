@@ -10,6 +10,7 @@ import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slice
 import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
 import { checkoutService } from "../../services/checkout.service";
 import { bookingService } from "../../services/booking.service";
+import { orderService } from "../../services/order.service";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -80,6 +81,8 @@ const Booking = () => {
     };
 
     useEffect(() => {
+        let isCancelled = false;
+
         if (showTimeId) {
             dispatch(fetchShowTimeByIdThunk(showTimeId));
         }
@@ -88,39 +91,71 @@ const Booking = () => {
         setSelectedCombos([]);
         setStep(1);
 
-        if (orderStorageKey) {
-            const raw = sessionStorage.getItem(orderStorageKey);
-            if (raw) {
-                try {
-                    const parsed = JSON.parse(raw) as { orderId?: number; expiredAt?: string };
-                    const isValid =
-                        !!parsed.orderId &&
-                        !!parsed.expiredAt &&
-                        new Date(parsed.expiredAt).getTime() > Date.now();
+        const clearPersistedOrder = () => {
+            if (orderStorageKey) {
+                sessionStorage.removeItem(orderStorageKey);
+            }
 
-                    if (isValid) {
-                        setOrderId(parsed.orderId ?? null);
-                        setOrderExpiredAt(parsed.expiredAt ?? null);
-                    } else {
-                        sessionStorage.removeItem(orderStorageKey);
-                        setOrderId(null);
-                        setOrderExpiredAt(null);
-                    }
-                } catch {
-                    sessionStorage.removeItem(orderStorageKey);
-                    setOrderId(null);
-                    setOrderExpiredAt(null);
-                }
-            } else {
+            if (!isCancelled) {
                 setOrderId(null);
                 setOrderExpiredAt(null);
+                setHoldRemainingSeconds(null);
             }
-        } else {
-            setOrderId(null);
-            setOrderExpiredAt(null);
-        }
+        };
+
+        const hydratePersistedOrder = async () => {
+            if (!orderStorageKey) {
+                clearPersistedOrder();
+                return;
+            }
+
+            const raw = sessionStorage.getItem(orderStorageKey);
+            if (!raw) {
+                clearPersistedOrder();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(raw) as { orderId?: number; expiredAt?: string };
+                const hasRequiredFields = !!parsed.orderId && !!parsed.expiredAt;
+                const isNotExpired =
+                    hasRequiredFields && new Date(parsed.expiredAt as string).getTime() > Date.now();
+
+                if (!hasRequiredFields || !isNotExpired) {
+                    clearPersistedOrder();
+                    return;
+                }
+
+                const response = await orderService.getOrderByOrderId(parsed.orderId as number);
+                if (isCancelled) return;
+
+                const currentOrder = response?.result;
+                const nextExpiredAt = currentOrder?.expiredAt ?? parsed.expiredAt ?? null;
+                const nextOrderId = currentOrder?.orderId ?? parsed.orderId ?? null;
+                const isPayingOrder = currentOrder?.status === "PAYING";
+                const nextExpiredAtMs = nextExpiredAt ? new Date(nextExpiredAt).getTime() : NaN;
+                const hasValidExpiry = !Number.isNaN(nextExpiredAtMs) && nextExpiredAtMs > Date.now();
+
+                if (!nextOrderId || !isPayingOrder || !hasValidExpiry) {
+                    clearPersistedOrder();
+                    return;
+                }
+
+                setOrderId(nextOrderId);
+                setOrderExpiredAt(nextExpiredAt);
+                sessionStorage.setItem(
+                    orderStorageKey,
+                    JSON.stringify({ orderId: nextOrderId, expiredAt: nextExpiredAt })
+                );
+            } catch {
+                clearPersistedOrder();
+            }
+        };
+
+        void hydratePersistedOrder();
 
         return () => {
+            isCancelled = true;
             dispatch(clearCurrentShowtime());
         };
     }, [dispatch, orderStorageKey, showTimeId]);
@@ -209,7 +244,11 @@ const Booking = () => {
             return true;
         } catch (error) {
             const { code, message } = extractApiError(error);
-            if (code === "ORDER_EXPIRED") {
+            if (
+                code === "ORDER_EXPIRED" ||
+                code === "ORDER_STATUS_INVALID" ||
+                code === "ORDER_NOT_FOUND"
+            ) {
                 toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                 handleOrderExpired();
                 return false;
@@ -227,7 +266,11 @@ const Booking = () => {
             return res.result;
         } catch (error) {
             const { code, message } = extractApiError(error);
-            if (code === "ORDER_EXPIRED") {
+            if (
+                code === "ORDER_EXPIRED" ||
+                code === "ORDER_STATUS_INVALID" ||
+                code === "ORDER_NOT_FOUND"
+            ) {
                 toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
                 handleOrderExpired();
                 return null;
