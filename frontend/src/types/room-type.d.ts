@@ -10,11 +10,20 @@ export type RoomTypeEntity = {
 export type RoomTypeCreationRequest = {
     roomTypeName: string;
     description: string;
+    status?: RoomTypeStatus;
 };
 
 export type RoomTypeUpdateRequest = {
     roomTypeName?: string;
     description?: string;
+    status?: RoomTypeStatus;
+};
+
+export type RoomTypeFilterParams = {
+    name?: string;
+    status?: RoomTypeStatus | "";
+    page?: number;
+    size?: number;
 };
 
 export type RoomTypeResponse = RoomTypeEntity;

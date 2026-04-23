@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 
     Optional<Room> findByRoomId(Integer roomId);
+    boolean existsByRoomType_RoomTypeIdAndStatus(Integer roomTypeId, RoomStatus status);
 
 
     Page<Room> findAllByCinema_CinemaIdAndRoomType_RoomTypeIdAndStatus(

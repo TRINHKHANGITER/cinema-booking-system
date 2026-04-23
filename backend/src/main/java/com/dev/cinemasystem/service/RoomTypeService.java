@@ -1,16 +1,19 @@
 package com.dev.cinemasystem.service;
 
 
-import com.dev.cinemasystem.entity.RoomType;
-import com.dev.cinemasystem.exception.AppException;
-import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.mapper.RoomTypeMapper;
-import com.dev.cinemasystem.repository.RoomTypeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeCreationRequest;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeResponse;
 import com.dev.cinemasystem.dto.roomTypeDTO.RoomTypeUpdateRequest;
+import com.dev.cinemasystem.entity.RoomType;
+import com.dev.cinemasystem.enums.RoomStatus;
 import com.dev.cinemasystem.enums.RoomTypeStatus;
+import com.dev.cinemasystem.exception.AppException;
+import com.dev.cinemasystem.exception.ErrorCode;
+import com.dev.cinemasystem.mapper.RoomTypeMapper;
+import com.dev.cinemasystem.repository.RoomRepository;
+import com.dev.cinemasystem.repository.RoomTypeRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,9 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -29,100 +36,142 @@ import java.util.List;
 public class RoomTypeService {
 
     RoomTypeMapper roomTypeMapper;
-
     RoomTypeRepository roomTypeRepository;
+    RoomRepository roomRepository;
 
-
-
-
-    public RoomTypeResponse  getRoomTypeById(Integer roomTypeId){
-        var roomType = roomTypeRepository.findById(roomTypeId)
+    public RoomTypeResponse getRoomTypeById(Integer roomTypeId) {
+        RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> {
                     log.error("Room type with id {} not found", roomTypeId);
                     return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
                 });
-        log.info("Retrieving room type with id: {}", roomTypeId);
+
         return roomTypeMapper.toRoomTypeResponse(roomType);
     }
 
-    public  RoomTypeResponse createRoomType(RoomTypeCreationRequest request){
-        if(request == null){
-            log.error("Room type creation request is null");
+    public RoomTypeResponse createRoomType(RoomTypeCreationRequest request) {
+        if (request == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-        if(roomTypeRepository.findByRoomTypeName(request.getRoomTypeName()) != null){
-            log.error("Room type name {} already exists", request.getRoomTypeName());
+
+        String normalizedName = request.getRoomTypeName().trim();
+        if (roomTypeRepository.existsByRoomTypeNameIgnoreCase(normalizedName)) {
             throw new AppException(ErrorCode.ROOM_TYPE_NAME_EXISTS);
         }
-        var roomType = roomTypeMapper.toRoomTypeFromRoomCreationRequest(request);
-        roomType.setStatus(RoomTypeStatus.ACTIVE);
-        log.info("Creating room type with name: {}", roomType.getRoomTypeName());
-        return roomTypeMapper.toRoomTypeResponse(roomTypeRepository.save(roomType));
+
+        RoomType roomType = roomTypeMapper.toRoomTypeFromRoomCreationRequest(request);
+        roomType.setRoomTypeName(normalizedName);
+        roomType.setStatus(request.getStatus() != null ? request.getStatus() : RoomTypeStatus.ACTIVE);
+
+        RoomType savedRoomType = roomTypeRepository.save(roomType);
+        return roomTypeMapper.toRoomTypeResponse(savedRoomType);
     }
 
-    public PagingDto<RoomTypeResponse> getAllRoomTypes( RoomTypeStatus status, Integer page, Integer size){
-        if (page < 1) {
-            log.error("Invalid page number: {}", page);
-            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
-        }
-        if (size < 1 ) {
-            log.error("Invalid page size: {}", size);
-            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
-        }
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<RoomType> roomTypePage;
-        if(status != null){
-            roomTypePage = roomTypeRepository.findAllByStatus(status, pageable);
-        }else{
-            roomTypePage = roomTypeRepository.findAll(pageable);
-        }
+    public PagingDto<RoomTypeResponse> getAllRoomTypes(RoomTypeStatus status, Integer page, Integer size) {
+        return filterRoomTypes(null, status != null ? status.name() : null, page, size);
+    }
 
-        log.info("Fetching room types - page: {}, size: {}", page, size);
+    public PagingDto<RoomTypeResponse> filterRoomTypes(
+            String name,
+            String status,
+            Integer page,
+            Integer size
+    ) {
+        validatePageAndSize(page, size);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Specification<RoomType> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (name != null && !name.isBlank()) {
+                String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(builder.like(builder.lower(root.get("roomTypeName")), keyword));
+            }
+
+            if (status != null && !status.isBlank()) {
+                predicates.add(builder.equal(root.get("status"), parseRoomTypeStatus(status)));
+            }
+
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<RoomType> roomTypePage = roomTypeRepository.findAll(specification, pageable);
         List<RoomTypeResponse> roomTypeResponses = roomTypeMapper.toRoomTypeResponseList(roomTypePage.getContent());
-        return  PagingDto.<RoomTypeResponse>builder()
+
+        return PagingDto.<RoomTypeResponse>builder()
                 .items(roomTypeResponses)
-                .currentPage(page)
-                .pageSize(size)
+                .currentPage(roomTypePage.getNumber() + 1)
+                .pageSize(roomTypePage.getSize())
                 .totalItems(roomTypePage.getTotalElements())
                 .totalPages(roomTypePage.getTotalPages())
                 .build();
     }
 
-    public RoomTypeResponse  updateRoomType(Integer roomTypeId, RoomTypeUpdateRequest request){
-        var roomType = roomTypeRepository.findById(roomTypeId)
+    public RoomTypeResponse updateRoomType(Integer roomTypeId, RoomTypeUpdateRequest request) {
+        if (request == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> {
                     log.error("Room type with id {} not found", roomTypeId);
                     return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
                 });
-        if(request == null){
-            log.error("Room type update request is null");
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
-        if(request.getRoomTypeName() != null){
-            RoomType roomtype2 = roomTypeRepository.findByRoomTypeName(request.getRoomTypeName());
-            if( roomtype2!= null && roomtype2.getRoomTypeId() != roomTypeId){
-                log.error("Room type name {} already exists", request.getRoomTypeName());
+
+        if (request.getRoomTypeName() != null && !request.getRoomTypeName().isBlank()) {
+            String normalizedName = request.getRoomTypeName().trim();
+            if (roomTypeRepository.existsByRoomTypeNameIgnoreCaseAndRoomTypeIdNot(normalizedName, roomTypeId)) {
                 throw new AppException(ErrorCode.ROOM_TYPE_NAME_EXISTS);
             }
+            request.setRoomTypeName(normalizedName);
         }
-        log.info("Updating room type with id: {}", roomTypeId);
-        roomTypeMapper.updateRoomTypeInfo(roomType, request);
-        return roomTypeMapper.toRoomTypeResponse(roomTypeRepository.save(roomType));
 
+        roomTypeMapper.updateRoomTypeInfo(roomType, request);
+        RoomType savedRoomType = roomTypeRepository.save(roomType);
+        return roomTypeMapper.toRoomTypeResponse(savedRoomType);
     }
 
-    public boolean deleteRoomType(Integer roomTypeId){
-        var room = roomTypeRepository.findById(roomTypeId)
+    public boolean deleteRoomType(Integer roomTypeId) {
+        RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> {
-                    log.error("roomTypeId with id {} not found", roomTypeId);
-                    return new AppException(ErrorCode.ROOM_NOT_FOUND);
+                    log.error("Room type with id {} not found", roomTypeId);
+                    return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
                 });
-        room.setStatus(RoomTypeStatus.INACTIVE);
-        roomTypeRepository.save(room);
-        log.info("Deleted room with id: {}", roomTypeId);
+
+        boolean hasActiveRooms = roomRepository.existsByRoomType_RoomTypeIdAndStatus(
+                roomTypeId,
+                RoomStatus.ACTIVE
+        );
+        if (hasActiveRooms) {
+            throw new AppException(ErrorCode.ROOM_TYPE_HAS_ACTIVE_ROOMS);
+        }
+
+        roomType.setStatus(RoomTypeStatus.INACTIVE);
+        roomTypeRepository.save(roomType);
         return true;
     }
 
+    public List<String> getAllRoomTypeStatuses() {
+        return Arrays.stream(RoomTypeStatus.values())
+                .map(Enum::name)
+                .toList();
+    }
 
+    private RoomTypeStatus parseRoomTypeStatus(String value) {
+        try {
+            return RoomTypeStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private void validatePageAndSize(Integer page, Integer size) {
+        if (page == null || page < 1) {
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+
+        if (size == null || size < 1 || size > 100) {
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }
 }
-

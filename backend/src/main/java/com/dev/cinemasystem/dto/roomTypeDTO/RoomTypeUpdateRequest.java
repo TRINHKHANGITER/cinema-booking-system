@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.roomTypeDTO;
 
+import com.dev.cinemasystem.enums.RoomTypeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,5 +14,7 @@ public class RoomTypeUpdateRequest {
     String roomTypeName;
 
     String description;
+
+    RoomTypeStatus status;
 
 }
