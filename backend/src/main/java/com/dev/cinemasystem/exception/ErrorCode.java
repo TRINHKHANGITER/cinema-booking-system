@@ -81,6 +81,7 @@ public enum ErrorCode {
     SEAT_TYPE_HAS_ACTIVE_SEATS("SEAT_TYPE_HAS_ACTIVE_SEATS", HttpStatus.BAD_REQUEST, "Cannot delete seat type because there are active seats using it"),
     SEAT_NOT_FOUND("SEAT_NOT_FOUND", HttpStatus.NOT_FOUND, "Seat not found"),
     SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Seat already exists in room at given seatRow and seatColumn"),
+    SEAT_HAS_ACTIVE_TICKETS_OR_HOLDS("SEAT_HAS_ACTIVE_TICKETS_OR_HOLDS", HttpStatus.BAD_REQUEST, "Cannot delete seat because there are active tickets or current holds using it"),
 
 
     MOVIE_TYPE_NAME_BLANK("MOVIE_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Movie type name is required"),

@@ -2,9 +2,12 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.entity.Seat;
+import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.SeatMapper;
+import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
+import com.dev.cinemasystem.repository.TicketRepository;
 import com.dev.cinemasystem.repository.RoomRepository;
 import com.dev.cinemasystem.repository.SeatRepository;
 import com.dev.cinemasystem.repository.SeatTypeRepository;
@@ -12,6 +15,7 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
 import com.dev.cinemasystem.enums.SeatStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,6 +25,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -33,6 +39,8 @@ public class SeatService {
     SeatMapper seatMapper;
     RoomRepository roomRepository;
     SeatTypeRepository seatTypeRepository;
+    TicketRepository ticketRepository;
+    ShowTimeSeatRepository showTimeSeatRepository;
 
 
 
@@ -41,7 +49,7 @@ public class SeatService {
         var seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> {
                     log.error("Seat with id {} not found", seatId);
-                    return new AppException(ErrorCode.ROOM_NOT_FOUND);
+                    return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
         log.info("Retrieving seat with id: {}", seatId);
         return seatMapper.toSeatResponse(seat);
@@ -52,25 +60,45 @@ public class SeatService {
             log.error("Seat creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
+        String normalizedSeatRow = normalizeSeatRow(request.getSeatRow());
+        Integer seatColumn = request.getSeatColumn();
+
         var room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> {
             log.error("Room with id {} not found", request.getRoomId());
             return new AppException(ErrorCode.ROOM_NOT_FOUND);
         });
         var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
             log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
+            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
         });
 
-        if(seatRepository.existsBySeatRowAndSeatColumnAndRoom_RoomId(request.getSeatRow(), request.getSeatColumn(), request.getRoomId())){
-            log.error("Seat at seatRow {} and seatColumn {} already exists in room id {}", request.getSeatRow(), request.getSeatColumn(), request.getRoomId());
-            throw new AppException(ErrorCode.SEAT_ALREADY_EXISTS_IN_ROOM);
+        var existingSeat = seatRepository.findBySeatRowAndSeatColumnAndRoom_RoomId(
+                normalizedSeatRow,
+                seatColumn,
+                request.getRoomId()
+        );
+        if (existingSeat.isPresent()) {
+            var seat = existingSeat.get();
+            if (seat.getStatus() == SeatStatus.ACTIVE) {
+                log.error("Seat at seatRow {} and seatColumn {} already exists in room id {}", normalizedSeatRow, seatColumn, request.getRoomId());
+                throw new AppException(ErrorCode.SEAT_ALREADY_EXISTS_IN_ROOM);
+            }
+
+            seat.setSeatRow(normalizedSeatRow);
+            seat.setSeatColumn(seatColumn);
+            seat.setRoom(room);
+            seat.setSeatType(seatType);
+            seat.setStatus(request.getStatus() != null ? request.getStatus() : SeatStatus.ACTIVE);
+            log.info("Reactivating seat {}{} in room id {}", normalizedSeatRow, seatColumn, room.getRoomId());
+            return seatMapper.toSeatResponse(seatRepository.save(seat));
         }
 
         var seat = seatMapper.toSeatFromSeatCreationRequest(request);
+        seat.setSeatRow(normalizedSeatRow);
+        seat.setSeatColumn(seatColumn);
         seat.setRoom(room);
         seat.setSeatType(seatType);
-        seat.setStatus(SeatStatus.ACTIVE);
-        seatRepository.save(seat);
+        seat.setStatus(request.getStatus() != null ? request.getStatus() : SeatStatus.ACTIVE);
         log.info("Creating seat in room id: {} with seat type id: {}", room.getRoomId(), seatType.getSeatTypeId());
         return seatMapper.toSeatResponse(seatRepository.save(seat));
     }
@@ -127,10 +155,13 @@ public class SeatService {
     }
 
     public SeatResponse  updateSeat(Integer seatId, SeatCreationResquest request){
+        String normalizedSeatRow = normalizeSeatRow(request.getSeatRow());
+        request.setSeatRow(normalizedSeatRow);
+
         var seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> {
                     log.error("Seat with id {} not found", seatId);
-                    return new AppException(ErrorCode.ROOM_NOT_FOUND);
+                    return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
         var room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> {
             log.error("Room with id {} not found", request.getRoomId());
@@ -138,13 +169,13 @@ public class SeatService {
         });
         var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
             log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
+            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
         });
 
         var existingSeat = seatRepository.findBySeatRowAndSeatColumnAndRoom_RoomId(
-                request.getSeatRow(), request.getSeatColumn(), request.getRoomId());
+                normalizedSeatRow, request.getSeatColumn(), request.getRoomId());
         if(existingSeat.isPresent() && !existingSeat.get().getSeatId().equals(seatId)){
-            log.error("Seat at seatRow {} and seatColumn {} already exists in room id {}", request.getSeatRow(), request.getSeatColumn(), request.getRoomId());
+            log.error("Seat at seatRow {} and seatColumn {} already exists in room id {}", normalizedSeatRow, request.getSeatColumn(), request.getRoomId());
             throw new AppException(ErrorCode.SEAT_ALREADY_EXISTS_IN_ROOM);
         }
 
@@ -159,12 +190,36 @@ public class SeatService {
         var seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> {
                     log.error("Seat with id {} not found", seatId);
-                    return new AppException(ErrorCode.ROOM_NOT_FOUND);
+                    return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
+
+        boolean hasActiveTickets = ticketRepository.existsBySeat_SeatIdAndStatus(seatId, TicketStatus.ACTIVE);
+        boolean hasActiveHolds = showTimeSeatRepository.existsBySeat_SeatIdAndStatusAndHoldExpiresAtAfter(
+                seatId,
+                ShowTimeSeatStatus.HELD,
+                LocalDateTime.now()
+        );
+        if (hasActiveTickets || hasActiveHolds) {
+            throw new AppException(ErrorCode.SEAT_HAS_ACTIVE_TICKETS_OR_HOLDS);
+        }
+
         seat.setStatus(SeatStatus.BLOCKED);
         seatRepository.save(seat);
         log.info("Deleted seat with id: {}", seatId);
         return true;
+    }
+
+    public List<String> getAllSeatStatuses() {
+        return Arrays.stream(SeatStatus.values())
+                .map(Enum::name)
+                .toList();
+    }
+
+    private String normalizeSeatRow(String seatRow) {
+        if (seatRow == null) {
+            return null;
+        }
+        return seatRow.trim().toUpperCase();
     }
 
 

@@ -9,6 +9,7 @@ import { roomService } from "../../services/room.service";
 import { provinceService } from "../../services/province.service";
 import { cinemaService } from "../../services/cinema.service";
 import { roomTypeService } from "../../services/roomType.service";
+import RoomSeatManagerModal from "./RoomSeatManagerModal";
 import type {
     RoomCreationRequest,
     RoomResponse,
@@ -133,6 +134,7 @@ const RoomManagement = () => {
     const [openEdit, setOpenEdit] = useState(false);
     const [editingRoom, setEditingRoom] = useState<RoomResponse | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<RoomResponse | null>(null);
+    const [seatManagingRoom, setSeatManagingRoom] = useState<RoomResponse | null>(null);
 
     const [createCinemas, setCreateCinemas] = useState<CinemaResponse[]>([]);
     const [createRoomTypes, setCreateRoomTypes] = useState<RoomTypeResponse[]>([]);
@@ -769,6 +771,14 @@ const RoomManagement = () => {
                                             <div className="inline-flex items-center gap-2">
                                                 <button
                                                     type="button"
+                                                    onClick={() => setSeatManagingRoom(room)}
+                                                    className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
+                                                >
+                                                    Seats
+                                                </button>
+
+                                                <button
+                                                    type="button"
                                                     onClick={() => openEditModal(room)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
                                                 >
@@ -1192,6 +1202,12 @@ const RoomManagement = () => {
                     </div>
                 </div>
             </ModalShell>
+
+            <RoomSeatManagerModal
+                open={Boolean(seatManagingRoom)}
+                room={seatManagingRoom}
+                onClose={() => setSeatManagingRoom(null)}
+            />
         </div>
     );
 };

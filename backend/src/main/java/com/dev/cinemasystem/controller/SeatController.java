@@ -3,10 +3,12 @@ package com.dev.cinemasystem.controller;
 
 import com.dev.cinemasystem.service.SeatService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
 import com.dev.cinemasystem.enums.SeatStatus;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,11 +28,20 @@ public class SeatController {
     @GetMapping
     public ApiResponse<List<SeatResponse>> getSeatsByRoom(
             @RequestParam Integer roomId,
-            @RequestParam(defaultValue = "ACTIVE") SeatStatus status
+            @RequestParam(required = false) SeatStatus status
     ) {
         return ApiResponse.<List<SeatResponse>>builder()
                 .message("Seats retrieved successfully")
                 .result(seatService.getSeatsByRoom(roomId, status))
+                .build();
+    }
+
+    @GetMapping("/statuses")
+    public ApiResponse<ItemListDto<String>> getAllSeatStatuses() {
+        List<String> statuses = seatService.getAllSeatStatuses();
+        return ApiResponse.<ItemListDto<String>>builder()
+                .message("Seat statuses retrieved successfully")
+                .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
 
@@ -43,7 +54,7 @@ public class SeatController {
     }
 
     @PostMapping
-    public ApiResponse<SeatResponse> createSeat(@RequestBody SeatCreationResquest request) {
+    public ApiResponse<SeatResponse> createSeat(@RequestBody @Valid SeatCreationResquest request) {
         return ApiResponse.<SeatResponse>builder()
                 .message("Seat created successfully")
                 .result(seatService.createSeat(request))
@@ -66,7 +77,7 @@ public class SeatController {
     }
 
     @PatchMapping("/{seatId}")
-    public ApiResponse<SeatResponse> updateSeat(@PathVariable Integer seatId, @RequestBody SeatCreationResquest request) {
+    public ApiResponse<SeatResponse> updateSeat(@PathVariable Integer seatId, @RequestBody @Valid SeatCreationResquest request) {
         return ApiResponse.<SeatResponse>builder()
                 .message("Seat updated successfully")
                 .result(seatService.updateSeat(seatId, request))
