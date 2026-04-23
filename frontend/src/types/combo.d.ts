@@ -14,5 +14,29 @@ export type ComboRequest = {
     quantity: number;
 };
 
+export type ComboCreationRequest = {
+    comboName: string;
+    description: string;
+    price: number;
+    status?: ComboStatus;
+    image?: File | null;
+};
+
+export type ComboUpdateRequest = {
+    comboName?: string;
+    description?: string;
+    price?: number;
+    status?: ComboStatus;
+    image?: File | null;
+};
+
+export type ComboFilterParams = {
+    name?: string;
+    status?: ComboStatus | "";
+    page?: number;
+    size?: number;
+};
+
+export type ComboResponse = ComboEntity;
 export type Combo = ComboEntity;
 export type SelectedCombo = ComboEntity & { quantity: number };

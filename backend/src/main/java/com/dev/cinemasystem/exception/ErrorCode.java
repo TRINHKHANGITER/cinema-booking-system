@@ -116,6 +116,9 @@ public enum ErrorCode {
     INVALID_SEAT_SELECTION("INVALID_SEAT_SELECTION", HttpStatus.BAD_REQUEST, "Invalid seat selection"),
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", HttpStatus.NOT_FOUND, "Payment not found"),
     COMBO_NOT_FOUND("COMBO_NOT_FOUND", HttpStatus.NOT_FOUND, "Combo not found"),
+    COMBO_NAME_BLANK("COMBO_NAME_BLANK", HttpStatus.BAD_REQUEST, "Combo name is required"),
+    COMBO_NAME_EXISTS("COMBO_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Combo name already exists"),
+    COMBO_HAS_ACTIVE_ORDER_COMBOS("COMBO_HAS_ACTIVE_ORDER_COMBOS", HttpStatus.BAD_REQUEST, "Cannot delete combo because there are active order combos using it"),
 
     FILE_UPLOAD_FAILED("FILE_UPLOAD_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, "File upload failed"),
     IMAGE_BLANK("IMAGE_BLANK", HttpStatus.BAD_REQUEST, "Image is required"),

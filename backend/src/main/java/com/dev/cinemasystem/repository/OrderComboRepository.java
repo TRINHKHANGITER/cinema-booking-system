@@ -15,4 +15,6 @@ public interface OrderComboRepository extends JpaRepository<OrderCombo, Integer>
     List<OrderCombo> findAllByOrder_OrderId(Integer orderId);
 
     Optional<OrderCombo> findByOrder_OrderIdAndCombo_ComboId(Integer orderId, Integer comboId);
+
+    boolean existsByCombo_ComboIdAndStatus(Integer comboId, OrderComboStatus status);
 }

@@ -1396,12 +1396,12 @@ INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
 (3, 2, 200000, 'ACTIVE');
 -- combo
 INSERT INTO combo (combo_name, image, description, price, status) VALUES
-('Combo 1',        'https://example.com/combos/combo1.jpg', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
-('Combo 2',        'https://example.com/combos/combo2.jpg', 'Bắp lớn + 2 Pepsi lớn',                         200000, 'AVAILABLE'),
-('Combo 3',        'https://example.com/combos/combo3.jpg', 'Bắp caramel + 7UP + Nachos',                    175000, 'AVAILABLE'),
-('Combo Đôi',      'https://example.com/combos/combo4.jpg', '2 Bắp vừa + 2 Pepsi lớn',                       230000, 'AVAILABLE'),
-('Combo Gia Đình', 'https://example.com/combos/combo5.jpg', '1 Bắp lớn + 2 Pepsi + Nachos + Gummy',          310000, 'AVAILABLE'),
-('Combo Nhẹ',      'https://example.com/combos/combo6.jpg', 'Bắp nhỏ + Nước suối',                            80000, 'AVAILABLE');
+('Combo 1',        '1.png', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
+('Combo 2',        '2.png', 'Bắp lớn + 2 Pepsi lớn',                         200000, 'AVAILABLE'),
+('Combo 3',        '3.png', 'Bắp caramel + 7UP + Nachos',                    175000, 'AVAILABLE'),
+('Combo Đôi',      '4.png', '2 Bắp vừa + 2 Pepsi lớn',                       230000, 'AVAILABLE'),
+('Combo Gia Đình', '5.jfif', '1 Bắp lớn + 2 Pepsi + Nachos + Gummy',          310000, 'AVAILABLE'),
+('Combo Nhẹ',      '6.jfif', 'Bắp nhỏ + Nước suối',                            80000, 'AVAILABLE');
 
 
 -- order

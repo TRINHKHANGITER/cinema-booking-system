@@ -46,6 +46,7 @@ import RoomTypeManagement from "./pages/admin/RoomTypeManagement";
 import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
+import ComboManagement from "./pages/admin/ComboManagement";
 
 function App() {
     return (
@@ -90,6 +91,7 @@ function App() {
                                     path="price-tickets"
                                     element={<PriceTicketManagement />}
                                 />
+                                <Route path="combos" element={<ComboManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
                             </Route>
