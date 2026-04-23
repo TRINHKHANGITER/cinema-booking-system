@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.service;
 
+import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
@@ -30,6 +31,7 @@ public class OrderService {
     OrderMapper orderMapper;
     UserRepository userRepository;
     ShowTimeRepository showTimeRepository;
+    BookingProperties bookingProperties;
 
     public OrderResponse createOrder(OrderCreationRequest orderCreationRequest) {
         ShowTime showTime = showTimeRepository.findById(orderCreationRequest.getShowTimeId())
@@ -49,7 +51,7 @@ public class OrderService {
         order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
         order.setNetAmount(BigDecimal.ZERO);
-        order.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+        order.setExpiredAt(LocalDateTime.now().plusMinutes(bookingProperties.getHoldMinutes()));
         order.setStatus(OrderStatus.PAYING);
 
         return orderMapper.toOrderResponse(orderRepository.save(order));

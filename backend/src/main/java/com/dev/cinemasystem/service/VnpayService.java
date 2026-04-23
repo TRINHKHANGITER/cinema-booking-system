@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.service;
 
+import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.configuration.payment.VnPayConfig;
 import com.dev.cinemasystem.constant.VnpayParamsRequest;
 import com.dev.cinemasystem.dto.vnpayDTO.VnpayRequest;
@@ -26,11 +27,12 @@ public class VnpayService {
     static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     final VnPayConfig vnPayConfig;
+    final BookingProperties bookingProperties;
 
     public String buildVnpayUrl(VnpayRequest vnpayRequest, String clientIp) {
         String infoTransactionOrder = PaymentService.buildTransferContent(vnpayRequest.getOrderId());
         ZonedDateTime now = ZonedDateTime.now(VIETNAM_ZONE);
-        ZonedDateTime expireAt = now.plusMinutes(5);
+        ZonedDateTime expireAt = now.plusMinutes(bookingProperties.getHoldMinutes());
         String transactionReference = buildTransactionReference(vnpayRequest.getOrderId(), now);
 
         Map<String, String> params = new LinkedHashMap<>();

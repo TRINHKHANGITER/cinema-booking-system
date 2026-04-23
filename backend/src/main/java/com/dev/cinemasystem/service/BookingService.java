@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.service;
 
+import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.dto.bookingDTO.OrderComboItemRequest;
 import com.dev.cinemasystem.dto.bookingDTO.UpdateOrderCombosRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
@@ -31,8 +32,7 @@ import java.util.*;
 @Slf4j
 public class BookingService {
 
-    static final long HOLD_MINUTES = 5;
-
+    BookingProperties bookingProperties;
     ShowTimeSeatRepository showTimeSeatRepository;
     ShowTimeRepository showTimeRepository;
     OrderRepository orderRepository;
@@ -71,7 +71,7 @@ public class BookingService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime holdExpiresAt = order.getExpiredAt() != null
                 ? order.getExpiredAt()
-                : now.plusMinutes(HOLD_MINUTES);
+                : now.plusMinutes(bookingProperties.getHoldMinutes());
 
         List<Integer> normalizedSeatIds = request.getSeatIds().stream()
                 .filter(Objects::nonNull)
@@ -351,7 +351,7 @@ public class BookingService {
                 .discountAmount(BigDecimal.ZERO)
                 .totalAmount(BigDecimal.ZERO)
                 .netAmount(BigDecimal.ZERO)
-                .expiredAt(now.plusMinutes(HOLD_MINUTES))
+                .expiredAt(now.plusMinutes(bookingProperties.getHoldMinutes()))
                 .status(OrderStatus.PAYING)
                 .build());
     }

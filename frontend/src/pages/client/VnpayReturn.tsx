@@ -11,15 +11,23 @@ export default function VnpayReturn() {
 
     const params = new URLSearchParams(location.search);
     const txnRef = params.get("vnp_TxnRef");
+    const orderId = useMemo(() => {
+        if (!txnRef) return null;
+        const matched = txnRef.match(/^\d+/);
+        if (!matched) return null;
+
+        const parsedOrderId = Number.parseInt(matched[0], 10);
+        return Number.isNaN(parsedOrderId) ? null : parsedOrderId;
+    }, [txnRef]);
 
     useEffect(() => {
-        if (!txnRef) return;
+        if (!orderId) return;
 
         let timeoutId: ReturnType<typeof setTimeout>;
         let isMounted = true;
 
         const getOrder = async () => {
-            const resOrder = await orderService.getOrderByOrderId(Number(txnRef));
+            const resOrder = await orderService.getOrderByOrderId(orderId);
             return resOrder.result;
         };
 
@@ -56,7 +64,7 @@ export default function VnpayReturn() {
             isMounted = false;
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [location.search, txnRef]);
+    }, [location.search, orderId]);
 
     const orderParams = useMemo(() => {
         if (!order) return [];
