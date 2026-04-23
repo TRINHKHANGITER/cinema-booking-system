@@ -27,12 +27,28 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/room-type")
+@RequestMapping({"/room-type", "/roomType"})
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoomTypeController {
     RoomTypeService roomTypeService;
+
+    @GetMapping
+    public ApiResponse<ItemListDto<RoomTypeResponse>> getRoomTypesForRoomDropdown(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) Integer cinemaId,
+            @RequestParam(required = false, name = "cinema") Integer cinema,
+            @RequestParam(required = false) RoomTypeStatus status
+    ) {
+        Integer resolvedCinemaId = cinemaId != null ? cinemaId : cinema;
+        return ApiResponse.<ItemListDto<RoomTypeResponse>>builder()
+                .message("Room types retrieved successfully")
+                .result(ItemListDto.<RoomTypeResponse>builder()
+                        .items(roomTypeService.getRoomTypesForRoomDropdown(provinceId, resolvedCinemaId, status))
+                        .build())
+                .build();
+    }
 
 
     @GetMapping("/{roomTypeId}")

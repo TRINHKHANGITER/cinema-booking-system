@@ -9,6 +9,21 @@ import type {
 } from "../types/room-type";
 
 export const roomTypeService = {
+    getRoomTypeItemList: async (params?: {
+        provinceId?: number;
+        cinemaId?: number;
+        status?: RoomTypeStatus;
+    }) => {
+        const res = await api.get<ApiResponse<ItemListDto<RoomTypeResponse>>>("/room-type", {
+            params: {
+                provinceId: params?.provinceId,
+                cinemaId: params?.cinemaId,
+                status: params?.status,
+            },
+        });
+        return res.data;
+    },
+
     filterRoomTypes: async (params: RoomTypeFilterParams) => {
         const query = new URLSearchParams();
         if (params.name?.trim()) query.set("name", params.name.trim());

@@ -35,7 +35,7 @@ public class OpenApiGroupConfig {
     public GroupedOpenApi roomTypeGroup() {
         return GroupedOpenApi.builder()
                 .group("room-type")
-                .pathsToMatch("/room-type/**")
+                .pathsToMatch("/room-type/**", "/roomType/**")
                 .build();
     }
 

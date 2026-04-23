@@ -37,6 +37,19 @@ public class CinemaController {
                 .build();
     }
 
+    @GetMapping("/item-list")
+    public ApiResponse<ItemListDto<CinemaResponse>> getCinemasAsItemList(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) CinemaStatus status
+    ) {
+        return ApiResponse.<ItemListDto<CinemaResponse>>builder()
+                .message("Cinemas retrieved successfully")
+                .result(ItemListDto.<CinemaResponse>builder()
+                        .items(cinemaService.getCinemas(provinceId, false, status))
+                        .build())
+                .build();
+    }
+
     @GetMapping("/{cinemaId}")
     public ApiResponse<CinemaResponse> getCinemaById(@PathVariable Integer cinemaId) {
         return ApiResponse.<CinemaResponse>builder()

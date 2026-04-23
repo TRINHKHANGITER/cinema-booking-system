@@ -11,6 +11,7 @@ import com.dev.cinemasystem.enums.RoomTypeStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.RoomTypeMapper;
+import com.dev.cinemasystem.repository.CinemaRepository;
 import com.dev.cinemasystem.repository.RoomRepository;
 import com.dev.cinemasystem.repository.RoomTypeRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,7 @@ public class RoomTypeService {
     RoomTypeMapper roomTypeMapper;
     RoomTypeRepository roomTypeRepository;
     RoomRepository roomRepository;
+    CinemaRepository cinemaRepository;
 
     public RoomTypeResponse getRoomTypeById(Integer roomTypeId) {
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
@@ -149,6 +152,26 @@ public class RoomTypeService {
         roomType.setStatus(RoomTypeStatus.INACTIVE);
         roomTypeRepository.save(roomType);
         return true;
+    }
+
+    public List<RoomTypeResponse> getRoomTypesForRoomDropdown(
+            Integer provinceId,
+            Integer cinemaId,
+            RoomTypeStatus status
+    ) {
+        if (cinemaId != null) {
+            var cinema = cinemaRepository.findById(cinemaId)
+                    .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
+            if (provinceId != null && !provinceId.equals(cinema.getProvince().getProvinceId())) {
+                return List.of();
+            }
+        }
+
+        List<RoomType> roomTypes = status == null
+                ? roomTypeRepository.findAll(Sort.by(Sort.Direction.ASC, "roomTypeName"))
+                : roomTypeRepository.findAllByStatusOrderByRoomTypeNameAsc(status);
+
+        return roomTypeMapper.toRoomTypeResponseList(roomTypes);
     }
 
     public List<String> getAllRoomTypeStatuses() {

@@ -57,6 +57,7 @@ public enum ErrorCode {
     CAPACITY_INVALID("CAPACITY_INVALID", HttpStatus.BAD_REQUEST, "Capacity must be at least 1"),
     ROOM_TYPE_ID_INVALID("ROOM_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "Room type ID must be at least 1"),
     CINEMA_ID_INVALID("CINEMA_ID_INVALID", HttpStatus.BAD_REQUEST, "Cinema ID must be at least 1"),
+    ROOM_HAS_ACTIVE_SEATS("ROOM_HAS_ACTIVE_SEATS", HttpStatus.BAD_REQUEST, "Cannot delete room because there are active seats using it"),
 
     ROOM_TYPE_NOT_FOUND("ROOM_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Room type not found"),
 

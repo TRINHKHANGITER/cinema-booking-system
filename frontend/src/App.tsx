@@ -43,6 +43,7 @@ import MovieTypeManagement from "./pages/admin/MovieTypeManagement";
 import PriceTicketManagement from "./pages/admin/PriceTicketManagement";
 import ProvinceManagement from "./pages/admin/ProvinceManagement";
 import RoomTypeManagement from "./pages/admin/RoomTypeManagement";
+import RoomManagement from "./pages/admin/RoomManagement";
 import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
@@ -88,6 +89,7 @@ function App() {
                                 <Route path="cinemas" element={<CinemaManagement />} />
                                 <Route path="movie-types" element={<MovieTypeManagement />} />
                                 <Route path="room-types" element={<RoomTypeManagement />} />
+                                <Route path="rooms" element={<RoomManagement />} />
                                 <Route path="seat-types" element={<SeatTypeManagement />} />
                                 <Route
                                     path="price-tickets"

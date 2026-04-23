@@ -43,6 +43,18 @@ public class ProvinceController {
                 .build();
     }
 
+    @GetMapping("/item-list")
+    public ApiResponse<ItemListDto<ProvinceResponse>> getProvincesAsItemList(
+            @RequestParam(required = false) ProvinceStatus status
+    ) {
+        return ApiResponse.<ItemListDto<ProvinceResponse>>builder()
+                .message("Provinces retrieved successfully")
+                .result(ItemListDto.<ProvinceResponse>builder()
+                        .items(provinceService.getProvinces(status))
+                        .build())
+                .build();
+    }
+
     @GetMapping("/{provinceId}")
     public ApiResponse<ProvinceResponse> getProvinceById(@PathVariable Integer provinceId) {
         return ApiResponse.<ProvinceResponse>builder()

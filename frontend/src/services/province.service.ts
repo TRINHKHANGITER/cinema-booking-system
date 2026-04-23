@@ -20,6 +20,19 @@ export const provinceService = {
         return res.data;
     },
 
+    getProvinceItemList: async (status?: ProvinceStatus) => {
+        const res = await api.get<ApiResponse<ItemListDto<ProvinceResponse>>>(
+            "/province/item-list",
+            {
+                params: {
+                    status,
+                },
+            }
+        );
+
+        return res.data;
+    },
+
     filterProvinces: async (params: ProvinceFilterParams) => {
         const query = new URLSearchParams();
         if (params.name?.trim()) query.set("name", params.name.trim());

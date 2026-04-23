@@ -5,10 +5,11 @@ import com.dev.cinemasystem.enums.RoomStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface RoomRepository extends JpaRepository<Room, Integer> {
+public interface RoomRepository extends JpaRepository<Room, Integer>, JpaSpecificationExecutor<Room> {
 
     Optional<Room> findByRoomId(Integer roomId);
     boolean existsByRoomType_RoomTypeIdAndStatus(Integer roomTypeId, RoomStatus status);

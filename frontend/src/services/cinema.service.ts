@@ -22,6 +22,11 @@ type GetAllCinemasParams = {
     status?: CinemaStatus;
 };
 
+type GetCinemaItemListParams = {
+    provinceId?: number;
+    status?: CinemaStatus;
+};
+
 export const cinemaService = {
     getCinemas: async (params?: GetCinemasParams) => {
         const res = await api.get<ApiResponse<Cinema[]>>("/cinema", {
@@ -37,6 +42,17 @@ export const cinemaService = {
 
     getCinemaById: async (cinemaId: number) => {
         const res = await api.get<ApiResponse<Cinema>>(`/cinema/${cinemaId}`);
+        return res.data;
+    },
+
+    getCinemaItemList: async (params?: GetCinemaItemListParams) => {
+        const res = await api.get<ApiResponse<ItemListDto<CinemaResponse>>>("/cinema/item-list", {
+            params: {
+                provinceId: params?.provinceId,
+                status: params?.status,
+            },
+        });
+
         return res.data;
     },
 
@@ -87,4 +103,3 @@ export const cinemaService = {
         return res.data;
     },
 };
-
