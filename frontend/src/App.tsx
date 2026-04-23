@@ -35,6 +35,11 @@ import { cusPublicRoutes } from "./route/route";
 import DefaultLayout from "./layouts/DefaultLayout";
 import { Toaster } from "sonner";
 import AuthInitializer from "./layouts/AuthInitializer";
+import AdminGuard from "./layouts/AdminGuard";
+import AdminLayout from "./layouts/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import MovieManagement from "./pages/admin/MovieManagement";
+import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 
 function App() {
     return (
@@ -66,6 +71,14 @@ function App() {
 
                             return null;
                         })}
+
+                        <Route element={<AdminGuard />}>
+                            <Route path="/admin" element={<AdminLayout />}>
+                                <Route index element={<Dashboard />} />
+                                <Route path="movies" element={<MovieManagement />} />
+                                <Route path="showtimes" element={<ShowtimeManagement />} />
+                            </Route>
+                        </Route>
                     </Routes>
                 </AuthInitializer>
             </Router>

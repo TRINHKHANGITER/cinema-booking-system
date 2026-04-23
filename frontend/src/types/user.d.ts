@@ -1,4 +1,4 @@
-export type Role = "USER" | "STAFF";
+export type Role = "USER" | "STAFF" | "ADMIN";
 export type UserStatus = "ACTIVE" | "LOCKED" | "SUSPENDED" | "DELETED";
 export type GioiTinh = "male" | "female" | "other";
 export type Sex = GioiTinh;
