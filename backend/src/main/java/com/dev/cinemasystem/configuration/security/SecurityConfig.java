@@ -47,6 +47,7 @@ public class SecurityConfig {
             "/showtime-seat/**",
             "/booking/**",
             "/checkout/vnpay/**",
+            "/image/**",
 
             // Swagger
             "/swagger-ui/**",

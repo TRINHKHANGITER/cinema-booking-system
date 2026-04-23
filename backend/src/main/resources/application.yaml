@@ -25,8 +25,15 @@ springdoc:
   api-docs:
     path: /api-docs
 
+
 storage:
-  image-dir: data/image
+  image-combo-pattern: /image/combo/**
+  image-combo-dir: data/image/combo
+  image-movie-imageLandscape-pattern: /image/movie/imageLandscape/**
+  image-movie-imageLandscape-dir: data/image/movie/imageLandscape
+  image-movie-imagePortrait-pattern: /image/movie/imagePortrait/**
+  image-movie-imagePortrait-dir: data/image/movie/imagePortrait
+
 
 
 gemini:
