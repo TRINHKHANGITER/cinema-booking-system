@@ -81,12 +81,8 @@ public class AuthenticationService {
 
 
     public LoginResponse authenticate(LoginRequest request){
-        User user = userRepository.findByUsername(request.getEmail())
-                .orElse(null);
-        if(user == null){
-            user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
-        }
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
@@ -100,7 +96,7 @@ public class AuthenticationService {
         var refreshToken = generateToken(user, 24*30);
         UserResponse userResponse = userMapper.toUserResponseFromUser(user);
 
-        log.info("user {} authenticated successfully", user.getUsername());
+        log.info("user {} authenticated successfully", user.getEmail());
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -115,7 +111,7 @@ public class AuthenticationService {
     public String generateToken(User user, int hours){
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimSet = new JWTClaimsSet.Builder()
-                .subject(user.getUsername())
+                .subject(user.getEmail())
                 .issueTime(new Date())
                 .issuer("cinemasystem.com")
                 .expirationTime(new Date(

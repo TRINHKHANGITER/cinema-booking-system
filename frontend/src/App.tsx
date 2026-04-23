@@ -40,6 +40,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import MovieManagement from "./pages/admin/MovieManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
+import UserManagement from "./pages/admin/UserManagement";
 
 function App() {
     return (
@@ -75,6 +76,7 @@ function App() {
                         <Route element={<AdminGuard />}>
                             <Route path="/admin" element={<AdminLayout />}>
                                 <Route index element={<Dashboard />} />
+                                <Route path="users" element={<UserManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
                             </Route>

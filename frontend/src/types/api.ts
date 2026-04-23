@@ -11,3 +11,7 @@ export type PagingDto<T> = {
     pageSize: number;
     totalPages: number;
 };
+
+export type ItemListDto<T> = {
+    items: T[];
+};

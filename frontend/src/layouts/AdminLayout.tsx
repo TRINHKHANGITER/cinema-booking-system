@@ -9,6 +9,7 @@ type AdminNavItem = {
 
 const adminNavItems: AdminNavItem[] = [
     { path: "/admin", label: "Dashboard", end: true },
+    { path: "/admin/users", label: "User Management" },
     { path: "/admin/movies", label: "Movie Management" },
     { path: "/admin/showtimes", label: "Showtime Management" },
 ];
@@ -33,7 +34,7 @@ const AdminLayout = () => {
                     <p className="text-xs uppercase tracking-[0.2em] text-white/70">Galaxy Cinema</p>
                     <h2 className="mt-2 text-2xl font-bold">Admin Panel</h2>
                     <p className="mt-3 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/85">
-                        {user?.fullName ?? user?.username ?? user?.email ?? "Administrator"}
+                        {user?.fullName ?? user?.email ?? "Administrator"}
                     </p>
                 </div>
 

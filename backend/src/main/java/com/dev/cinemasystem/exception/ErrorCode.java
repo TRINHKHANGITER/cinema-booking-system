@@ -25,6 +25,8 @@ public enum ErrorCode {
     USERNAME_EXISTS("USERNAME_EXISTS", HttpStatus.BAD_REQUEST, "Username is already existed"),
     EMAIL_EXISTS("EMAIL_EXISTS", HttpStatus.BAD_REQUEST, "Email is already existed"),
     PHONE_NUMBER_EXISTS("PHONE_NUMBER_EXISTS", HttpStatus.BAD_REQUEST, "Phone number is already existed"),
+    ROLE_BLANK("ROLE_BLANK", HttpStatus.BAD_REQUEST, "Role is required"),
+    USER_STATUS_BLANK("USER_STATUS_BLANK", HttpStatus.BAD_REQUEST, "Status is required"),
     EMAIL_INVALID("EMAIL_INVALID", HttpStatus.BAD_REQUEST, "Email is invalid"),
     PHONE_NUMBER_INVALID("PHONE_NUMBER_INVALID", HttpStatus.BAD_REQUEST, "Phone number is at least 10 to 15 digits"),
     USERNAME_BLANK("USERNAME_BLANK", HttpStatus.BAD_REQUEST, "Username is required"),

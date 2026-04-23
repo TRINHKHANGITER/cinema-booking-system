@@ -31,9 +31,6 @@ public class User {
     @Column(nullable = false, unique = true, length = 15)
     String phoneNumber;
 
-    @Column(nullable = false, unique = true, length = 100)
-    String username;
-
     LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)

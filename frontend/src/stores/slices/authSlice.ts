@@ -194,11 +194,9 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
             phoneNumber: string,
             dateOfBirth?: string
         ) => {
-            const username = email.split("@")[0] || `user${Date.now()}`;
             const payload: UserCreationRequest = {
                 fullName,
                 phoneNumber,
-                username,
                 email,
                 password,
                 dateOfBirth: dateOfBirth || null,
