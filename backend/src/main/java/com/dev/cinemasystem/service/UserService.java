@@ -205,8 +205,24 @@ public class UserService {
             List<Predicate> predicates = new ArrayList<>();
 
             if (name != null && !name.isBlank()) {
-                String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
-                predicates.add(builder.like(builder.lower(root.get("fullName")), keyword));
+                String normalizedKeyword = name.trim().toLowerCase(Locale.ROOT);
+                String keywordPattern = "%" + normalizedKeyword + "%";
+                String phonePattern = "%" + name.trim() + "%";
+
+                Predicate searchByFullName = builder.like(
+                        builder.lower(root.get("fullName")),
+                        keywordPattern
+                );
+                Predicate searchByEmail = builder.like(
+                        builder.lower(root.get("email")),
+                        keywordPattern
+                );
+                Predicate searchByPhone = builder.like(
+                        root.get("phoneNumber"),
+                        phonePattern
+                );
+
+                predicates.add(builder.or(searchByFullName, searchByEmail, searchByPhone));
             }
 
             if (role != null && !role.isBlank()) {
@@ -315,4 +331,3 @@ public class UserService {
                 .build();
     }
 }
-

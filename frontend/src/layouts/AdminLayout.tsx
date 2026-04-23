@@ -28,10 +28,12 @@ const AdminLayout = () => {
     const { user, signOut } = useAuthStore();
 
     return (
-        <div className="min-h-screen bg-[var(--glx-bg-soft)] text-[var(--glx-text-primary)] lg:grid lg:grid-cols-[270px_1fr]">
+        <div className="min-h-screen overflow-x-hidden bg-[var(--glx-bg-soft)] text-[var(--glx-text-primary)] lg:grid lg:grid-cols-[270px_minmax(0,1fr)]">
             <aside className="hidden border-r border-[var(--glx-border)] bg-gradient-to-b from-[var(--glx-blue)] to-[var(--glx-blue-strong)] text-white lg:flex lg:flex-col">
                 <div className="border-b border-white/15 px-6 py-6">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/70">Galaxy Cinema</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                        Galaxy Cinema
+                    </p>
                     <h2 className="mt-2 text-2xl font-bold">Admin Panel</h2>
                     <p className="mt-3 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/85">
                         {user?.fullName ?? user?.email ?? "Administrator"}
@@ -72,15 +74,15 @@ const AdminLayout = () => {
                 </div>
             </aside>
 
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen min-w-0 flex-col">
                 <header className="sticky top-0 z-20 border-b border-[var(--glx-border)] bg-[var(--glx-surface)]/95 backdrop-blur">
-                    <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                    <div className="mx-auto flex w-full min-w-0 max-w-[1480px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between gap-3">
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                                     Admin Workspace
                                 </p>
-                                <h1 className="mt-1 text-2xl font-bold text-slate-800">
+                                <h1 className="mt-1 truncate text-2xl font-bold text-slate-800">
                                     {currentSection.label}
                                 </h1>
                             </div>
@@ -90,7 +92,7 @@ const AdminLayout = () => {
                                 onClick={() => {
                                     void signOut();
                                 }}
-                                className="rounded-lg border border-[var(--glx-orange)] px-3 py-2 text-sm font-semibold text-[var(--glx-orange)] transition-all duration-300 hover:bg-[var(--glx-orange)] hover:text-white lg:hidden"
+                                className="shrink-0 rounded-lg border border-[var(--glx-orange)] px-3 py-2 text-sm font-semibold text-[var(--glx-orange)] transition-all duration-300 hover:bg-[var(--glx-orange)] hover:text-white lg:hidden"
                             >
                                 Sign Out
                             </button>
@@ -118,8 +120,10 @@ const AdminLayout = () => {
                     </div>
                 </header>
 
-                <main className="mx-auto w-full max-w-[1480px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-                    <Outlet />
+                <main className="mx-auto w-full min-w-0 max-w-[1480px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                    <div className="min-w-0">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>

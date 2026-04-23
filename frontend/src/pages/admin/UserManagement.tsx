@@ -360,11 +360,11 @@ const UserManagement = () => {
             if (event.key === "Enter") {
                 applyFilters();
             }
-        }}
-        type="text"
-        placeholder="Search by full name..."
-        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
-    />
+                        }}
+                        type="text"
+                        placeholder="Search name / email / phone..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
 
     <select
         value={roleInput}
