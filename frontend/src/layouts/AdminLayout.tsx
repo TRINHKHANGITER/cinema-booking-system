@@ -12,6 +12,7 @@ const adminNavItems: AdminNavItem[] = [
     { path: "/admin/users", label: "User Management" },
     { path: "/admin/movie-types", label: "Movie Type Management" },
     { path: "/admin/room-types", label: "Room Type Management" },
+    { path: "/admin/seat-types", label: "Seat Type Management" },
     { path: "/admin/movies", label: "Movie Management" },
     { path: "/admin/showtimes", label: "Showtime Management" },
 ];

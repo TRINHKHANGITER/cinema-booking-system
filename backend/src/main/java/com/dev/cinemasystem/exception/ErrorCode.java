@@ -72,6 +72,7 @@ public enum ErrorCode {
     SEAT_TYPE_NAME_BLANK("SEAT_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Seat type name is required"),
     SEAT_TYPE_NOT_FOUND("SEAT_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Seat type not found"),
     SEAT_TYPE_NAME_EXISTS("SEAT_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Seat type name already exists"),
+    SEAT_TYPE_HAS_ACTIVE_SEATS("SEAT_TYPE_HAS_ACTIVE_SEATS", HttpStatus.BAD_REQUEST, "Cannot delete seat type because there are active seats using it"),
     SEAT_NOT_FOUND("SEAT_NOT_FOUND", HttpStatus.NOT_FOUND, "Seat not found"),
     SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Seat already exists in room at given seatRow and seatColumn"),
 

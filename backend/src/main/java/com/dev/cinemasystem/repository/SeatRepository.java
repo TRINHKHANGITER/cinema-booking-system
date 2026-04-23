@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface SeatRepository extends JpaRepository<Seat, Integer> {
 
     Optional<Seat> findBySeatId(Integer seatId);
+    boolean existsBySeatType_SeatTypeIdAndStatus(Integer seatTypeId, SeatStatus status);
 
     boolean existsBySeatRowAndSeatColumnAndRoom_RoomId(
             String seatRow, Integer seatColumn, Integer roomId);

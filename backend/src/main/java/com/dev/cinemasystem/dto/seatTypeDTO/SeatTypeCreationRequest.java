@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.seatTypeDTO;
 
+import com.dev.cinemasystem.enums.SeatTypeStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,5 +17,7 @@ public class SeatTypeCreationRequest {
 
     @NotBlank(message = "DESCRIPTION_BLANK")
     String description;
+
+    SeatTypeStatus status;
 
 }

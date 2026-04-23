@@ -41,6 +41,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import MovieManagement from "./pages/admin/MovieManagement";
 import MovieTypeManagement from "./pages/admin/MovieTypeManagement";
 import RoomTypeManagement from "./pages/admin/RoomTypeManagement";
+import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
 
@@ -81,6 +82,7 @@ function App() {
                                 <Route path="users" element={<UserManagement />} />
                                 <Route path="movie-types" element={<MovieTypeManagement />} />
                                 <Route path="room-types" element={<RoomTypeManagement />} />
+                                <Route path="seat-types" element={<SeatTypeManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
                             </Route>
