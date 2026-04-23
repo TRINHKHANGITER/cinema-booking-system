@@ -44,6 +44,9 @@ public enum ErrorCode {
 
     CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS("CINEMA_ALREADY_EXISTS_AT_THIS_ADDRESS", HttpStatus.BAD_REQUEST, "Cinema already exists at this address"),
     PROVINCE_NOT_FOUND("PROVINCE_NOT_FOUND", HttpStatus.NOT_FOUND, "Province not found"),
+    PROVINCE_NAME_BLANK("PROVINCE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Province name is required"),
+    PROVINCE_NAME_EXISTS("PROVINCE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Province name already exists"),
+    PROVINCE_HAS_ACTIVE_CINEMAS("PROVINCE_HAS_ACTIVE_CINEMAS", HttpStatus.BAD_REQUEST, "Cannot delete province because there are active cinemas using it"),
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", HttpStatus.NOT_FOUND, "Room not found"),
     ROOM_TYPE_BLANK("ROOM_TYPE_BLANK", HttpStatus.BAD_REQUEST, "Room type is required"),
     ROOM_NAME_BLANK("ROOM_NAME_BLANK", HttpStatus.BAD_REQUEST, "Room name is required"),

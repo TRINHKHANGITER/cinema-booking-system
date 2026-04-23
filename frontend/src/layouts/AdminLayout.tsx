@@ -10,6 +10,7 @@ type AdminNavItem = {
 const adminNavItems: AdminNavItem[] = [
     { path: "/admin", label: "Dashboard", end: true },
     { path: "/admin/users", label: "User Management" },
+    { path: "/admin/provinces", label: "Province Management" },
     { path: "/admin/movie-types", label: "Movie Type Management" },
     { path: "/admin/room-types", label: "Room Type Management" },
     { path: "/admin/seat-types", label: "Seat Type Management" },

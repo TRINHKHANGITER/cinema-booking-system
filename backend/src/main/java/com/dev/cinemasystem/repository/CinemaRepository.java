@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public interface CinemaRepository extends JpaRepository<Cinema, Integer> {
     boolean existsByCinemaName(String cinemaName);
+    boolean existsByProvince_ProvinceIdAndStatus(Integer provinceId, CinemaStatus status);
 
     Page<Cinema> findByProvince_ProvinceIdAndStatus(Integer provinceId, CinemaStatus status, Pageable pageable);
 
