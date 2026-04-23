@@ -47,6 +47,7 @@ import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import ComboManagement from "./pages/admin/ComboManagement";
+import CinemaManagement from "./pages/admin/CinemaManagement";
 
 function App() {
     return (
@@ -84,6 +85,7 @@ function App() {
                                 <Route index element={<Dashboard />} />
                                 <Route path="users" element={<UserManagement />} />
                                 <Route path="provinces" element={<ProvinceManagement />} />
+                                <Route path="cinemas" element={<CinemaManagement />} />
                                 <Route path="movie-types" element={<MovieTypeManagement />} />
                                 <Route path="room-types" element={<RoomTypeManagement />} />
                                 <Route path="seat-types" element={<SeatTypeManagement />} />

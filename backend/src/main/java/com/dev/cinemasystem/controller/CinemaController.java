@@ -2,11 +2,13 @@ package com.dev.cinemasystem.controller;
 
 import com.dev.cinemasystem.service.CinemaService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
 import com.dev.cinemasystem.enums.CinemaStatus;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -56,8 +58,31 @@ public class CinemaController {
                 .build();
     }
 
+    @GetMapping("/filter")
+    public ApiResponse<PagingDto<CinemaResponse>> filterCinemas(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.<PagingDto<CinemaResponse>>builder()
+                .message("Cinemas filtered successfully")
+                .result(cinemaService.filterCinemas(name, provinceId, status, page, size))
+                .build();
+    }
+
+    @GetMapping("/statuses")
+    public ApiResponse<ItemListDto<String>> getAllCinemaStatuses() {
+        List<String> statuses = cinemaService.getAllCinemaStatuses();
+        return ApiResponse.<ItemListDto<String>>builder()
+                .message("Cinema statuses retrieved successfully")
+                .result(ItemListDto.<String>builder().items(statuses).build())
+                .build();
+    }
+
     @PostMapping
-    public ApiResponse<CinemaResponse> createCinema(@RequestBody CinemaCreationRequest request) {
+    public ApiResponse<CinemaResponse> createCinema(@RequestBody @Valid CinemaCreationRequest request) {
         return ApiResponse.<CinemaResponse>builder()
                 .message("Cinema created successfully")
                 .result(cinemaService.createCinema(request))
@@ -65,7 +90,10 @@ public class CinemaController {
     }
 
     @PatchMapping("/{cinemaId}")
-    public ApiResponse<CinemaResponse> updateCinema(@PathVariable Integer cinemaId, @RequestBody CinemaUpdateRequest request) {
+    public ApiResponse<CinemaResponse> updateCinema(
+            @PathVariable Integer cinemaId,
+            @RequestBody @Valid CinemaUpdateRequest request
+    ) {
         return ApiResponse.<CinemaResponse>builder()
                 .message("Cinema updated successfully")
                 .result(cinemaService.updateCinema(cinemaId, request))

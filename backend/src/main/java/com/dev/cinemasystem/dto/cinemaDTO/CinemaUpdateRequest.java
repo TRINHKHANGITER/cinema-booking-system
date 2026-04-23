@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
+import com.dev.cinemasystem.enums.CinemaStatus;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,4 +19,6 @@ public class CinemaUpdateRequest {
     String addressText;
 
     String description;
+
+    CinemaStatus status;
 }
