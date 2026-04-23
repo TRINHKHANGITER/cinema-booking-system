@@ -40,6 +40,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import MovieManagement from "./pages/admin/MovieManagement";
 import MovieTypeManagement from "./pages/admin/MovieTypeManagement";
+import PriceTicketManagement from "./pages/admin/PriceTicketManagement";
 import ProvinceManagement from "./pages/admin/ProvinceManagement";
 import RoomTypeManagement from "./pages/admin/RoomTypeManagement";
 import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
@@ -85,6 +86,10 @@ function App() {
                                 <Route path="movie-types" element={<MovieTypeManagement />} />
                                 <Route path="room-types" element={<RoomTypeManagement />} />
                                 <Route path="seat-types" element={<SeatTypeManagement />} />
+                                <Route
+                                    path="price-tickets"
+                                    element={<PriceTicketManagement />}
+                                />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
                             </Route>

@@ -99,6 +99,7 @@ public enum ErrorCode {
     SEAT_TYPE_ID_BLANK("SEAT_TYPE_ID_BLANK", HttpStatus.BAD_REQUEST, "Seat type ID is required"),
     PRICE_TICKET_NOT_FOUND("PRICE_TICKET_NOT_FOUND", HttpStatus.NOT_FOUND, "Price ticket not found"),
     PRICE_TICKET_EXISTS("PRICE_TICKET_EXISTS", HttpStatus.BAD_REQUEST, "Price ticket already exists for given combination"),
+    PRICE_TICKET_HAS_ACTIVE_TICKETS("PRICE_TICKET_HAS_ACTIVE_TICKETS", HttpStatus.BAD_REQUEST, "Cannot delete price ticket because there are active tickets using it"),
 
 
     SHOWTIME_ALREADY_EXISTS("SHOWTIME_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Showtime already exists for the given movie, room, and start time"),

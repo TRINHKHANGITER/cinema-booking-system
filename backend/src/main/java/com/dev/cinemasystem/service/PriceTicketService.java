@@ -1,23 +1,36 @@
 package com.dev.cinemasystem.service;
 
 
-import com.dev.cinemasystem.entity.PriceTicket;
+import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
+import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketUpdateResquest;
+import com.dev.cinemasystem.entity.PriceTicket;
+import com.dev.cinemasystem.enums.PriceTicketStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PriceTicketMapper;
 import com.dev.cinemasystem.repository.PriceTicketRepository;
 import com.dev.cinemasystem.repository.RoomTypeRepository;
 import com.dev.cinemasystem.repository.SeatTypeRepository;
-import com.dev.cinemasystem.enums.PriceTicketStatus;
+import com.dev.cinemasystem.repository.TicketRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -28,105 +41,162 @@ public class PriceTicketService {
     PriceTicketRepository priceTicketRepository;
     RoomTypeRepository roomTypeRepository;
     SeatTypeRepository seatTypeRepository;
+    TicketRepository ticketRepository;
     PriceTicketMapper priceTicketMapper;
 
-    public PriceTicketResponse getPriceTicketById(Integer priceTicketId){
-        var priceTicket = priceTicketRepository.findById(priceTicketId)
+    public PriceTicketResponse getPriceTicketById(Integer priceTicketId) {
+        PriceTicket priceTicket = priceTicketRepository.findById(priceTicketId)
                 .orElseThrow(() -> {
                     log.error("PriceTicket with id {} not found", priceTicketId);
                     return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
-        log.info("Retrieving priceTicket with id: {}", priceTicketId);
+
         return priceTicketMapper.toPriceTicketResponse(priceTicket);
     }
 
-    public  PriceTicketResponse createPriceTicket(PriceTicketCreationResquest request){
-        if(request == null){
-            log.error("PriceTicket creation request is null");
+    public PriceTicketResponse createPriceTicket(PriceTicketCreationResquest request) {
+        if (request == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        var roomType = roomTypeRepository.findById(request.getRoomTypeId()).orElseThrow(() -> {
-            log.error("Room type with id {} not found", request.getRoomTypeId());
-            return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
-        });
+        var roomType = roomTypeRepository.findById(request.getRoomTypeId())
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
 
-        var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
-            log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
-        });
+        var seatType = seatTypeRepository.findById(request.getSeatTypeId())
+                .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
 
-        if(priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+        if (priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
                 request.getRoomTypeId(),
                 request.getSeatTypeId()
-        ) != null){
-            log.error("PriceTicket with RoomTypeId {} and SeatTypeId {} already exists",
-                    request.getRoomTypeId(),
-                    request.getSeatTypeId()
-            );
+        ) != null) {
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
         }
-        var priceTicket = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
-        priceTicket.setStatus(PriceTicketStatus.ACTIVE);
+
+        PriceTicket priceTicket = priceTicketMapper.toPriceTicketFromPriceTicketCreationRequest(request);
         priceTicket.setRoomType(roomType);
         priceTicket.setSeatType(seatType);
-        log.info("Creating priceTicket with RoomTypeId {} and SeatTypeId {}",
-                request.getRoomTypeId(),
-                request.getSeatTypeId());
-        return priceTicketMapper.toPriceTicketResponse(priceTicketRepository.save(priceTicket));
+        priceTicket.setStatus(request.getStatus() != null ? request.getStatus() : PriceTicketStatus.ACTIVE);
+
+        PriceTicket savedPriceTicket = priceTicketRepository.save(priceTicket);
+        return priceTicketMapper.toPriceTicketResponse(savedPriceTicket);
     }
 
+    public PagingDto<PriceTicketResponse> getAllPriceTickets(
+            PriceTicketStatus status,
+            Integer page,
+            Integer size
+    ) {
+        return filterPriceTickets(null, null, status != null ? status.name() : null, page, size);
+    }
 
-    public PriceTicketResponse  updatePriceTicket(Integer priceTicketId, PriceTicketCreationResquest request){
+    public PagingDto<PriceTicketResponse> filterPriceTickets(
+            Integer roomTypeId,
+            Integer seatTypeId,
+            String status,
+            Integer page,
+            Integer size
+    ) {
+        validatePageAndSize(page, size);
 
-        if(request == null){
-            log.error("PriceTicket update request is null");
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Specification<PriceTicket> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (roomTypeId != null) {
+                predicates.add(builder.equal(root.get("roomType").get("roomTypeId"), roomTypeId));
+            }
+
+            if (seatTypeId != null) {
+                predicates.add(builder.equal(root.get("seatType").get("seatTypeId"), seatTypeId));
+            }
+
+            if (status != null && !status.isBlank()) {
+                predicates.add(builder.equal(root.get("status"), parsePriceTicketStatus(status)));
+            }
+
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<PriceTicket> priceTicketPage = priceTicketRepository.findAll(specification, pageable);
+        List<PriceTicketResponse> responses = priceTicketMapper.toPriceTicketResponseList(priceTicketPage.getContent());
+
+        return PagingDto.<PriceTicketResponse>builder()
+                .items(responses)
+                .currentPage(priceTicketPage.getNumber() + 1)
+                .pageSize(priceTicketPage.getSize())
+                .totalItems(priceTicketPage.getTotalElements())
+                .totalPages(priceTicketPage.getTotalPages())
+                .build();
+    }
+
+    public PriceTicketResponse updatePriceTicket(Integer priceTicketId, PriceTicketUpdateResquest request) {
+        if (request == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        var priceTicket = priceTicketRepository.findById(priceTicketId)
+        PriceTicket priceTicket = priceTicketRepository.findById(priceTicketId)
                 .orElseThrow(() -> {
                     log.error("PriceTicket with id {} not found", priceTicketId);
-                    return new AppException(ErrorCode.MOVIE_NOT_FOUND);
+                    return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
-        var roomType = roomTypeRepository.findById(request.getRoomTypeId()).orElseThrow(() -> {
-            log.error("Room type with id {} not found", request.getRoomTypeId());
-            return new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND);
-        });
-        var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
-            log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
-        });
 
-        var existingPriceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
-                request.getRoomTypeId(),
-                request.getSeatTypeId()
+        Integer targetRoomTypeId = request.getRoomTypeId() != null
+                ? request.getRoomTypeId()
+                : priceTicket.getRoomType().getRoomTypeId();
+        Integer targetSeatTypeId = request.getSeatTypeId() != null
+                ? request.getSeatTypeId()
+                : priceTicket.getSeatType().getSeatTypeId();
+
+        PriceTicket existingPriceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+                targetRoomTypeId,
+                targetSeatTypeId
         );
-        if( existingPriceTicket!= null && existingPriceTicket.getPriceTicketId() != priceTicketId){
-            log.error("PriceTicket with RoomTypeId {} and SeatTypeId {} already exists",
-                    request.getRoomTypeId(),
-                    request.getSeatTypeId()
-            );
+        if (existingPriceTicket != null && !existingPriceTicket.getPriceTicketId().equals(priceTicketId)) {
             throw new AppException(ErrorCode.PRICE_TICKET_EXISTS);
-
         }
-        priceTicket.setPrice(request.getPrice());
-        priceTicket.setRoomType(roomType);
-        priceTicket.setSeatType(seatType);
-        log.info("Updating priceTicket with id: {}", priceTicketId);
-        return priceTicketMapper.toPriceTicketResponse(priceTicketRepository.save(priceTicket));
+
+        if (request.getRoomTypeId() != null) {
+            var roomType = roomTypeRepository.findById(request.getRoomTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+            priceTicket.setRoomType(roomType);
+        }
+
+        if (request.getSeatTypeId() != null) {
+            var seatType = seatTypeRepository.findById(request.getSeatTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+            priceTicket.setSeatType(seatType);
+        }
+
+        priceTicketMapper.updatePriceTicketInfo(priceTicket, request);
+
+        PriceTicket savedPriceTicket = priceTicketRepository.save(priceTicket);
+        return priceTicketMapper.toPriceTicketResponse(savedPriceTicket);
     }
 
-    public boolean deletePriceTicket(Integer priceTicketId){
-        var priceTicket = priceTicketRepository.findById(priceTicketId)
+    public boolean deletePriceTicket(Integer priceTicketId) {
+        PriceTicket priceTicket = priceTicketRepository.findById(priceTicketId)
                 .orElseThrow(() -> {
                     log.error("PriceTicket with id {} not found", priceTicketId);
-                    return new AppException(ErrorCode.MOVIE_NOT_FOUND);
+                    return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
+
+        boolean hasActiveTickets = ticketRepository.existsByPriceTicket_PriceTicketIdAndStatus(
+                priceTicketId,
+                TicketStatus.ACTIVE
+        );
+        if (hasActiveTickets) {
+            throw new AppException(ErrorCode.PRICE_TICKET_HAS_ACTIVE_TICKETS);
+        }
+
         priceTicket.setStatus(PriceTicketStatus.INACTIVE);
         priceTicketRepository.save(priceTicket);
-        log.info("Deleted priceTicket with id: {}", priceTicketId);
         return true;
+    }
+
+    public List<String> getAllPriceTicketStatuses() {
+        return Arrays.stream(PriceTicketStatus.values())
+                .map(Enum::name)
+                .toList();
     }
 
     public BigDecimal getPriceByRoomTypeIdAndSeatTypeId(int roomTypeId, int seatTypeId) {
@@ -137,6 +207,21 @@ public class PriceTicketService {
         return ticket.getPrice();
     }
 
+    private PriceTicketStatus parsePriceTicketStatus(String value) {
+        try {
+            return PriceTicketStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+    }
 
+    private void validatePageAndSize(Integer page, Integer size) {
+        if (page == null || page < 1) {
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+
+        if (size == null || size < 1 || size > 100) {
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }
 }
-

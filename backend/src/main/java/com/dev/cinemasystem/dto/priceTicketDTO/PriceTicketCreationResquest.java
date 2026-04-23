@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.priceTicketDTO;
 
+import com.dev.cinemasystem.enums.PriceTicketStatus;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -26,4 +27,6 @@ public class PriceTicketCreationResquest {
     @Min(value = 1, message = "SEAT_TYPE_ID_INVALID")
     @NotNull(message = "SEAT_TYPE_ID_BLANK")
     Integer seatTypeId;
+
+    PriceTicketStatus status;
 }
