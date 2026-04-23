@@ -16,6 +16,7 @@ public interface MovieRepository extends JpaRepository<Movie, Integer> {
     Optional<Movie> findByMovieIdAndStatus(Integer movieId, MovieStatus status);
     Page<Movie> findAllByStatus(MovieStatus status, Pageable pageable);
     Page<Movie> findAllByMovieType_MovieTypeId(Integer movieTypeId, Pageable pageable);
+    boolean existsByMovieType_MovieTypeIdAndStatus(Integer movieTypeId, MovieStatus status);
 }
 
 

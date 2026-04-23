@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.movieTypeDTO;
 
+import com.dev.cinemasystem.enums.MovieTypeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,4 +15,5 @@ public class MovieTypeUpdateRequest {
 
     String description;
 
+    MovieTypeStatus status;
 }

@@ -78,6 +78,7 @@ public enum ErrorCode {
     MOVIE_TYPE_NAME_BLANK("MOVIE_TYPE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Movie type name is required"),
     MOVIE_TYPE_NOT_FOUND("MOVIE_TYPE_NOT_FOUND", HttpStatus.NOT_FOUND, "Movie type not found"),
     MOVIE_TYPE_NAME_EXISTS("MOVIE_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Movie type name already exists"),
+    MOVIE_TYPE_HAS_ACTIVE_MOVIES("MOVIE_TYPE_HAS_ACTIVE_MOVIES", HttpStatus.BAD_REQUEST, "Cannot delete movie type because there are active movies using it"),
     MOVIE_NOT_FOUND("MOVIE_NOT_FOUND", HttpStatus.NOT_FOUND, "Movie not found"),
     MOVIE_NAME_BLANK("MOVIE_NAME_BLANK", HttpStatus.BAD_REQUEST, "Movie name is required"),
     VIDEO_TRAILER_BLANK("VIDEO_TRAILER_BLANK", HttpStatus.BAD_REQUEST, "Video trailer is required"),

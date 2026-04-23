@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.movieTypeDTO;
 
+import com.dev.cinemasystem.enums.MovieTypeStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,4 +18,5 @@ public class MovieTypeCreationRequest {
     @NotBlank(message = "DESCRIPTION_BLANK")
     String description;
 
+    MovieTypeStatus status;
 }

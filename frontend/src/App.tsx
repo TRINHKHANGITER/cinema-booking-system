@@ -39,6 +39,7 @@ import AdminGuard from "./layouts/AdminGuard";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import MovieManagement from "./pages/admin/MovieManagement";
+import MovieTypeManagement from "./pages/admin/MovieTypeManagement";
 import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
 
@@ -77,6 +78,7 @@ function App() {
                             <Route path="/admin" element={<AdminLayout />}>
                                 <Route index element={<Dashboard />} />
                                 <Route path="users" element={<UserManagement />} />
+                                <Route path="movie-types" element={<MovieTypeManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
                             </Route>
