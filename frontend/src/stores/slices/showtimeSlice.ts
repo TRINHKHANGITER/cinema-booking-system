@@ -131,7 +131,7 @@ export const fetchShowTimesByMovieIdThunk = createAsyncThunk<
     try {
         const response = await showTimeService.getShowTimesByMovieId(
             movieId,
-            status ?? "SCHEDULED",
+            status ?? "SELLING",
             page ?? 1,
             size ?? 10
         );
@@ -201,67 +201,90 @@ const showtimeSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchShowTimesByFiltersThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.showtimes = action.payload.result?.items ?? [];
-            })
-            .addCase(fetchShowTimeByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.currentShowtime = action.payload.result ?? null;
-            })
-            .addCase(fetchShowTimesByCinemaThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.showtimes = action.payload.result?.items ?? [];
-            })
-            .addCase(fetchShowTimesByMovieIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.showtimes = action.payload.result?.items ?? [];
-            })
-            .addCase(searchShowTimesThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeSearchItem>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.searchItems = action.payload.result?.items ?? [];
-            })
-            .addCase(createShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                const created = action.payload.result;
-                if (!created) return;
-
-                const existingIndex = state.showtimes.findIndex((item) => item.movieId === created.movieId);
-                if (existingIndex >= 0) {
-                    state.showtimes[existingIndex] = created;
-                } else {
-                    state.showtimes.push(created);
+            .addCase(
+                fetchShowTimesByFiltersThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.showtimes = action.payload.result?.items ?? [];
                 }
-            })
-            .addCase(updateShowTimeThunk.fulfilled, (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                const updated = action.payload.result;
-                if (!updated) return;
-
-                state.showtimes = state.showtimes.map((item) =>
-                    item.movieId === updated.movieId ? updated : item
-                );
-                if (state.currentShowtime?.movieId === updated.movieId) {
-                    state.currentShowtime = updated;
+            )
+            .addCase(
+                fetchShowTimeByIdThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.currentShowtime = action.payload.result ?? null;
                 }
-            })
+            )
+            .addCase(
+                fetchShowTimesByCinemaThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.showtimes = action.payload.result?.items ?? [];
+                }
+            )
+            .addCase(
+                fetchShowTimesByMovieIdThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.showtimes = action.payload.result?.items ?? [];
+                }
+            )
+            .addCase(
+                searchShowTimesThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeSearchItem>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.searchItems = action.payload.result?.items ?? [];
+                }
+            )
+            .addCase(
+                createShowTimeThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    const created = action.payload.result;
+                    if (!created) return;
+
+                    const existingIndex = state.showtimes.findIndex(
+                        (item) => item.movieId === created.movieId
+                    );
+                    if (existingIndex >= 0) {
+                        state.showtimes[existingIndex] = created;
+                    } else {
+                        state.showtimes.push(created);
+                    }
+                }
+            )
+            .addCase(
+                updateShowTimeThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<ShowtimeMovieResponse>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    const updated = action.payload.result;
+                    if (!updated) return;
+
+                    state.showtimes = state.showtimes.map((item) =>
+                        item.movieId === updated.movieId ? updated : item
+                    );
+                    if (state.currentShowtime?.movieId === updated.movieId) {
+                        state.currentShowtime = updated;
+                    }
+                }
+            )
             .addCase(deleteShowTimeThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.code = action.payload.code;
@@ -276,11 +299,13 @@ const showtimeSlice = createSlice({
                 }
             )
             .addMatcher(
-                (action) => action.type.startsWith("showtime/") && action.type.endsWith("/rejected"),
+                (action) =>
+                    action.type.startsWith("showtime/") && action.type.endsWith("/rejected"),
                 (state, action: { payload?: ApiErrorPayload; error?: { message?: string } }) => {
                     state.loading = false;
                     state.code = action.payload?.code ?? "UNKNOWN_ERROR";
-                    state.message = action.payload?.message ?? action.error?.message ?? "Request failed";
+                    state.message =
+                        action.payload?.message ?? action.error?.message ?? "Request failed";
                 }
             );
     },
@@ -288,3 +313,4 @@ const showtimeSlice = createSlice({
 
 export const { setSelectedDate, clearCurrentShowtime } = showtimeSlice.actions;
 export default showtimeSlice.reducer;
+

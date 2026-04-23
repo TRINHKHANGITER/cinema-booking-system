@@ -1,12 +1,9 @@
 package com.dev.cinemasystem.enums;
 
 public enum OrderStatus {
-    CREATED,
-    HOLDING,
-    AWAITING_PAYMENT,
+    PAYING,
     PAID,
     CANCELLED,
     EXPIRED,
-    REFUNDED
+    FAILED
 }
-

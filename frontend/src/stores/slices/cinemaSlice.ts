@@ -149,12 +149,15 @@ const cinemaSlice = createSlice({
                 state.code = null;
                 state.message = null;
             })
-            .addCase(fetchCinemasThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Cinema[]>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.cinemas = action.payload.result ?? [];
-            })
+            .addCase(
+                fetchCinemasThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Cinema[]>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.cinemas = action.payload.result ?? [];
+                }
+            )
             .addCase(fetchCinemasThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.code = action.payload?.code ?? "UNKNOWN_ERROR";
@@ -165,46 +168,58 @@ const cinemaSlice = createSlice({
                 state.code = null;
                 state.message = null;
             })
-            .addCase(fetchCinemaByIdThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Cinema>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.currentCinema = action.payload.result ?? null;
-            })
+            .addCase(
+                fetchCinemaByIdThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Cinema>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.currentCinema = action.payload.result ?? null;
+                }
+            )
             .addCase(fetchCinemaByIdThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.code = action.payload?.code ?? "UNKNOWN_ERROR";
                 state.message = action.payload?.message ?? action.error.message ?? "Request failed";
             })
-            .addCase(fetchAllCinemasThunk.fulfilled, (state, action: PayloadAction<ApiResponse<PagingDto<Cinema>>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                state.paging = action.payload.result ?? null;
-                state.cinemas = action.payload.result?.items ?? [];
-            })
-            .addCase(createCinemaThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Cinema>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                if (action.payload.result) {
-                    state.cinemas.unshift(action.payload.result);
+            .addCase(
+                fetchAllCinemasThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<PagingDto<Cinema>>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    state.paging = action.payload.result ?? null;
+                    state.cinemas = action.payload.result?.items ?? [];
                 }
-            })
-            .addCase(updateCinemaThunk.fulfilled, (state, action: PayloadAction<ApiResponse<Cinema>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
-                const updated = action.payload.result;
-                if (!updated) return;
+            )
+            .addCase(
+                createCinemaThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Cinema>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    if (action.payload.result) {
+                        state.cinemas.unshift(action.payload.result);
+                    }
+                }
+            )
+            .addCase(
+                updateCinemaThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<Cinema>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
+                    const updated = action.payload.result;
+                    if (!updated) return;
 
-                state.cinemas = state.cinemas.map((item) =>
-                    item.cinemaId === updated.cinemaId ? updated : item
-                );
-                if (state.currentCinema?.cinemaId === updated.cinemaId) {
-                    state.currentCinema = updated;
+                    state.cinemas = state.cinemas.map((item) =>
+                        item.cinemaId === updated.cinemaId ? updated : item
+                    );
+                    if (state.currentCinema?.cinemaId === updated.cinemaId) {
+                        state.currentCinema = updated;
+                    }
                 }
-            })
+            )
             .addCase(deleteCinemaThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.code = action.payload.code;
@@ -223,7 +238,8 @@ const cinemaSlice = createSlice({
                 (state, action: { payload?: ApiErrorPayload; error?: { message?: string } }) => {
                     state.loading = false;
                     state.code = action.payload?.code ?? "UNKNOWN_ERROR";
-                    state.message = action.payload?.message ?? action.error?.message ?? "Request failed";
+                    state.message =
+                        action.payload?.message ?? action.error?.message ?? "Request failed";
                 }
             );
     },

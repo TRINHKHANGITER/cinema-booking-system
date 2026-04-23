@@ -109,27 +109,30 @@ const authSlice = createSlice({
                 state.code = null;
                 state.message = null;
             })
-            .addCase(loginThunk.fulfilled, (state, action: PayloadAction<ApiResponse<LoginResponse>>) => {
-                state.loading = false;
-                state.code = action.payload.code;
-                state.message = action.payload.message ?? null;
+            .addCase(
+                loginThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<LoginResponse>>) => {
+                    state.loading = false;
+                    state.code = action.payload.code;
+                    state.message = action.payload.message ?? null;
 
-                const result = action.payload.result;
-                state.accessToken = result?.accessToken ?? null;
-                state.refreshToken = result?.refreshToken ?? null;
-                state.user = result?.user ?? null;
-                state.isAuthenticated = Boolean(result?.accessToken);
+                    const result = action.payload.result;
+                    state.accessToken = result?.accessToken ?? null;
+                    state.refreshToken = result?.refreshToken ?? null;
+                    state.user = result?.user ?? null;
+                    state.isAuthenticated = Boolean(result?.accessToken);
 
-                if (result?.accessToken) {
-                    localStorage.setItem(LS_ACCESS, result.accessToken);
+                    if (result?.accessToken) {
+                        localStorage.setItem(LS_ACCESS, result.accessToken);
+                    }
+                    if (result?.refreshToken) {
+                        localStorage.setItem(LS_REFRESH, result.refreshToken);
+                    }
+                    if (result?.user) {
+                        localStorage.setItem(LS_USER, JSON.stringify(result.user));
+                    }
                 }
-                if (result?.refreshToken) {
-                    localStorage.setItem(LS_REFRESH, result.refreshToken);
-                }
-                if (result?.user) {
-                    localStorage.setItem(LS_USER, JSON.stringify(result.user));
-                }
-            })
+            )
             .addCase(loginThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.code = action.payload?.code ?? "UNKNOWN_ERROR";
@@ -159,9 +162,7 @@ type AuthStoreCompat = AuthState & {
     fetchMe: () => Promise<void>;
 };
 
-export const useAuthStore = <T = AuthStoreCompat>(
-    selector?: (state: AuthStoreCompat) => T
-): T => {
+export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCompat) => T): T => {
     const dispatch = useDispatch<any>();
     const auth = useSelector((state: { auth: AuthState }) => state.auth);
 
@@ -170,17 +171,17 @@ export const useAuthStore = <T = AuthStoreCompat>(
         signIn: async (email: string, password: string) => {
             const action = await dispatch(
                 loginThunk({
-                    emailOrUsername: email,
+                    email,
                     password,
                 })
-            );
+            );  
 
             if (loginThunk.fulfilled.match(action)) {
                 return action.payload;
             }
 
             const errorMessage =
-                action.payload?.message ?? action.error?.message ?? "Dang nhap that bai";
+                action.payload?.message ?? action.error?.message ?? "Đăng nhập thất bại";
             throw new Error(errorMessage);
         },
         signOut: async () => {
@@ -208,7 +209,7 @@ export const useAuthStore = <T = AuthStoreCompat>(
             if (response.code === "SUCCESS") {
                 await dispatch(
                     loginThunk({
-                        emailOrUsername: email,
+                        email,
                         password,
                     })
                 );
@@ -230,3 +231,4 @@ export const useAuthStore = <T = AuthStoreCompat>(
 };
 
 export default authSlice.reducer;
+

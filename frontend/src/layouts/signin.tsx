@@ -34,11 +34,11 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
         const { email, password } = data;
         try {
             const response = await signIn(email, password);
-            toast.success(response.message || "Dang nhap thanh cong");
+            toast.success(response.message || "Đăng nhập thành công");
             reset();
             setOpen(false);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Dang nhap that bai";
+            const message = error instanceof Error ? error.message : "Đăng nhập thất bại";
             toast.error(message);
         }
     };

@@ -369,7 +369,7 @@ scale-100 blur-0 grayscale-0)'
                                         style={{ color: "transparent" }}
                                     />
                                     <p className="flex-auto md:flex hidden flex-col text-sm font-bold not-italic justify-start items-start md:pr-0 group hover:text-orange-500 transition-all duration-500 ease-in-out capitalize">
-                                        {user?.fullName ?? "Tai khoan"}
+                                        {user?.fullName ?? "Tài khoản"}
                                         <span className="block text-xs font-light not-italic">
                                             Star
                                         </span>

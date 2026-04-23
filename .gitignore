@@ -19,22 +19,12 @@ backend/target/
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
 ### VS Code ###
 .vscode/
 
 .env
 
-**/resources/application.yml
+# **/resources/application.yml
 
 
 **package-lock.json
@@ -43,3 +33,6 @@ build/
 **/note.md
 
 **/.M2
+**/dist/
+
+# backend/src/main/resources/

@@ -1,25 +1,20 @@
-
-import Booking from "../pages/client/Booking"
-import IsShowing from "../pages/client/IsShowing"
-import Home from "../pages/client/Home"
-import BookTicket from "../pages/client/BookTicket"
-
-
+import Booking from "../pages/client/Booking";
+import IsShowing from "../pages/client/IsShowing";
+import Home from "../pages/client/Home";
+import BookTicket from "../pages/client/BookTicket";
+import VnpayReturn from "../pages/client/VnpayReturn";
 
 const routePath = {
     login: "/login",
     home: "/",
-    phim_dang_chieu:"/phim-dang-chieu",
+    phim_dang_chieu: "/phim-dang-chieu",
     xuat_chieu: "/xuat-chieu/:slug",
     dat_ve: "/dat-ve/:slug",
-
-
-};  
+    checkout_vnpay_return: "/checkout/vnpay/return",
+};
 
 const cusPublicRoutes = [
-
-
-     {
+    {
         path: routePath.home,
         label: "Trang chủ",
         isContent: false,
@@ -53,9 +48,16 @@ const cusPublicRoutes = [
         type: "CUSTOMER",
         component: Booking,
         isPrivate: false,
-    }
+    },
 
-
+    {
+        path: routePath.checkout_vnpay_return,
+        label: "Checkout vnpay return",
+        isContent: false,
+        type: "CUSTOMER",
+        component: VnpayReturn,
+        isPrivate: false,
+    },
 ];
 
 export { routePath, cusPublicRoutes };

@@ -12,7 +12,7 @@ const COMBOS: Combo[] = [
         comboId: 1,
         comboName: "Combo Big",
         image: "/images/co-combo-1-extra-premium.png",
-        description: "1 bap + 2 nuoc",
+        description: "1 bắp + 2 nước",
         price: 129000,
         status: "AVAILABLE",
     },
@@ -20,7 +20,7 @@ const COMBOS: Combo[] = [
         comboId: 2,
         comboName: "Combo Couple",
         image: "/images/co-combo-1-extra-premium.png",
-        description: "2 bap + 2 nuoc",
+        description: "2 bắp + 2 nước",
         price: 199000,
         status: "AVAILABLE",
     },
@@ -51,7 +51,7 @@ const ChoiceFood = ({ selectedCombos, onChange }: ChoiceFoodProps) => {
 
     return (
         <div className="bg-white p-4 md:h-full h-[80vh] overflow-hidden">
-            <h3 className="text-l mb-4 font-semibold">Chon Combo / San pham</h3>
+            <h3 className="text-l mb-4 font-semibold">Chọn Combo / Sản phẩm</h3>
             <ul className="concession__list h-[80vh] overflow-auto pb-10 px-2 md:px-0">
                 {COMBOS.map((item) => {
                     const selected = selectedCombos.find((c) => c.comboId === item.comboId);
@@ -71,7 +71,7 @@ const ChoiceFood = ({ selectedCombos, onChange }: ChoiceFoodProps) => {
                                 <div className="text-sm">{item.description}</div>
                                 <div className="flex justify-between mt-2 text-sm">
                                     <div>
-                                        <strong>Gia: </strong>
+                                        <strong>Giá: </strong>
                                         <span className="inline-block font-bold">
                                             {Number(item.price).toLocaleString("vi-VN")}d
                                         </span>

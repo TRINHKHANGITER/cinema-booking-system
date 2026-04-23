@@ -1,7 +1,7 @@
 import type { UserResponse } from "./user";
 
 export type LoginRequest = {
-    emailOrUsername: string;
+    email: string;
     password: string;
 };
 
