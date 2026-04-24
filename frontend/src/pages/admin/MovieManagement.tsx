@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,7 +31,7 @@ const optionalNumberSchema = z.preprocess(
         const numericValue = Number(value);
         return Number.isNaN(numericValue) ? value : numericValue;
     },
-    z.number().min(0, "Value must be >= 0").optional()
+    z.number().min(0, "Giá trị phải >= 0").optional()
 );
 
 const optionalIntegerSchema = z.preprocess(
@@ -42,18 +42,18 @@ const optionalIntegerSchema = z.preprocess(
         const numericValue = Number(value);
         return Number.isNaN(numericValue) ? value : numericValue;
     },
-    z.number().int("Value must be integer").min(0, "Value must be >= 0").optional()
+    z.number().int("Giá trị phải là số nguyên").min(0, "Giá trị phải >= 0").optional()
 );
 
 const movieFormSchema = z
     .object({
-        movieName: z.string().trim().min(1, "Movie name is required"),
-        description: z.string().trim().min(1, "Description is required"),
-        durationMinutes: z.coerce.number().int().min(1, "Duration must be greater than 0"),
-        movieTypeId: z.coerce.number().int().min(1, "Movie type is required"),
-        releaseDate: z.string().trim().min(1, "Release date is required"),
-        endDate: z.string().trim().min(1, "End date is required"),
-        status: z.string().trim().min(1, "Status is required"),
+        movieName: z.string().trim().min(1, "Tên phim là bắt buộc"),
+        description: z.string().trim().min(1, "Mô tả là bắt buộc"),
+        durationMinutes: z.coerce.number().int().min(1, "Thời lượng phải lớn hơn 0"),
+        movieTypeId: z.coerce.number().int().min(1, "Thể loại phim là bắt buộc"),
+        releaseDate: z.string().trim().min(1, "Ngày khởi chiếu là bắt buộc"),
+        endDate: z.string().trim().min(1, "Ngày kết thúc là bắt buộc"),
+        status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
         trailerUrl: z.string().optional(),
         ratingAverage: optionalNumberSchema,
         totalVotes: optionalIntegerSchema,
@@ -74,7 +74,7 @@ const movieFormSchema = z
         if (endDate.getTime() < releaseDate.getTime()) {
             context.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "End date must be greater than or equal to release date",
+                message: "Ngày kết thúc phải lớn hơn hoặc bằng ngày khởi chiếu",
                 path: ["endDate"],
             });
         }
@@ -130,7 +130,7 @@ const statusClassByMovieStatus: Record<MovieStatus, string> = {
     INACTIVE: "bg-slate-200 text-slate-700",
 };
 
-const formatMovieDate = (value: string | null | undefined, fallback = "Not updated") => {
+const formatMovieDate = (value: string | null | undefined, fallback = "Chưa cập nhật") => {
     if (!value) return fallback;
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -139,7 +139,7 @@ const formatMovieDate = (value: string | null | undefined, fallback = "Not updat
     return date.toLocaleDateString("vi-VN");
 };
 
-const formatMovieDateTime = (value: string | null | undefined, fallback = "Not updated") => {
+const formatMovieDateTime = (value: string | null | undefined, fallback = "Chưa cập nhật") => {
     if (!value) return fallback;
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -201,8 +201,8 @@ const MovieDetailRow = ({ label, value }: MovieDetailRowProps) => {
 const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
     if (!movie) {
         return (
-            <ModalShell open={open} title="Movie Detail" onClose={onClose} panelClassName="max-w-[1100px]">
-                <p className="text-sm text-slate-500">No movie selected.</p>
+            <ModalShell open={open} title="Chi tiết phim" onClose={onClose} panelClassName="max-w-[1100px]">
+                <p className="text-sm text-slate-500">Chưa chọn phim.</p>
             </ModalShell>
         );
     }
@@ -213,7 +213,7 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
     const trailerUrl = movie.trailerUrl?.trim();
 
     return (
-        <ModalShell open={open} title="Movie Detail" onClose={onClose} panelClassName="max-w-[1100px]">
+        <ModalShell open={open} title="Chi tiết phim" onClose={onClose} panelClassName="max-w-[1100px]">
             <div className="space-y-6">
                 <div className="-mx-6 -mt-4 overflow-hidden border-b border-slate-100 bg-black">
                     <img
@@ -250,22 +250,22 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    Duration
+                                    Thời lượng
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-700">
                                     {Number(movie.durationMinutes ?? 0) > 0
-                                        ? `${movie.durationMinutes} minutes`
-                                        : "Not updated"}
+                                        ? `${movie.durationMinutes} phútutes`
+                                        : "Chưa cập nhật"}
                                 </p>
                             </div>
                             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    Rating
+                                    Đánh giá
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-700">
                                     {movie.ratingAverage !== null && movie.ratingAverage !== undefined
                                         ? movie.ratingAverage
-                                        : "Not updated"}
+                                        : "Chưa cập nhật"}
                                     {movie.totalVotes !== null && movie.totalVotes !== undefined
                                         ? ` (${movie.totalVotes} votes)`
                                         : ""}
@@ -273,12 +273,12 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                             </div>
                             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    Movie Type
+                                    Thể loại phim
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-700">
                                     {resolveMovieText(
                                         movie.movieType?.movieTypeName,
-                                        "Not updated"
+                                        "Chưa cập nhật"
                                     )}
                                 </p>
                             </div>
@@ -291,7 +291,7 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                                 rel="noreferrer"
                                 className="mt-4 inline-flex rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white"
                             >
-                                Watch Trailer
+                                Xem trailer
                             </a>
                         )}
                     </div>
@@ -299,46 +299,46 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
 
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     <div className="rounded-xl border border-slate-200 bg-white p-4">
-                        <h5 className="text-base font-bold text-slate-800">General Information</h5>
+                        <h5 className="text-base font-bold text-slate-800">Thông tin chung</h5>
                         <div className="mt-3 divide-y divide-slate-100">
-                            <MovieDetailRow label="Movie ID" value={movie.movieId} />
+                            <MovieDetailRow label="Mã phim" value={movie.movieId} />
                             <MovieDetailRow
-                                label="Release Date"
+                                label="Ngày khởi chiếu"
                                 value={formatMovieDate(movie.releaseDate)}
                             />
-                            <MovieDetailRow label="End Date" value={formatMovieDate(movie.endDate)} />
+                            <MovieDetailRow label="Ngày kết thúc" value={formatMovieDate(movie.endDate)} />
                             <MovieDetailRow
-                                label="Country"
-                                value={resolveMovieText(movie.country, "Not updated")}
+                                label="Quốc gia"
+                                value={resolveMovieText(movie.country, "Chưa cập nhật")}
                             />
                             <MovieDetailRow
                                 label="Slug"
-                                value={resolveMovieText(movie.slug, "Not updated")}
+                                value={resolveMovieText(movie.slug, "Chưa cập nhật")}
                             />
                             <MovieDetailRow
-                                label="Created At"
+                                label="Ngày tạo"
                                 value={formatMovieDateTime(movie.createdAt)}
                             />
                             <MovieDetailRow
-                                label="Updated At"
+                                label="Ngày cập nhật"
                                 value={formatMovieDateTime(movie.updatedAt)}
                             />
                         </div>
                     </div>
 
                     <div className="rounded-xl border border-slate-200 bg-white p-4">
-                        <h5 className="text-base font-bold text-slate-800">Production and Cast</h5>
+                        <h5 className="text-base font-bold text-slate-800">Sản xuất và diễn viên</h5>
                         <div className="mt-3 divide-y divide-slate-100">
                             <MovieDetailRow
-                                label="Producer"
-                                value={resolveMovieText(movie.producer, "Not updated")}
+                                label="Nhà sản xuất"
+                                value={resolveMovieText(movie.producer, "Chưa cập nhật")}
                             />
                             <MovieDetailRow
-                                label="Director"
-                                value={resolveMovieText(movie.director, "Not updated")}
+                                label="Đạo diễn"
+                                value={resolveMovieText(movie.director, "Chưa cập nhật")}
                             />
                             <MovieDetailRow
-                                label="Actors"
+                                label="Diễn viên"
                                 value={
                                     actors.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
@@ -352,7 +352,7 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                                             ))}
                                         </div>
                                     ) : (
-                                        "Not updated"
+                                        "Chưa cập nhật"
                                     )
                                 }
                             />
@@ -361,9 +361,9 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <h5 className="text-base font-bold text-slate-800">Noi dung phim</h5>
+                    <h5 className="text-base font-bold text-slate-800">Nội dung phim</h5>
                     <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
-                        {resolveMovieText(movie.description, "No description")}
+                        {resolveMovieText(movie.description, "Chưa có mô tả")}
                     </p>
                 </div>
             </div>
@@ -385,7 +385,7 @@ const MovieFormFields = ({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Movie Name *
+                        Tên phim *
                     </label>
                     <input
                         type="text"
@@ -400,7 +400,7 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                     <select
                         {...form.register("status")}
                         className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -420,7 +420,7 @@ const MovieFormFields = ({
             </div>
 
             <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Description *</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Mô tả *</label>
                 <textarea
                     rows={4}
                     {...form.register("description")}
@@ -436,7 +436,7 @@ const MovieFormFields = ({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Duration (min) *
+                        Thời lượng (phút) *
                     </label>
                     <input
                         type="number"
@@ -453,13 +453,13 @@ const MovieFormFields = ({
 
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Movie Type *
+                        Thể loại phim *
                     </label>
                     <select
                         {...form.register("movieTypeId")}
                         className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                     >
-                        <option value={0}>Select movie type</option>
+                        <option value={0}>Chọn thể loại phim</option>
                         {movieTypes.map((movieType) => (
                             <option
                                 key={`movie-form-type-${movieType.movieTypeId}`}
@@ -478,7 +478,7 @@ const MovieFormFields = ({
 
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Release Date *
+                        Ngày khởi chiếu *
                     </label>
                     <input
                         type="date"
@@ -493,7 +493,7 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">End Date *</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Ngày kết thúc *</label>
                     <input
                         type="date"
                         {...form.register("endDate")}
@@ -527,7 +527,7 @@ const MovieFormFields = ({
 
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Rating Average
+                        Điểm đánh giá trung bình
                     </label>
                     <input
                         type="number"
@@ -544,7 +544,7 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Total Votes</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Tổng lượt đánh giá</label>
                     <input
                         type="number"
                         min={0}
@@ -561,7 +561,7 @@ const MovieFormFields = ({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Country</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Quốc gia</label>
                     <input
                         type="text"
                         {...form.register("country")}
@@ -570,7 +570,7 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Producer</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Nhà sản xuất</label>
                     <input
                         type="text"
                         {...form.register("producer")}
@@ -581,7 +581,7 @@ const MovieFormFields = ({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Director</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Đạo diễn</label>
                     <input
                         type="text"
                         {...form.register("director")}
@@ -591,7 +591,7 @@ const MovieFormFields = ({
 
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Actors (comma separated)
+                        Diễn viên (ngăn cách bằng dấu phẩy)
                     </label>
                     <input
                         type="text"
@@ -602,7 +602,7 @@ const MovieFormFields = ({
             </div>
 
             <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Trailer URL</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">Đường dẫn trailer</label>
                 <input
                     type="url"
                     {...form.register("trailerUrl")}
@@ -613,7 +613,7 @@ const MovieFormFields = ({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Portrait Image
+                        Ảnh dọc
                     </label>
                     <input
                         type="file"
@@ -627,7 +627,7 @@ const MovieFormFields = ({
                     {portraitPreview && (
                         <img
                             src={portraitPreview}
-                            alt="Movie portrait preview"
+                            alt="Xem trước ảnh dọc phim"
                             className="mt-2 h-28 w-20 rounded-md border border-slate-200 object-cover"
                         />
                     )}
@@ -635,7 +635,7 @@ const MovieFormFields = ({
 
                 <div>
                     <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Landscape Image
+                        Ảnh ngang
                     </label>
                     <input
                         type="file"
@@ -649,7 +649,7 @@ const MovieFormFields = ({
                     {landscapePreview && (
                         <img
                             src={landscapePreview}
-                            alt="Movie landscape preview"
+                            alt="Xem trước ảnh ngang phim"
                             className="mt-2 h-24 w-44 rounded-md border border-slate-200 object-cover"
                         />
                     )}
@@ -784,7 +784,7 @@ const MovieManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load movies"));
+            toast.error(parseApiError(error, "Không thể tải danh sách phim"));
             setMovies([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -998,15 +998,15 @@ const MovieManagement = () => {
         try {
             const response = await movieService.createMovie(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create movie failed");
+                toast.error(response.message || "Tạo phim thất bại");
                 return;
             }
 
-            toast.success("Movie created successfully");
+            toast.success("Tạo phim thành công");
             closeCreateModal();
             void fetchMovies();
         } catch (error) {
-            toast.error(parseApiError(error, "Create movie failed"));
+            toast.error(parseApiError(error, "Tạo phim thất bại"));
         }
     });
 
@@ -1022,15 +1022,15 @@ const MovieManagement = () => {
         try {
             const response = await movieService.updateMovie(editingMovie.movieId, payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update movie failed");
+                toast.error(response.message || "Cập nhật phim thất bại");
                 return;
             }
 
-            toast.success("Movie updated successfully");
+            toast.success("Cập nhật phim thành công");
             closeEditModal();
             void fetchMovies();
         } catch (error) {
-            toast.error(parseApiError(error, "Update movie failed"));
+            toast.error(parseApiError(error, "Cập nhật phim thất bại"));
         }
     });
 
@@ -1040,15 +1040,15 @@ const MovieManagement = () => {
         try {
             const response = await movieService.deleteMovie(deleteTarget.movieId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete movie failed");
+                toast.error(response.message || "Xóa phim thất bại");
                 return;
             }
 
-            toast.success("Movie deleted successfully");
+            toast.success("Xóa phim thành công");
             setDeleteTarget(null);
             void fetchMovies();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete movie failed"));
+            toast.error(parseApiError(error, "Xóa phim thất bại"));
         }
     };
 
@@ -1058,13 +1058,13 @@ const MovieManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Movie Control
+                            Quản trị phim
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Movie Management
+                            Quản lý phim
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update movies with full metadata.
+                            Lọc, tạo và cập nhật phim với đầy đủ thông tin.
                         </p>
                     </div>
 
@@ -1073,7 +1073,7 @@ const MovieManagement = () => {
                         onClick={openCreateModal}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Movie
+                        + Thêm phim
                     </button>
                 </div>
 
@@ -1087,7 +1087,7 @@ const MovieManagement = () => {
                             }
                         }}
                         type="text"
-                        placeholder="Search by movie name..."
+                        placeholder="Tìm theo tên phim..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -1098,7 +1098,7 @@ const MovieManagement = () => {
                         }
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All movie types</option>
+                        <option value="">Tất cả thể loại phim</option>
                         {movieTypes.map((movieType) => (
                             <option key={movieType.movieTypeId} value={movieType.movieTypeId}>
                                 {movieType.movieTypeName}
@@ -1111,7 +1111,7 @@ const MovieManagement = () => {
                         onChange={(event) => setStatusInput(event.target.value as MovieStatus | "")}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -1124,18 +1124,18 @@ const MovieManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Movie List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách phim</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -1161,15 +1161,13 @@ const MovieManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Poster</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Movie</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Type</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Date Range</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 text-right font-bold text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Áp phích</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Phim</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Loại</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Khoảng ngày</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 text-right font-bold text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -1179,7 +1177,7 @@ const MovieManagement = () => {
                                         colSpan={7}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading movies...
+                                        Đang tải phim...
                                     </td>
                                 </tr>
                             ) : movies.length === 0 ? (
@@ -1188,7 +1186,7 @@ const MovieManagement = () => {
                                         colSpan={7}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No movies found
+                                        Không tìm thấy phim
                                     </td>
                                 </tr>
                             ) : (
@@ -1202,7 +1200,7 @@ const MovieManagement = () => {
                                             <td className="px-6 py-4">
                                                 <img
                                                     src={resolveMoviePortraitImage(movie.imagePortrait)}
-                                                    alt={resolveMovieText(movie.movieName, "Movie")}
+                                                    alt={resolveMovieText(movie.movieName, "Phim")}
                                                     className="h-16 w-12 rounded border border-slate-200 object-cover"
                                                 />
                                             </td>
@@ -1212,30 +1210,30 @@ const MovieManagement = () => {
                                                 </div>
                                                 <div className="text-xs text-slate-500">
                                                     {Number(movie.durationMinutes ?? 0) > 0
-                                                        ? `${movie.durationMinutes} min`
-                                                        : "Duration not updated"}
+                                                        ? `${movie.durationMinutes} phút`
+                                                        : "Chưa cập nhật thời lượng"}
                                                 </div>
                                                 <div className="text-xs text-slate-500">
-                                                    Country:{" "}
-                                                    {resolveMovieText(movie.country, "Not updated")}
+                                                    Quốc gia:{" "}
+                                                    {resolveMovieText(movie.country, "Chưa cập nhật")}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">
                                                 {resolveMovieText(
                                                     movie.movieType?.movieTypeName,
-                                                    "Not updated"
+                                                    "Chưa cập nhật"
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">
                                                 <div>
                                                     {resolveMovieText(
                                                         movie.releaseDate,
-                                                        "Not updated"
+                                                        "Chưa cập nhật"
                                                     )}
                                                 </div>
                                                 <div>
-                                                    to{" "}
-                                                    {resolveMovieText(movie.endDate, "Not updated")}
+                                                    đến{" "}
+                                                    {resolveMovieText(movie.endDate, "Chưa cập nhật")}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -1251,23 +1249,17 @@ const MovieManagement = () => {
                                                         type="button"
                                                         onClick={() => openViewModal(movie)}
                                                         className="rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-blue)] transition-all duration-300 hover:bg-[var(--glx-blue)] hover:text-white"
-                                                    >
-                                                        View
-                                                    </button>
+                                                    >Xem</button>
                                                     <button
                                                         type="button"
                                                         onClick={() => openEditModal(movie)}
                                                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                    >
-                                                        Edit
-                                                    </button>
+                                                    >Sửa</button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeleteTarget(movie)}
                                                         className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    >Xóa</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -1287,7 +1279,7 @@ const MovieManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -1316,14 +1308,14 @@ const MovieManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
 
             <MovieViewModal open={openView} movie={viewingMovie} onClose={closeViewModal} />
 
-            <ModalShell open={openCreate} onClose={closeCreateModal} title="Add Movie">
+            <ModalShell open={openCreate} onClose={closeCreateModal} title="Thêm phim">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <MovieFormFields
                         form={createForm}
@@ -1340,21 +1332,17 @@ const MovieManagement = () => {
                             type="button"
                             onClick={closeCreateModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={closeEditModal} title="Edit Movie">
+            <ModalShell open={openEdit} onClose={closeEditModal} title="Sửa phim">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <MovieFormFields
                         form={editForm}
@@ -1371,16 +1359,12 @@ const MovieManagement = () => {
                             type="button"
                             onClick={closeEditModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
@@ -1388,31 +1372,27 @@ const MovieManagement = () => {
             <ModalShell
                 open={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
-                title="Delete Movie"
+                title="Xóa phim"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete movie{" "}
+                        Bạn có chắc muốn xóa phim{" "}
                         <strong>{deleteTarget?.movieName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any active showtime is using this movie.
+                        Không thể xóa nếu còn suất chiếu đang hoạt động sử dụng phim này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -1421,3 +1401,6 @@ const MovieManagement = () => {
 };
 
 export default MovieManagement;
+
+
+

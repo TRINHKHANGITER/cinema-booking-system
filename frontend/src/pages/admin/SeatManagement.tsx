@@ -1,7 +1,8 @@
-function SeatManagement(roomId: number) {
+﻿function SeatManagement(roomId: number) {
     return ( 
-        <div> seat page</div>
+        <div> trang ghế</div>
      );
 }
 
 export default SeatManagement;
+

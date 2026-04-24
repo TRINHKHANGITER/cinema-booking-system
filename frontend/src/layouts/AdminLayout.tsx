@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/slices/authSlice";
 import LogoIcon from "../components/icon/logo";
@@ -9,18 +10,18 @@ type AdminNavItem = {
 };
 
 const adminNavItems: AdminNavItem[] = [
-    { path: "/admin", label: "Dashboard", end: true },
-    { path: "/admin/users", label: "User Management" },
-    { path: "/admin/provinces", label: "Province Management" },
-    { path: "/admin/cinemas", label: "Cinema Management" },
-    { path: "/admin/movie-types", label: "Movie Type Management" },
-    { path: "/admin/room-types", label: "Room Type Management" },
-    { path: "/admin/rooms", label: "Room Management" },
-    { path: "/admin/seat-types", label: "Seat Type Management" },
-    { path: "/admin/price-tickets", label: "Price Ticket Management" },
-    { path: "/admin/combos", label: "Combo Management" },
-    { path: "/admin/movies", label: "Movie Management" },
-    { path: "/admin/showtimes", label: "Showtime Management" },
+    { path: "/admin", label: "Tổng quan", end: true },
+    { path: "/admin/users", label: "Quản lý người dùng" },
+    { path: "/admin/provinces", label: "Quản lý tỉnh/thành" },
+    { path: "/admin/cinemas", label: "Quản lý rạp" },
+    { path: "/admin/movie-types", label: "Quản lý thể loại phim" },
+    { path: "/admin/room-types", label: "Quản lý loại phòng" },
+    { path: "/admin/rooms", label: "Quản lý phòng" },
+    { path: "/admin/seat-types", label: "Quản lý loại ghế" },
+    { path: "/admin/price-tickets", label: "Quản lý giá vé" },
+    { path: "/admin/combos", label: "Quản lý combo" },
+    { path: "/admin/movies", label: "Quản lý phim" },
+    { path: "/admin/showtimes", label: "Quản lý suất chiếu" },
 ];
 
 const resolveCurrentSection = (pathname: string) => {
@@ -35,7 +36,7 @@ const AdminLayout = () => {
     const location = useLocation();
     const currentSection = resolveCurrentSection(location.pathname);
     const { user, signOut } = useAuthStore();
-    const displayUserName = user?.fullName ?? user?.email ?? "Administrator";
+    const displayUserName = user?.fullName ?? user?.email ?? "Quản trị viên";
 
     return (
         <div className="h-screen overflow-hidden bg-[var(--glx-bg-soft)] text-[var(--glx-text-primary)] lg:grid lg:grid-cols-[270px_minmax(0,1fr)]">
@@ -80,7 +81,7 @@ const AdminLayout = () => {
                         }}
                         className="w-full rounded-xl border border-white/30 px-3 py-2 text-sm font-semibold text-white transition-all duration-300 hover:border-[var(--glx-orange)] hover:bg-[var(--glx-orange)]"
                     >
-                        Sign Out
+                        Đăng xuất
                     </button>
                 </div>
             </aside>
@@ -91,7 +92,7 @@ const AdminLayout = () => {
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                                 <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                                    Admin Workspace
+                                    ADMIN WORKSPACE
                                 </p>
                                 <h1 className="mt-1 truncate text-2xl font-bold text-slate-800">
                                     {/* {currentSection.label} */}
@@ -109,7 +110,7 @@ const AdminLayout = () => {
                                     }}
                                     className="shrink-0 rounded-lg border border-[var(--glx-orange)] px-3 py-2 text-sm font-semibold text-[var(--glx-orange)] transition-all duration-300 hover:bg-[var(--glx-orange)] hover:text-white lg:hidden"
                                 >
-                                    Sign Out
+                                    Đăng xuất
                                 </button>
                             </div>
                         </div>
@@ -149,3 +150,6 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+
+
+

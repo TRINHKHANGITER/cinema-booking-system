@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,17 +20,17 @@ import type { SeatTypeResponse } from "../../types/seat-type";
 const defaultStatuses: PriceTicketStatus[] = ["ACTIVE", "INACTIVE"];
 
 const createPriceTicketSchema = z.object({
-    price: z.coerce.number().min(0, "Price must be greater than or equal to 0"),
-    roomTypeId: z.coerce.number().int().min(1, "Room type is required"),
-    seatTypeId: z.coerce.number().int().min(1, "Seat type is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    price: z.coerce.number().min(0, "Giá phải lớn hơn hoặc bằng 0"),
+    roomTypeId: z.coerce.number().int().min(1, "Loại phòng là bắt buộc"),
+    seatTypeId: z.coerce.number().int().min(1, "Loại ghế là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 const updatePriceTicketSchema = z.object({
-    price: z.coerce.number().min(0, "Price must be greater than or equal to 0"),
-    roomTypeId: z.coerce.number().int().min(1, "Room type is required"),
-    seatTypeId: z.coerce.number().int().min(1, "Seat type is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    price: z.coerce.number().min(0, "Giá phải lớn hơn hoặc bằng 0"),
+    roomTypeId: z.coerce.number().int().min(1, "Loại phòng là bắt buộc"),
+    seatTypeId: z.coerce.number().int().min(1, "Loại ghế là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type CreatePriceTicketFormValues = z.infer<typeof createPriceTicketSchema>;
@@ -190,7 +190,7 @@ const PriceTicketManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load price tickets"));
+            toast.error(parseApiError(error, "Không thể tải danh sách giá vé"));
             setPriceTickets([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -269,15 +269,15 @@ const PriceTicketManagement = () => {
         try {
             const response = await priceTicketService.createPriceTicket(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create price ticket failed");
+                toast.error(response.message || "Tạo giá vé thất bại");
                 return;
             }
 
-            toast.success("Price ticket created successfully");
+            toast.success("Tạo giá vé thành công");
             setOpenCreate(false);
             void fetchPriceTickets();
         } catch (error) {
-            toast.error(parseApiError(error, "Create price ticket failed"));
+            toast.error(parseApiError(error, "Tạo giá vé thất bại"));
         }
     });
 
@@ -297,16 +297,16 @@ const PriceTicketManagement = () => {
                 payload
             );
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update price ticket failed");
+                toast.error(response.message || "Cập nhật giá vé thất bại");
                 return;
             }
 
-            toast.success("Price ticket updated successfully");
+            toast.success("Cập nhật giá vé thành công");
             setOpenEdit(false);
             setEditingPriceTicket(null);
             void fetchPriceTickets();
         } catch (error) {
-            toast.error(parseApiError(error, "Update price ticket failed"));
+            toast.error(parseApiError(error, "Cập nhật giá vé thất bại"));
         }
     });
 
@@ -316,15 +316,15 @@ const PriceTicketManagement = () => {
         try {
             const response = await priceTicketService.deletePriceTicket(deleteTarget.priceTicketId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete price ticket failed");
+                toast.error(response.message || "Xóa giá vé thất bại");
                 return;
             }
 
-            toast.success("Price ticket deleted successfully");
+            toast.success("Xóa giá vé thành công");
             setDeleteTarget(null);
             void fetchPriceTickets();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete price ticket failed"));
+            toast.error(parseApiError(error, "Xóa giá vé thất bại"));
         }
     };
 
@@ -344,13 +344,13 @@ const PriceTicketManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Price Ticket Control
+                            Quản trị giá vé
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Price Ticket Management
+                            Quản lý giá vé
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update ticket prices by room type and seat type.
+                            Lọc, tạo và cập nhật giá vé theo loại phòng và loại ghế.
                         </p>
                     </div>
 
@@ -359,7 +359,7 @@ const PriceTicketManagement = () => {
                         onClick={openCreateModal}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Price Ticket
+                        + Thêm giá vé
                     </button>
                 </div>
 
@@ -372,7 +372,7 @@ const PriceTicketManagement = () => {
                         }}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All room types</option>
+                        <option value="">Tất cả loại phòng</option>
                         {roomTypes.map((item) => (
                             <option key={item.roomTypeId} value={item.roomTypeId}>
                                 {item.roomTypeName}
@@ -388,7 +388,7 @@ const PriceTicketManagement = () => {
                         }}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All seat types</option>
+                        <option value="">Tất cả loại ghế</option>
                         {seatTypes.map((item) => (
                             <option key={item.seatTypeId} value={item.seatTypeId}>
                                 {item.seatTypeName}
@@ -401,7 +401,7 @@ const PriceTicketManagement = () => {
                         onChange={(event) => setStatusInput(event.target.value as PriceTicketStatus | "")}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -414,18 +414,18 @@ const PriceTicketManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Price Ticket List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách giá vé</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -451,14 +451,12 @@ const PriceTicketManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Price</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Room Type</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Seat Type</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Giá</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Loại phòng</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Loại ghế</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -468,7 +466,7 @@ const PriceTicketManagement = () => {
                                         colSpan={6}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading price tickets...
+                                        Đang tải giá vé...
                                     </td>
                                 </tr>
                             ) : priceTickets.length === 0 ? (
@@ -477,7 +475,7 @@ const PriceTicketManagement = () => {
                                         colSpan={6}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No price tickets found
+                                        Không tìm thấy giá vé
                                     </td>
                                 </tr>
                             ) : (
@@ -510,16 +508,12 @@ const PriceTicketManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(item)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >
-                                                    Edit
-                                                </button>
+                                                >Sửa</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(item)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
+                                                >Xóa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -538,7 +532,7 @@ const PriceTicketManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -567,15 +561,15 @@ const PriceTicketManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Add Price Ticket">
+            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm giá vé">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Price *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Giá *</label>
                         <input
                             type="number"
                             step="0.01"
@@ -591,12 +585,12 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Room Type *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Loại phòng *</label>
                         <select
                             {...createForm.register("roomTypeId")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                         >
-                            <option value={0}>Select room type</option>
+                            <option value={0}>Chọn loại phòng</option>
                             {roomTypes.map((item) => (
                                 <option key={`create-room-${item.roomTypeId}`} value={item.roomTypeId}>
                                     {item.roomTypeName}
@@ -611,12 +605,12 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Seat Type *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Loại ghế *</label>
                         <select
                             {...createForm.register("seatTypeId")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                         >
-                            <option value={0}>Select seat type</option>
+                            <option value={0}>Chọn loại ghế</option>
                             {seatTypes.map((item) => (
                                 <option key={`create-seat-${item.seatTypeId}`} value={item.seatTypeId}>
                                     {item.seatTypeName}
@@ -631,7 +625,7 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                         <select
                             {...createForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -654,24 +648,20 @@ const PriceTicketManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Price Ticket">
+            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa giá vé">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Price *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Giá *</label>
                         <input
                             type="number"
                             step="0.01"
@@ -687,12 +677,12 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Room Type *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Loại phòng *</label>
                         <select
                             {...editForm.register("roomTypeId")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                         >
-                            <option value={0}>Select room type</option>
+                            <option value={0}>Chọn loại phòng</option>
                             {roomTypes.map((item) => (
                                 <option key={`edit-room-${item.roomTypeId}`} value={item.roomTypeId}>
                                     {item.roomTypeName}
@@ -707,12 +697,12 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Seat Type *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Loại ghế *</label>
                         <select
                             {...editForm.register("seatTypeId")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                         >
-                            <option value={0}>Select seat type</option>
+                            <option value={0}>Chọn loại ghế</option>
                             {seatTypes.map((item) => (
                                 <option key={`edit-seat-${item.seatTypeId}`} value={item.seatTypeId}>
                                     {item.seatTypeName}
@@ -727,7 +717,7 @@ const PriceTicketManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                         <select
                             {...editForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -750,16 +740,12 @@ const PriceTicketManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
@@ -767,30 +753,26 @@ const PriceTicketManagement = () => {
             <ModalShell
                 open={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
-                title="Delete Price Ticket"
+                title="Xóa giá vé"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete this price ticket?
+                        Bạn có chắc muốn xóa giá vé này?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any ACTIVE ticket is using this price ticket.
+                        Không thể xóa nếu còn vé ACTIVE đang dùng giá vé này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -799,3 +781,6 @@ const PriceTicketManagement = () => {
 };
 
 export default PriceTicketManagement;
+
+
+

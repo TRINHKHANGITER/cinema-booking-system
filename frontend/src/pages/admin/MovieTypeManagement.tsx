@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,15 +16,15 @@ import type {
 const defaultStatuses: MovieTypeStatus[] = ["ACTIVE", "INACTIVE"];
 
 const createMovieTypeSchema = z.object({
-    movieTypeName: z.string().trim().min(1, "Movie type name is required"),
-    description: z.string().trim().min(1, "Description is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    movieTypeName: z.string().trim().min(1, "Tên thể loại phim là bắt buộc"),
+    description: z.string().trim().min(1, "Mô tả là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 const updateMovieTypeSchema = z.object({
-    movieTypeName: z.string().trim().min(1, "Movie type name is required"),
-    description: z.string().trim().min(1, "Description is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    movieTypeName: z.string().trim().min(1, "Tên thể loại phim là bắt buộc"),
+    description: z.string().trim().min(1, "Mô tả là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type CreateMovieTypeFormValues = z.infer<typeof createMovieTypeSchema>;
@@ -142,7 +142,7 @@ const MovieTypeManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load movie types"));
+            toast.error(parseApiError(error, "Không thể tải danh sách thể loại phim"));
             setMovieTypes([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -216,15 +216,15 @@ const MovieTypeManagement = () => {
         try {
             const response = await movieTypeService.createMovieType(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create movie type failed");
+                toast.error(response.message || "Tạo thể loại phim thất bại");
                 return;
             }
 
-            toast.success("Movie type created successfully");
+            toast.success("Tạo thể loại phim thành công");
             setOpenCreate(false);
             void fetchMovieTypes();
         } catch (error) {
-            toast.error(parseApiError(error, "Create movie type failed"));
+            toast.error(parseApiError(error, "Tạo thể loại phim thất bại"));
         }
     });
 
@@ -243,16 +243,16 @@ const MovieTypeManagement = () => {
                 payload
             );
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update movie type failed");
+                toast.error(response.message || "Cập nhật thể loại phim thất bại");
                 return;
             }
 
-            toast.success("Movie type updated successfully");
+            toast.success("Cập nhật thể loại phim thành công");
             setOpenEdit(false);
             setEditingMovieType(null);
             void fetchMovieTypes();
         } catch (error) {
-            toast.error(parseApiError(error, "Update movie type failed"));
+            toast.error(parseApiError(error, "Cập nhật thể loại phim thất bại"));
         }
     });
 
@@ -261,14 +261,14 @@ const MovieTypeManagement = () => {
         try {
             const response = await movieTypeService.deleteMovieType(deleteTarget.movieTypeId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete movie type failed");
+                toast.error(response.message || "Xóa thể loại phim thất bại");
                 return;
             }
-            toast.success("Movie type deleted successfully");
+            toast.success("Xóa thể loại phim thành công");
             setDeleteTarget(null);
             void fetchMovieTypes();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete movie type failed"));
+            toast.error(parseApiError(error, "Xóa thể loại phim thất bại"));
         }
     };
 
@@ -278,13 +278,13 @@ const MovieTypeManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Movie Type Control
+                            Quản trị thể loại phim
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Movie Type Management
+                            Quản lý thể loại phim
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update movie types for the cinema system.
+                            Lọc, tạo và cập nhật thể loại phim cho hệ thống rạp.
                         </p>
                     </div>
 
@@ -293,7 +293,7 @@ const MovieTypeManagement = () => {
                         onClick={openCreateModal}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Movie Type
+                        + Thêm loại phim
                     </button>
                 </div>
 
@@ -307,7 +307,7 @@ const MovieTypeManagement = () => {
                             }
                         }}
                         type="text"
-                        placeholder="Search by movie type name..."
+                        placeholder="Tìm theo tên thể loại phim..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -318,7 +318,7 @@ const MovieTypeManagement = () => {
                         }
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -331,18 +331,18 @@ const MovieTypeManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Movie Type List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách thể loại phim</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -368,13 +368,11 @@ const MovieTypeManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Name</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Description</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tên</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mô tả</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -384,7 +382,7 @@ const MovieTypeManagement = () => {
                                         colSpan={5}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading movie types...
+                                        Đang tải thể loại phim...
                                     </td>
                                 </tr>
                             ) : movieTypes.length === 0 ? (
@@ -393,7 +391,7 @@ const MovieTypeManagement = () => {
                                         colSpan={5}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No movie types found
+                                        Không tìm thấy thể loại phim
                                     </td>
                                 </tr>
                             ) : (
@@ -428,16 +426,12 @@ const MovieTypeManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(movieType)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >
-                                                    Edit
-                                                </button>
+                                                >Sửa</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(movieType)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
+                                                >Xóa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -456,7 +450,7 @@ const MovieTypeManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -485,7 +479,7 @@ const MovieTypeManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
@@ -493,12 +487,12 @@ const MovieTypeManagement = () => {
             <ModalShell
                 open={openCreate}
                 onClose={() => setOpenCreate(false)}
-                title="Add Movie Type"
+                title="Thêm thể loại phim"
             >
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Movie Type Name *
+                            Tên thể loại phim *
                         </label>
                         <input
                             type="text"
@@ -514,7 +508,7 @@ const MovieTypeManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Description *
+                            Mô tả *
                         </label>
                         <textarea
                             rows={3}
@@ -530,7 +524,7 @@ const MovieTypeManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Status *
+                            Trạng thái *
                         </label>
                         <select
                             {...createForm.register("status")}
@@ -554,16 +548,12 @@ const MovieTypeManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
@@ -571,12 +561,12 @@ const MovieTypeManagement = () => {
             <ModalShell
                 open={openEdit}
                 onClose={() => setOpenEdit(false)}
-                title="Edit Movie Type"
+                title="Sửa thể loại phim"
             >
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Movie Type Name *
+                            Tên thể loại phim *
                         </label>
                         <input
                             type="text"
@@ -592,7 +582,7 @@ const MovieTypeManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Description *
+                            Mô tả *
                         </label>
                         <textarea
                             rows={3}
@@ -608,7 +598,7 @@ const MovieTypeManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Status *
+                            Trạng thái *
                         </label>
                         <select
                             {...editForm.register("status")}
@@ -632,16 +622,12 @@ const MovieTypeManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
@@ -649,31 +635,27 @@ const MovieTypeManagement = () => {
             <ModalShell
                 open={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
-                title="Delete Movie Type"
+                title="Xóa thể loại phim"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete movie type{" "}
+                        Bạn có chắc muốn xóa thể loại phim{" "}
                         <strong>{deleteTarget?.movieTypeName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any ACTIVE movie is using this type.
+                        Không thể xóa nếu còn phim ACTIVE đang dùng loại này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -682,4 +664,7 @@ const MovieTypeManagement = () => {
 };
 
 export default MovieTypeManagement;
+
+
+
 

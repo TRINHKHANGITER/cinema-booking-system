@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,12 +33,12 @@ const seatSchema = z.object({
     seatRow: z
         .string()
         .trim()
-        .min(1, "Row is required")
-        .max(1, "Row must be one character")
-        .regex(/^[A-Za-z]$/, "Row must be a single letter A-Z"),
-    seatColumn: z.coerce.number().int().min(1, "Column must be greater than 0"),
-    seatTypeId: z.coerce.number().int().min(1, "Seat type is required"),
-    status: z.string().trim().min(1, "Status is required"),
+        .min(1, "Hàng là bắt buộc")
+        .max(1, "Hàng chỉ được 1 ký tự")
+        .regex(/^[A-Za-z]$/, "Hàng phải là một chữ cái từ A-Z"),
+    seatColumn: z.coerce.number().int().min(1, "Cột phải lớn hơn 0"),
+    seatTypeId: z.coerce.number().int().min(1, "Loại ghế là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type SeatFormValues = z.infer<typeof seatSchema>;
@@ -170,7 +170,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
             );
             setSeats(response.result ?? []);
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load seats"));
+            toast.error(parseApiError(error, "Không thể tải danh sách ghế"));
             setSeats([]);
         } finally {
             setIsLoading(false);
@@ -262,7 +262,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 
     const handleOpenEditFromSelection = () => {
         if (!selectedSeat) {
-            toast.error("Please select a seat to edit");
+            toast.error("Vui lòng chọn ghế để sửa");
             return;
         }
         openEditModal(selectedSeat);
@@ -270,7 +270,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 
     const handleOpenDeleteFromSelection = () => {
         if (!selectedSeat) {
-            toast.error("Please select a seat to delete");
+            toast.error("Vui lòng chọn ghế để xóa");
             return;
         }
         setDeleteTarget(selectedSeat);
@@ -290,14 +290,14 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
         try {
             const response = await seatService.createSeat(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create seat failed");
+                toast.error(response.message || "Tạo ghế thất bại");
                 return;
             }
-            toast.success("Seat created successfully");
+            toast.success("Tạo ghế thành công");
             closeCreateModal();
             void fetchSeats();
         } catch (error) {
-            toast.error(parseApiError(error, "Create seat failed"));
+            toast.error(parseApiError(error, "Tạo ghế thất bại"));
         }
     });
 
@@ -315,14 +315,14 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
         try {
             const response = await seatService.updateSeat(editingSeat.seatId, payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update seat failed");
+                toast.error(response.message || "Cập nhật ghế thất bại");
                 return;
             }
-            toast.success("Seat updated successfully");
+            toast.success("Cập nhật ghế thành công");
             closeEditModal();
             void fetchSeats();
         } catch (error) {
-            toast.error(parseApiError(error, "Update seat failed"));
+            toast.error(parseApiError(error, "Cập nhật ghế thất bại"));
         }
     });
 
@@ -331,17 +331,17 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
         try {
             const response = await seatService.deleteSeat(deleteTarget.seatId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete seat failed");
+                toast.error(response.message || "Xóa ghế thất bại");
                 return;
             }
-            toast.success("Seat deleted successfully");
+            toast.success("Xóa ghế thành công");
             setDeleteTarget(null);
             if (selectedSeatId === deleteTarget.seatId) {
                 setSelectedSeatId(null);
             }
             void fetchSeats();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete seat failed"));
+            toast.error(parseApiError(error, "Xóa ghế thất bại"));
         }
     };
 
@@ -398,7 +398,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                     type="button"
                     onClick={() => setSelectedSeatId(seat.seatId)}
                     className={`${baseClass} ${widthClass} ${visualClass}`}
-                    title={`${buttonLabel} - ${isBooked ? "BOOKED" : "AVAILABLE"}`}
+                    title={`${buttonLabel} - ${isBooked ? "Đã bán" : "Còn trống"}`}
                 >
                     {buttonLabel}
                 </button>
@@ -415,7 +415,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
             <ModalShell
                 open={open}
                 onClose={onClose}
-                title={`Seat Management - ${room?.roomName ?? ""}`}
+                title={`Quản lý ghế - ${room?.roomName ?? ""}`}
                 maxWidthClass="max-w-[1120px]"
             >
                 <div className="space-y-5">
@@ -428,7 +428,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                                 }
                                 className="h-9 rounded-md border border-slate-200 px-3 text-sm text-slate-700 outline-none focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                             >
-                                <option value="ALL">All statuses</option>
+                                <option value="ALL">Tất cả trạng thái</option>
                                 {seatStatuses.map((status) => (
                                     <option key={status} value={status}>
                                         {status}
@@ -457,22 +457,18 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                                 onClick={handleOpenEditFromSelection}
                                 disabled={!selectedSeat}
                                 className="h-9 rounded-md border border-[var(--glx-border)] px-3 text-xs font-semibold text-slate-700 transition hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Edit
-                            </button>
+                            >Sửa</button>
                             <button
                                 type="button"
                                 onClick={handleOpenDeleteFromSelection}
                                 disabled={!selectedSeat}
                                 className="h-9 rounded-md border border-rose-200 px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Delete
-                            </button>
+                            >Xóa</button>
                         </div>
                     </div>
 
                     <div className="text-xs text-slate-500">
-                        Selected seat: <span className="font-semibold text-slate-700">{selectedSeatLabel}</span>
+                        Ghế đang chọn: <span className="font-semibold text-slate-700">{selectedSeatLabel}</span>
                     </div>
 
                     <div className="rounded-xl border border-[var(--glx-border)] bg-[#f6f6f7] p-4 md:p-6">
@@ -482,10 +478,10 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                         </div>
 
                         {isLoading ? (
-                            <p className="py-8 text-center text-sm text-slate-500">Loading seats...</p>
+                            <p className="py-8 text-center text-sm text-slate-500">Đang tải ghế...</p>
                         ) : groupedSeats.length === 0 ? (
                             <p className="py-8 text-center text-sm text-slate-500">
-                                No seats found for this room
+                                Không tìm thấy ghế cho phòng này
                             </p>
                         ) : (
                             <div className="flex flex-col items-center gap-1.5 overflow-auto">
@@ -538,11 +534,11 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                 </div>
             </ModalShell>
 
-            <ModalShell open={openCreate} onClose={closeCreateModal} title="Add Seat" maxWidthClass="max-w-[560px]">
+            <ModalShell open={openCreate} onClose={closeCreateModal} title="Thêm ghế" maxWidthClass="max-w-[560px]">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Row *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Hàng *</label>
                             <input
                                 type="text"
                                 maxLength={1}
@@ -556,7 +552,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             )}
                         </div>
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Column *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Cột *</label>
                             <input
                                 type="number"
                                 min={1}
@@ -573,12 +569,12 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Seat Type *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Loại ghế *</label>
                             <select
                                 {...createForm.register("seatTypeId")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select seat type</option>
+                                <option value={0}>Chọn loại ghế</option>
                                 {seatTypes.map((seatType) => (
                                     <option
                                         key={`create-seat-type-${seatType.seatTypeId}`}
@@ -595,7 +591,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             )}
                         </div>
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                             <select
                                 {...createForm.register("status")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -619,25 +615,21 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             type="button"
                             onClick={closeCreateModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={closeEditModal} title="Edit Seat" maxWidthClass="max-w-[560px]">
+            <ModalShell open={openEdit} onClose={closeEditModal} title="Sửa ghế" maxWidthClass="max-w-[560px]">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Row *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Hàng *</label>
                             <input
                                 type="text"
                                 maxLength={1}
@@ -651,7 +643,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             )}
                         </div>
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Column *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Cột *</label>
                             <input
                                 type="number"
                                 min={1}
@@ -668,12 +660,12 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Seat Type *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Loại ghế *</label>
                             <select
                                 {...editForm.register("seatTypeId")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select seat type</option>
+                                <option value={0}>Chọn loại ghế</option>
                                 {seatTypes.map((seatType) => (
                                     <option
                                         key={`edit-seat-type-${seatType.seatTypeId}`}
@@ -690,7 +682,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             )}
                         </div>
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                             <select
                                 {...editForm.register("status")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -714,16 +706,12 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             type="button"
                             onClick={closeEditModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
@@ -731,12 +719,12 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
             <ModalShell
                 open={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
-                title="Delete Seat"
+                title="Xóa ghế"
                 maxWidthClass="max-w-[520px]"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete seat{" "}
+                        Bạn có chắc muốn xóa ghế{" "}
                         <strong>
                             {deleteTarget?.seatRow}
                             {deleteTarget?.seatColumn}
@@ -744,23 +732,19 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                         ?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if the seat has ACTIVE tickets or is currently HELD.
+                        Không thể xóa nếu ghế còn vé ACTIVE hoặc đang được HELD.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -769,4 +753,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 };
 
 export default RoomSeatManagerModal;
+
+
+
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,19 +18,19 @@ import type { ProvinceResponse } from "../../types/province";
 const defaultStatuses: CinemaStatus[] = ["ACTIVE", "INACTIVE", "UNDER_MAINTENANCE"];
 
 const createCinemaSchema = z.object({
-    cinemaName: z.string().trim().min(1, "Cinema name is required"),
-    provinceId: z.coerce.number().int().min(1, "Province is required"),
-    addressText: z.string().trim().min(1, "Address is required"),
+    cinemaName: z.string().trim().min(1, "Tên rạp là bắt buộc"),
+    provinceId: z.coerce.number().int().min(1, "Tỉnh/thành là bắt buộc"),
+    addressText: z.string().trim().min(1, "Địa chỉ là bắt buộc"),
     description: z.string().optional(),
-    status: z.string().trim().min(1, "Status is required"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 const updateCinemaSchema = z.object({
-    cinemaName: z.string().trim().min(1, "Cinema name is required"),
-    provinceId: z.coerce.number().int().min(1, "Province is required"),
-    addressText: z.string().trim().min(1, "Address is required"),
+    cinemaName: z.string().trim().min(1, "Tên rạp là bắt buộc"),
+    provinceId: z.coerce.number().int().min(1, "Tỉnh/thành là bắt buộc"),
+    addressText: z.string().trim().min(1, "Địa chỉ là bắt buộc"),
     description: z.string().optional(),
-    status: z.string().trim().min(1, "Status is required"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type CreateCinemaFormValues = z.infer<typeof createCinemaSchema>;
@@ -181,7 +181,7 @@ const CinemaManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load cinemas"));
+            toast.error(parseApiError(error, "Không thể tải danh sách rạp"));
             setCinemas([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -263,15 +263,15 @@ const CinemaManagement = () => {
         try {
             const response = await cinemaService.createCinema(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create cinema failed");
+                toast.error(response.message || "Tạo rạp thất bại");
                 return;
             }
 
-            toast.success("Cinema created successfully");
+            toast.success("Tạo rạp thành công");
             setOpenCreate(false);
             void fetchCinemas();
         } catch (error) {
-            toast.error(parseApiError(error, "Create cinema failed"));
+            toast.error(parseApiError(error, "Tạo rạp thất bại"));
         }
     });
 
@@ -289,16 +289,16 @@ const CinemaManagement = () => {
         try {
             const response = await cinemaService.updateCinema(editingCinema.cinemaId, payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update cinema failed");
+                toast.error(response.message || "Cập nhật rạp thất bại");
                 return;
             }
 
-            toast.success("Cinema updated successfully");
+            toast.success("Cập nhật rạp thành công");
             setOpenEdit(false);
             setEditingCinema(null);
             void fetchCinemas();
         } catch (error) {
-            toast.error(parseApiError(error, "Update cinema failed"));
+            toast.error(parseApiError(error, "Cập nhật rạp thất bại"));
         }
     });
 
@@ -308,15 +308,15 @@ const CinemaManagement = () => {
         try {
             const response = await cinemaService.deleteCinema(deleteTarget.cinemaId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete cinema failed");
+                toast.error(response.message || "Xóa rạp thất bại");
                 return;
             }
 
-            toast.success("Cinema deleted successfully");
+            toast.success("Xóa rạp thành công");
             setDeleteTarget(null);
             void fetchCinemas();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete cinema failed"));
+            toast.error(parseApiError(error, "Xóa rạp thất bại"));
         }
     };
 
@@ -335,13 +335,13 @@ const CinemaManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Cinema Control
+                            Quản trị rạp
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Cinema Management
+                            Quản lý rạp
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update cinemas for each province.
+                            Lọc, tạo và cập nhật rạp theo từng tỉnh/thành.
                         </p>
                     </div>
 
@@ -350,7 +350,7 @@ const CinemaManagement = () => {
                         onClick={openCreateModal}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Cinema
+                        + Thêm rạp
                     </button>
                 </div>
 
@@ -364,7 +364,7 @@ const CinemaManagement = () => {
                             }
                         }}
                         type="text"
-                        placeholder="Search by cinema name..."
+                        placeholder="Tìm theo tên rạp..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -376,7 +376,7 @@ const CinemaManagement = () => {
                         }}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All provinces</option>
+                        <option value="">Tất cả tỉnh/thành</option>
                         {provinces.map((province) => (
                             <option key={province.provinceId} value={province.provinceId}>
                                 {province.provinceName}
@@ -389,7 +389,7 @@ const CinemaManagement = () => {
                         onChange={(event) => setStatusInput(event.target.value as CinemaStatus | "")}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -402,18 +402,18 @@ const CinemaManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Cinema List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách rạp</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -439,15 +439,13 @@ const CinemaManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Name</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Province</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Address</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Description</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tên</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tỉnh/Thành</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Địa chỉ</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mô tả</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -457,7 +455,7 @@ const CinemaManagement = () => {
                                         colSpan={7}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading cinemas...
+                                        Đang tải rạp...
                                     </td>
                                 </tr>
                             ) : cinemas.length === 0 ? (
@@ -466,7 +464,7 @@ const CinemaManagement = () => {
                                         colSpan={7}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No cinemas found
+                                        Không tìm thấy rạp
                                     </td>
                                 </tr>
                             ) : (
@@ -504,16 +502,12 @@ const CinemaManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(cinema)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >
-                                                    Edit
-                                                </button>
+                                                >Sửa</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(cinema)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
+                                                >Xóa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -532,7 +526,7 @@ const CinemaManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -561,16 +555,16 @@ const CinemaManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Add Cinema">
+            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm rạp">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Cinema Name *
+                            Tên rạp *
                         </label>
                         <input
                             type="text"
@@ -587,13 +581,13 @@ const CinemaManagement = () => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Province *
+                                Tỉnh/Thành *
                             </label>
                             <select
                                 {...createForm.register("provinceId")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select province</option>
+                                <option value={0}>Chọn tỉnh/thành</option>
                                 {provinces.map((province) => (
                                     <option
                                         key={`create-${province.provinceId}`}
@@ -612,7 +606,7 @@ const CinemaManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Status *
+                                Trạng thái *
                             </label>
                             <select
                                 {...createForm.register("status")}
@@ -634,7 +628,7 @@ const CinemaManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Address *
+                            Địa chỉ *
                         </label>
                         <input
                             type="text"
@@ -649,9 +643,7 @@ const CinemaManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Description
-                        </label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Mô tả</label>
                         <textarea
                             rows={3}
                             {...createForm.register("description")}
@@ -664,25 +656,21 @@ const CinemaManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Cinema">
+            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa rạp">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Cinema Name *
+                            Tên rạp *
                         </label>
                         <input
                             type="text"
@@ -699,13 +687,13 @@ const CinemaManagement = () => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Province *
+                                Tỉnh/Thành *
                             </label>
                             <select
                                 {...editForm.register("provinceId")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select province</option>
+                                <option value={0}>Chọn tỉnh/thành</option>
                                 {provinces.map((province) => (
                                     <option
                                         key={`edit-${province.provinceId}`}
@@ -724,7 +712,7 @@ const CinemaManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Status *
+                                Trạng thái *
                             </label>
                             <select
                                 {...editForm.register("status")}
@@ -746,7 +734,7 @@ const CinemaManagement = () => {
 
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Address *
+                            Địa chỉ *
                         </label>
                         <input
                             type="text"
@@ -761,9 +749,7 @@ const CinemaManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Description
-                        </label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Mô tả</label>
                         <textarea
                             rows={3}
                             {...editForm.register("description")}
@@ -776,44 +762,36 @@ const CinemaManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Delete Cinema">
+            <ModalShell open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Xóa rạp">
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete cinema{" "}
+                        Bạn có chắc muốn xóa rạp{" "}
                         <strong>{deleteTarget?.cinemaName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any ACTIVE room is using this cinema.
+                        Không thể xóa nếu còn phòng ACTIVE đang dùng rạp này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -822,4 +800,7 @@ const CinemaManagement = () => {
 };
 
 export default CinemaManagement;
+
+
+
 

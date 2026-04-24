@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,21 +23,21 @@ import type { RoomTypeResponse } from "../../types/room-type";
 const defaultStatuses: RoomStatus[] = ["ACTIVE", "INACTIVE", "UNDER_MAINTENANCE"];
 
 const createRoomSchema = z.object({
-    roomName: z.string().trim().min(1, "Room name is required"),
-    capacity: z.coerce.number().int().min(1, "Capacity must be greater than 0"),
-    provinceId: z.coerce.number().int().min(1, "Province is required"),
-    cinemaId: z.coerce.number().int().min(1, "Cinema is required"),
-    roomTypeId: z.coerce.number().int().min(1, "Room type is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    roomName: z.string().trim().min(1, "Tên phòng là bắt buộc"),
+    capacity: z.coerce.number().int().min(1, "Sức chứa phải lớn hơn 0"),
+    provinceId: z.coerce.number().int().min(1, "Tỉnh/thành là bắt buộc"),
+    cinemaId: z.coerce.number().int().min(1, "Rạp là bắt buộc"),
+    roomTypeId: z.coerce.number().int().min(1, "Loại phòng là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 const updateRoomSchema = z.object({
-    roomName: z.string().trim().min(1, "Room name is required"),
-    capacity: z.coerce.number().int().min(1, "Capacity must be greater than 0"),
-    provinceId: z.coerce.number().int().min(1, "Province is required"),
-    cinemaId: z.coerce.number().int().min(1, "Cinema is required"),
-    roomTypeId: z.coerce.number().int().min(1, "Room type is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    roomName: z.string().trim().min(1, "Tên phòng là bắt buộc"),
+    capacity: z.coerce.number().int().min(1, "Sức chứa phải lớn hơn 0"),
+    provinceId: z.coerce.number().int().min(1, "Tỉnh/thành là bắt buộc"),
+    cinemaId: z.coerce.number().int().min(1, "Rạp là bắt buộc"),
+    roomTypeId: z.coerce.number().int().min(1, "Loại phòng là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type CreateRoomFormValues = z.infer<typeof createRoomSchema>;
@@ -231,7 +231,7 @@ const RoomManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load rooms"));
+            toast.error(parseApiError(error, "Không thể tải danh sách phòng"));
             setRooms([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -499,15 +499,15 @@ const RoomManagement = () => {
         try {
             const response = await roomService.createRoom(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create room failed");
+                toast.error(response.message || "Tạo phòng thất bại");
                 return;
             }
 
-            toast.success("Room created successfully");
+            toast.success("Tạo phòng thành công");
             closeCreateModal();
             void fetchRooms();
         } catch (error) {
-            toast.error(parseApiError(error, "Create room failed"));
+            toast.error(parseApiError(error, "Tạo phòng thất bại"));
         }
     });
 
@@ -525,15 +525,15 @@ const RoomManagement = () => {
         try {
             const response = await roomService.updateRoom(editingRoom.roomId, payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update room failed");
+                toast.error(response.message || "Cập nhật phòng thất bại");
                 return;
             }
 
-            toast.success("Room updated successfully");
+            toast.success("Cập nhật phòng thành công");
             closeEditModal();
             void fetchRooms();
         } catch (error) {
-            toast.error(parseApiError(error, "Update room failed"));
+            toast.error(parseApiError(error, "Cập nhật phòng thất bại"));
         }
     });
 
@@ -543,15 +543,15 @@ const RoomManagement = () => {
         try {
             const response = await roomService.deleteRoom(deleteTarget.roomId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete room failed");
+                toast.error(response.message || "Xóa phòng thất bại");
                 return;
             }
 
-            toast.success("Room deleted successfully");
+            toast.success("Xóa phòng thành công");
             setDeleteTarget(null);
             void fetchRooms();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete room failed"));
+            toast.error(parseApiError(error, "Xóa phòng thất bại"));
         }
     };
 
@@ -579,13 +579,13 @@ const RoomManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Room Control
+                            Quản trị phòng
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Room Management
+                            Quản lý phòng
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update room data by province, cinema and room type.
+                            Lọc, tạo và cập nhật phòng theo tỉnh/thành, rạp và loại phòng.
                         </p>
                     </div>
 
@@ -594,7 +594,7 @@ const RoomManagement = () => {
                         onClick={() => void openCreateModal()}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Room
+                        + Thêm phòng
                     </button>
                 </div>
 
@@ -608,7 +608,7 @@ const RoomManagement = () => {
                             }
                         }}
                         type="text"
-                        placeholder="Search by room name..."
+                        placeholder="Tìm theo tên phòng..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -617,7 +617,7 @@ const RoomManagement = () => {
                         onChange={(event) => void handleFilterProvinceChange(event.target.value)}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All provinces</option>
+                        <option value="">Tất cả tỉnh/thành</option>
                         {provinces.map((province) => (
                             <option key={province.provinceId} value={province.provinceId}>
                                 {province.provinceName}
@@ -630,7 +630,7 @@ const RoomManagement = () => {
                         onChange={(event) => void handleFilterCinemaChange(event.target.value)}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All cinemas</option>
+                        <option value="">Tất cả rạp</option>
                         {filterCinemas.map((cinema) => (
                             <option key={cinema.cinemaId} value={cinema.cinemaId}>
                                 {cinema.cinemaName}
@@ -646,7 +646,7 @@ const RoomManagement = () => {
                         }}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All room types</option>
+                        <option value="">Tất cả loại phòng</option>
                         {filterRoomTypes.map((roomType) => (
                             <option key={roomType.roomTypeId} value={roomType.roomTypeId}>
                                 {roomType.roomTypeName}
@@ -659,7 +659,7 @@ const RoomManagement = () => {
                         onChange={(event) => setStatusInput(event.target.value as RoomStatus | "")}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -672,18 +672,18 @@ const RoomManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Room List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách phòng</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -709,16 +709,14 @@ const RoomManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Room Name</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Province</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Cinema</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Room Type</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Capacity</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tên phòng</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tỉnh/Thành</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Rạp</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Loại phòng</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Sức chứa</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -728,7 +726,7 @@ const RoomManagement = () => {
                                         colSpan={8}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading rooms...
+                                        Đang tải phòng...
                                     </td>
                                 </tr>
                             ) : rooms.length === 0 ? (
@@ -737,7 +735,7 @@ const RoomManagement = () => {
                                         colSpan={8}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No rooms found
+                                        Không tìm thấy phòng
                                     </td>
                                 </tr>
                             ) : (
@@ -781,16 +779,12 @@ const RoomManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(room)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >
-                                                    Edit
-                                                </button>
+                                                >Sửa</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(room)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
+                                                >Xóa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -809,7 +803,7 @@ const RoomManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -838,16 +832,16 @@ const RoomManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={closeCreateModal} title="Add Room">
+            <ModalShell open={openCreate} onClose={closeCreateModal} title="Thêm phòng">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Room Name *
+                            Tên phòng *
                         </label>
                         <input
                             type="text"
@@ -881,7 +875,7 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Status *
+                                Trạng thái *
                             </label>
                             <select
                                 {...createForm.register("status")}
@@ -904,7 +898,7 @@ const RoomManagement = () => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Province *
+                                Tỉnh/Thành *
                             </label>
                             <select
                                 value={Number(createForm.watch("provinceId") ?? 0)}
@@ -913,7 +907,7 @@ const RoomManagement = () => {
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select province</option>
+                                <option value={0}>Chọn tỉnh/thành</option>
                                 {provinces.map((province) => (
                                     <option
                                         key={`create-province-${province.provinceId}`}
@@ -932,7 +926,7 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Cinema *
+                                Rạp *
                             </label>
                             <select
                                 value={Number(createForm.watch("cinemaId") ?? 0)}
@@ -941,7 +935,7 @@ const RoomManagement = () => {
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select cinema</option>
+                                <option value={0}>Chọn rạp</option>
                                 {createCinemas.map((cinema) => (
                                     <option
                                         key={`create-cinema-${cinema.cinemaId}`}
@@ -960,7 +954,7 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Room Type *
+                                Loại phòng *
                             </label>
                             <select
                                 value={Number(createForm.watch("roomTypeId") ?? 0)}
@@ -973,7 +967,7 @@ const RoomManagement = () => {
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select room type</option>
+                                <option value={0}>Chọn loại phòng</option>
                                 {createRoomTypes.map((roomType) => (
                                     <option
                                         key={`create-room-type-${roomType.roomTypeId}`}
@@ -996,25 +990,21 @@ const RoomManagement = () => {
                             type="button"
                             onClick={closeCreateModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={closeEditModal} title="Edit Room">
+            <ModalShell open={openEdit} onClose={closeEditModal} title="Sửa phòng">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Room Name *
+                            Tên phòng *
                         </label>
                         <input
                             type="text"
@@ -1048,7 +1038,7 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Status *
+                                Trạng thái *
                             </label>
                             <select
                                 {...editForm.register("status")}
@@ -1071,7 +1061,7 @@ const RoomManagement = () => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Province *
+                                Tỉnh/Thành *
                             </label>
                             <select
                                 value={Number(editForm.watch("provinceId") ?? 0)}
@@ -1080,7 +1070,7 @@ const RoomManagement = () => {
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select province</option>
+                                <option value={0}>Chọn tỉnh/thành</option>
                                 {provinces.map((province) => (
                                     <option
                                         key={`edit-province-${province.provinceId}`}
@@ -1099,14 +1089,14 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Cinema *
+                                Rạp *
                             </label>
                             <select
                                 value={Number(editForm.watch("cinemaId") ?? 0)}
                                 onChange={(event) => void handleEditCinemaChange(event.target.value)}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select cinema</option>
+                                <option value={0}>Chọn rạp</option>
                                 {editCinemas.map((cinema) => (
                                     <option
                                         key={`edit-cinema-${cinema.cinemaId}`}
@@ -1125,7 +1115,7 @@ const RoomManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Room Type *
+                                Loại phòng *
                             </label>
                             <select
                                 value={Number(editForm.watch("roomTypeId") ?? 0)}
@@ -1138,7 +1128,7 @@ const RoomManagement = () => {
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
-                                <option value={0}>Select room type</option>
+                                <option value={0}>Chọn loại phòng</option>
                                 {editRoomTypes.map((roomType) => (
                                     <option
                                         key={`edit-room-type-${roomType.roomTypeId}`}
@@ -1161,44 +1151,36 @@ const RoomManagement = () => {
                             type="button"
                             onClick={closeEditModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Delete Room">
+            <ModalShell open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Xóa phòng">
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete room{" "}
+                        Bạn có chắc muốn xóa phòng{" "}
                         <strong>{deleteTarget?.roomName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any ACTIVE seat is using this room.
+                        Không thể xóa nếu còn ghế ACTIVE đang dùng phòng này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -1213,3 +1195,6 @@ const RoomManagement = () => {
 };
 
 export default RoomManagement;
+
+
+

@@ -1,32 +1,32 @@
-const showtimeRows = [
+﻿const showtimeRows = [
     {
         movie: "Thunder Legacy",
-        cinema: "Galaxy Nguyen Du",
-        room: "Room 03 - 2D",
+        cinema: "Galaxy Nguyễn Du",
+        room: "Phòng 03 - 2D",
         time: "2026-04-23 09:15",
         occupancy: "82%",
         status: "OPEN",
     },
     {
         movie: "Moonline 2049",
-        cinema: "Galaxy Tan Binh",
-        room: "Room 05 - IMAX",
+        cinema: "Galaxy Tân Bình",
+        room: "Phòng 05 - IMAX",
         time: "2026-04-23 10:40",
         occupancy: "68%",
         status: "OPEN",
     },
     {
         movie: "The Quiet Frame",
-        cinema: "Galaxy Nguyen Du",
-        room: "Room 01 - 2D",
+        cinema: "Galaxy Nguyễn Du",
+        room: "Phòng 01 - 2D",
         time: "2026-04-23 12:30",
         occupancy: "47%",
         status: "LIMITED",
     },
     {
         movie: "Shadow Ticket",
-        cinema: "Galaxy Thu Duc",
-        room: "Room 02 - 2D",
+        cinema: "Galaxy Thủ Đức",
+        room: "Phòng 02 - 2D",
         time: "2026-04-23 14:50",
         occupancy: "0%",
         status: "DRAFT",
@@ -46,10 +46,10 @@ const ShowtimeManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Schedule Control
+                            Quản trị lịch chiếu
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Showtime Management
+                            Quản lý suất chiếu
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
                             Manage showtimes, room allocation and seat occupancy by cinema.
@@ -59,7 +59,7 @@ const ShowtimeManagement = () => {
                         type="button"
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Create Showtime
+                        + Tạo suất chiếu
                     </button>
                 </div>
 
@@ -69,13 +69,13 @@ const ShowtimeManagement = () => {
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
                     <select className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15">
-                        <option>All cinemas</option>
-                        <option>Galaxy Nguyen Du</option>
-                        <option>Galaxy Tan Binh</option>
-                        <option>Galaxy Thu Duc</option>
+                        <option>Tất cả rạp</option>
+                        <option>Galaxy Nguyễn Du</option>
+                        <option>Galaxy Tân Bình</option>
+                        <option>Galaxy Thủ Đức</option>
                     </select>
                     <select className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15">
-                        <option>All room types</option>
+                        <option>Tất cả loại phòng</option>
                         <option>2D</option>
                         <option>3D</option>
                         <option>IMAX</option>
@@ -84,29 +84,29 @@ const ShowtimeManagement = () => {
                         type="button"
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply Filters
+                        Áp dụng bộ lọc
                     </button>
                 </div>
             </section>
 
             <section className="grid gap-4 sm:grid-cols-3">
                 <article className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
-                    <p className="text-sm font-semibold text-slate-500">Shows Today</p>
+                    <p className="text-sm font-semibold text-slate-500">Suất chiếu hôm nay</p>
                     <p className="mt-2 text-2xl font-bold text-[var(--glx-blue)]">186</p>
                 </article>
                 <article className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
-                    <p className="text-sm font-semibold text-slate-500">Average Occupancy</p>
+                    <p className="text-sm font-semibold text-slate-500">Tỷ lệ lấp đầy trung bình</p>
                     <p className="mt-2 text-2xl font-bold text-[var(--glx-orange)]">71%</p>
                 </article>
                 <article className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
-                    <p className="text-sm font-semibold text-slate-500">Need Attention</p>
+                    <p className="text-sm font-semibold text-slate-500">Cần chú ý</p>
                     <p className="mt-2 text-2xl font-bold text-amber-600">9 slots</p>
                 </article>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex items-center justify-between border-b border-[var(--glx-border)] px-5 py-4 sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Today Showtime Slots</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Khung giờ suất chiếu hôm nay</h3>
                     <button
                         type="button"
                         className="rounded-lg border border-[var(--glx-orange)] px-3 py-1.5 text-sm font-semibold text-[var(--glx-orange)] transition-all duration-300 hover:bg-[var(--glx-orange)] hover:text-white"
@@ -119,15 +119,13 @@ const ShowtimeManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">Movie</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Cinema</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Room</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Start Time</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Occupancy</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-slate-600 text-right">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Phim</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Rạp</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Phòng</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Giờ bắt đầu</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Lấp đầy</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-slate-600 text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -152,9 +150,7 @@ const ShowtimeManagement = () => {
                                             <button
                                                 type="button"
                                                 className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                            >
-                                                Edit
-                                            </button>
+                                            >Sửa</button>
                                             <button
                                                 type="button"
                                                 className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
@@ -174,3 +170,6 @@ const ShowtimeManagement = () => {
 };
 
 export default ShowtimeManagement;
+
+
+

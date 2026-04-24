@@ -91,10 +91,7 @@ function App() {
                                 <Route path="room-types" element={<RoomTypeManagement />} />
                                 <Route path="rooms" element={<RoomManagement />} />
                                 <Route path="seat-types" element={<SeatTypeManagement />} />
-                                <Route
-                                    path="price-tickets"
-                                    element={<PriceTicketManagement />}
-                                />
+                                <Route path="price-tickets" element={<PriceTicketManagement />} />
                                 <Route path="combos" element={<ComboManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />

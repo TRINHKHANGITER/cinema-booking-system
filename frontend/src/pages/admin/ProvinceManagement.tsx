@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,13 +16,13 @@ import type {
 const defaultStatuses: ProvinceStatus[] = ["ACTIVE", "INACTIVE"];
 
 const createProvinceSchema = z.object({
-    provinceName: z.string().trim().min(1, "Province name is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    provinceName: z.string().trim().min(1, "Tên tỉnh/thành là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 const updateProvinceSchema = z.object({
-    provinceName: z.string().trim().min(1, "Province name is required"),
-    status: z.string().trim().min(1, "Status is required"),
+    provinceName: z.string().trim().min(1, "Tên tỉnh/thành là bắt buộc"),
+    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
 });
 
 type CreateProvinceFormValues = z.infer<typeof createProvinceSchema>;
@@ -138,7 +138,7 @@ const ProvinceManagement = () => {
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
-            toast.error(parseApiError(error, "Cannot load provinces"));
+            toast.error(parseApiError(error, "Không thể tải danh sách tỉnh/thành"));
             setProvinces([]);
             setTotalItems(0);
             setTotalPages(1);
@@ -209,15 +209,15 @@ const ProvinceManagement = () => {
         try {
             const response = await provinceService.createProvince(payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Create province failed");
+                toast.error(response.message || "Tạo tỉnh/thành thất bại");
                 return;
             }
 
-            toast.success("Province created successfully");
+            toast.success("Tạo tỉnh/thành thành công");
             setOpenCreate(false);
             void fetchProvinces();
         } catch (error) {
-            toast.error(parseApiError(error, "Create province failed"));
+            toast.error(parseApiError(error, "Tạo tỉnh/thành thất bại"));
         }
     });
 
@@ -232,16 +232,16 @@ const ProvinceManagement = () => {
         try {
             const response = await provinceService.updateProvince(editingProvince.provinceId, payload);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Update province failed");
+                toast.error(response.message || "Cập nhật tỉnh/thành thất bại");
                 return;
             }
 
-            toast.success("Province updated successfully");
+            toast.success("Cập nhật tỉnh/thành thành công");
             setOpenEdit(false);
             setEditingProvince(null);
             void fetchProvinces();
         } catch (error) {
-            toast.error(parseApiError(error, "Update province failed"));
+            toast.error(parseApiError(error, "Cập nhật tỉnh/thành thất bại"));
         }
     });
 
@@ -251,15 +251,15 @@ const ProvinceManagement = () => {
         try {
             const response = await provinceService.deleteProvince(deleteTarget.provinceId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Delete province failed");
+                toast.error(response.message || "Xóa tỉnh/thành thất bại");
                 return;
             }
 
-            toast.success("Province deleted successfully");
+            toast.success("Xóa tỉnh/thành thành công");
             setDeleteTarget(null);
             void fetchProvinces();
         } catch (error) {
-            toast.error(parseApiError(error, "Delete province failed"));
+            toast.error(parseApiError(error, "Xóa tỉnh/thành thất bại"));
         }
     };
 
@@ -269,13 +269,13 @@ const ProvinceManagement = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            Province Control
+                            Quản trị tỉnh/thành
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Province Management
+                            Quản lý tỉnh/thành
                         </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Filter, create and update provinces for the cinema system.
+                            Lọc, tạo và cập nhật tỉnh/thành cho hệ thống rạp.
                         </p>
                     </div>
 
@@ -284,7 +284,7 @@ const ProvinceManagement = () => {
                         onClick={openCreateModal}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--glx-orange)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-orange-soft)]"
                     >
-                        + Add Province
+                        + Thêm tỉnh/thành
                     </button>
                 </div>
 
@@ -298,7 +298,7 @@ const ProvinceManagement = () => {
                             }
                         }}
                         type="text"
-                        placeholder="Search by province name..."
+                        placeholder="Tìm theo tên tỉnh/thành..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -307,7 +307,7 @@ const ProvinceManagement = () => {
                         onChange={(event) => setStatusInput(event.target.value as ProvinceStatus | "")}
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
-                        <option value="">All statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         {statuses.map((status) => (
                             <option key={status} value={status}>
                                 {status}
@@ -320,18 +320,18 @@ const ProvinceManagement = () => {
                         onClick={applyFilters}
                         className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
                     >
-                        Apply
+                        Áp dụng
                     </button>
                 </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
                 <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <h3 className="text-lg font-bold text-slate-800">Province List</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Danh sách tỉnh/thành</h3>
                     <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span>Total: {totalItems}</span>
+                        <span>Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2">
-                            <span>Size</span>
+                            <span>Kích thước</span>
                             <select
                                 value={filters.size}
                                 onChange={(event) =>
@@ -357,12 +357,10 @@ const ProvinceManagement = () => {
                     <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
                         <thead className="bg-slate-50 text-left">
                             <tr>
-                                <th className="px-6 py-3 font-bold text-slate-600">ID</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Name</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Status</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">
-                                    Actions
-                                </th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Tên</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -372,7 +370,7 @@ const ProvinceManagement = () => {
                                         colSpan={4}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        Loading provinces...
+                                        Đang tải tỉnh/thành...
                                     </td>
                                 </tr>
                             ) : provinces.length === 0 ? (
@@ -381,7 +379,7 @@ const ProvinceManagement = () => {
                                         colSpan={4}
                                         className="px-6 py-10 text-center text-sm text-slate-500"
                                     >
-                                        No provinces found
+                                        Không tìm thấy tỉnh/thành
                                     </td>
                                 </tr>
                             ) : (
@@ -408,16 +406,12 @@ const ProvinceManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(province)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >
-                                                    Edit
-                                                </button>
+                                                >Sửa</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(province)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
+                                                >Xóa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -436,7 +430,7 @@ const ProvinceManagement = () => {
                         disabled={filters.page === 1 || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Prev
+                        Trước
                     </button>
 
                     {visiblePages.map((page) => (
@@ -465,16 +459,16 @@ const ProvinceManagement = () => {
                         disabled={filters.page >= totalPages || isLoading}
                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-sm text-slate-600 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                     >
-                        Next
+                        Tiếp
                     </button>
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Add Province">
+            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm tỉnh/thành">
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Province Name *
+                            Tên tỉnh/thành *
                         </label>
                         <input
                             type="text"
@@ -489,7 +483,7 @@ const ProvinceManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                         <select
                             {...createForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -512,25 +506,21 @@ const ProvinceManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Create
-                        </button>
+                        >Tạo mới</button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Edit Province">
+            <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa tỉnh/thành">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
-                            Province Name *
+                            Tên tỉnh/thành *
                         </label>
                         <input
                             type="text"
@@ -545,7 +535,7 @@ const ProvinceManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Status *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
                         <select
                             {...editForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -568,16 +558,12 @@ const ProvinceManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Save
-                        </button>
+                        >Lưu</button>
                     </div>
                 </form>
             </ModalShell>
@@ -585,30 +571,26 @@ const ProvinceManagement = () => {
             <ModalShell
                 open={Boolean(deleteTarget)}
                 onClose={() => setDeleteTarget(null)}
-                title="Delete Province"
+                title="Xóa tỉnh/thành"
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Are you sure you want to delete province <strong>{deleteTarget?.provinceName}</strong>?
+                        Bạn có chắc muốn xóa tỉnh/thành <strong>{deleteTarget?.provinceName}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
-                        Delete will be blocked if any ACTIVE cinema is using this province.
+                        Không thể xóa nếu còn rạp ACTIVE đang dùng tỉnh/thành này.
                     </p>
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >
-                            Cancel
-                        </button>
+                        >Hủy</button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >
-                            Delete
-                        </button>
+                        >Xóa</button>
                     </div>
                 </div>
             </ModalShell>
@@ -617,3 +599,6 @@ const ProvinceManagement = () => {
 };
 
 export default ProvinceManagement;
+
+
+

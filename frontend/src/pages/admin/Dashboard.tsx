@@ -1,59 +1,72 @@
-const overviewCards = [
+﻿const overviewCards = [
     {
-        title: "Tickets Sold Today",
+        title: "Vé bán hôm nay",
         value: "1,284",
         change: "+12.4%",
-        description: "Compared to yesterday",
+        description: "So với hôm qua",
     },
     {
-        title: "Total Revenue",
+        title: "Tổng doanh thu",
         value: "256.4M VND",
         change: "+8.1%",
-        description: "Daily gross revenue",
+        description: "Doanh thu gộp trong ngày",
     },
     {
-        title: "Active Movies",
+        title: "Phim đang hoạt động",
         value: "27",
         change: "+3",
-        description: "Now showing and upcoming",
+        description: "Đang chiếu và sắp chiếu",
     },
     {
-        title: "Seat Occupancy",
+        title: "Tỷ lệ lấp đầy ghế",
         value: "74%",
         change: "+5.7%",
-        description: "Average for today",
+        description: "Trung bình hôm nay",
     },
 ];
 
 const recentActivities = [
     {
-        title: "New movie schedule imported",
-        meta: "Main branch - 8 minutes ago",
+        title: "Đã nhập lịch phim mới",
+        meta: "Chi nhánh chính - 8 phút trước",
         status: "DONE",
     },
     {
-        title: "2 showtimes paused for maintenance",
-        meta: "District 1 Cinema - 26 minutes ago",
+        title: "2 suất chiếu tạm dừng để bảo trì",
+        meta: "Rạp Quận 1 - 26 phút trước",
         status: "PENDING",
     },
     {
-        title: "Price update applied to weekend slots",
-        meta: "Business team - 1 hour ago",
+        title: "Đã áp dụng cập nhật giá cho khung giờ cuối tuần",
+        meta: "Nhóm kinh doanh - 1 giờ trước",
         status: "DONE",
     },
     {
-        title: "Banner campaign waiting approval",
-        meta: "Marketing - 2 hours ago",
+        title: "Chiến dịch banner đang chờ duyệt",
+        meta: "Marketing - 2 giờ trước",
         status: "REVIEW",
     },
 ];
 
 const quickActions = [
-    "Create new movie",
-    "Open seat map checker",
-    "Sync today showtimes",
-    "Review payment logs",
+    "Tạo phim mới",
+    "Mở kiểm tra sơ đồ ghế",
+    "Đồng bộ suất chiếu hôm nay",
+    "Kiểm tra nhật ký thanh toán",
 ];
+
+const resolveActivityStatusLabel = (status: string) => {
+    switch (status) {
+        case "DONE":
+            return "Hoàn tất";
+        case "REVIEW":
+            return "Chờ duyệt";
+        case "PENDING":
+            return "Đang chờ";
+        default:
+            return status;
+    }
+};
 
 const Dashboard = () => {
     return (
@@ -62,14 +75,14 @@ const Dashboard = () => {
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
-                            System Overview
+                            Tổng quan hệ thống
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Cinema Operation Dashboard
+                            Bảng điều khiển vận hành rạp
                         </h2>
                         <p className="mt-2 max-w-2xl text-sm text-[var(--glx-text-muted)]">
-                            Admin UI now follows the same visual tone as client pages: clean white
-                            surfaces, deep-blue structure, and orange action highlights.
+                            Giao diện quản trị đồng bộ phong cách với trang khách hàng: nền sáng,
+                            cấu trúc xanh đậm và điểm nhấn hành động màu cam.
                         </p>
                     </div>
 
@@ -77,7 +90,7 @@ const Dashboard = () => {
                         type="button"
                         className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--glx-orange)] px-4 text-sm font-semibold text-[var(--glx-orange)] transition-all duration-300 hover:bg-[var(--glx-orange)] hover:text-white"
                     >
-                        Export Daily Report
+                        Xuất báo cáo ngày
                     </button>
                 </div>
             </section>
@@ -110,12 +123,12 @@ const Dashboard = () => {
             <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
                 <section className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)] sm:p-6">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-slate-800">Recent Activity</h3>
+                        <h3 className="text-lg font-bold text-slate-800">Hoạt động gần đây</h3>
                         <button
                             type="button"
                             className="text-sm font-semibold text-[var(--glx-blue)] transition-colors hover:text-[var(--glx-orange)]"
                         >
-                            View all
+                            Xem tất cả
                         </button>
                     </div>
 
@@ -141,7 +154,7 @@ const Dashboard = () => {
                                                   : "bg-sky-100 text-sky-700"
                                         }`}
                                     >
-                                        {activity.status}
+                                        {resolveActivityStatusLabel(activity.status)}
                                     </span>
                                 </div>
                             </li>
@@ -151,7 +164,7 @@ const Dashboard = () => {
 
                 <section className="space-y-6">
                     <div className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)] sm:p-6">
-                        <h3 className="text-lg font-bold text-slate-800">Quick Actions</h3>
+                        <h3 className="text-lg font-bold text-slate-800">Thao tác nhanh</h3>
                         <div className="mt-4 grid gap-3">
                             {quickActions.map((action) => (
                                 <button
@@ -166,11 +179,11 @@ const Dashboard = () => {
                     </div>
 
                     <div className="rounded-2xl border border-[var(--glx-border)] bg-white p-5 shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)] sm:p-6">
-                        <h3 className="text-lg font-bold text-slate-800">Health Snapshot</h3>
+                        <h3 className="text-lg font-bold text-slate-800">Tình trạng hệ thống</h3>
                         <div className="mt-4 space-y-4">
                             <div>
                                 <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="text-slate-600">API uptime</span>
+                                    <span className="text-slate-600">Độ ổn định API</span>
                                     <span className="font-bold text-[var(--glx-blue)]">99.91%</span>
                                 </div>
                                 <div className="h-2 rounded-full bg-slate-100">
@@ -179,7 +192,7 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="text-slate-600">Payment success</span>
+                                    <span className="text-slate-600">Thanh toán thành công</span>
                                     <span className="font-bold text-[var(--glx-orange)]">97.80%</span>
                                 </div>
                                 <div className="h-2 rounded-full bg-slate-100">
@@ -195,3 +208,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
