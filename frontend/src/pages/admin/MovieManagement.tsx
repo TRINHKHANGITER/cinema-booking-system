@@ -15,6 +15,7 @@ import type {
 } from "../../types/movie";
 import type { MovieTypeResponse } from "../../types/movie-type";
 import {
+    parseActors,
     resolveMovieLandscapeImage,
     resolveMoviePortraitImage,
     resolveMovieText,
@@ -86,6 +87,7 @@ type ModalShellProps = {
     open: boolean;
     title: string;
     onClose: () => void;
+    panelClassName?: string;
     children: ReactNode;
 };
 
@@ -128,14 +130,38 @@ const statusClassByMovieStatus: Record<MovieStatus, string> = {
     INACTIVE: "bg-slate-200 text-slate-700",
 };
 
-const ModalShell = ({ open, title, onClose, children }: ModalShellProps) => {
+const formatMovieDate = (value: string | null | undefined, fallback = "Not updated") => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return resolveMovieText(value, fallback);
+    }
+    return date.toLocaleDateString("vi-VN");
+};
+
+const formatMovieDateTime = (value: string | null | undefined, fallback = "Not updated") => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return resolveMovieText(value, fallback);
+    }
+    return date.toLocaleString("vi-VN", {
+        hour12: false,
+    });
+};
+
+const ModalShell = ({ open, title, onClose, panelClassName, children }: ModalShellProps) => {
     return (
         <div
             className={`fixed inset-0 z-[1000] grid h-screen w-screen place-items-center bg-black/45 px-4 transition-opacity duration-300 ${
                 open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
             }`}
         >
-            <div className="relative max-h-[90vh] w-full max-w-[900px] overflow-y-auto rounded-md bg-white px-6 py-6 shadow-2xl">
+            <div
+                className={`relative max-h-[90vh] w-full max-w-[900px] overflow-y-auto rounded-md bg-white px-6 py-6 shadow-2xl ${
+                    panelClassName ?? ""
+                }`}
+            >
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-slate-800">{title}</h3>
                     <button
@@ -149,6 +175,199 @@ const ModalShell = ({ open, title, onClose, children }: ModalShellProps) => {
                 {children}
             </div>
         </div>
+    );
+};
+
+type MovieDetailRowProps = {
+    label: string;
+    value: ReactNode;
+};
+
+type MovieViewModalProps = {
+    open: boolean;
+    movie: MovieResponse | null;
+    onClose: () => void;
+};
+
+const MovieDetailRow = ({ label, value }: MovieDetailRowProps) => {
+    return (
+        <div className="grid grid-cols-[120px_1fr] gap-3 py-2">
+            <span className="text-sm font-semibold text-slate-500">{label}</span>
+            <div className="text-sm text-slate-700">{value}</div>
+        </div>
+    );
+};
+
+const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
+    if (!movie) {
+        return (
+            <ModalShell open={open} title="Movie Detail" onClose={onClose} panelClassName="max-w-[1100px]">
+                <p className="text-sm text-slate-500">No movie selected.</p>
+            </ModalShell>
+        );
+    }
+
+    const statusClass =
+        statusClassByMovieStatus[movie.status] ?? "bg-slate-200 text-slate-700";
+    const actors = parseActors(movie.actors);
+    const trailerUrl = movie.trailerUrl?.trim();
+
+    return (
+        <ModalShell open={open} title="Movie Detail" onClose={onClose} panelClassName="max-w-[1100px]">
+            <div className="space-y-6">
+                <div className="-mx-6 -mt-4 overflow-hidden border-b border-slate-100 bg-black">
+                    <img
+                        src={resolveMovieLandscapeImage(movie.imageLandscape)}
+                        alt={`${resolveMovieText(movie.movieName)} landscape`}
+                        className="h-[260px] w-full object-cover sm:h-[360px]"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[250px_1fr]">
+                    <div className="mx-auto w-[220px] sm:w-[250px]">
+                        <img
+                            src={resolveMoviePortraitImage(movie.imagePortrait)}
+                            alt={`${resolveMovieText(movie.movieName)} poster`}
+                            className="h-[320px] w-full rounded-xl border-4 border-white object-cover shadow-[0_25px_50px_-30px_rgba(15,23,42,0.8)] sm:h-[380px]"
+                        />
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h4 className="text-2xl font-bold text-slate-800">
+                                {resolveMovieText(movie.movieName)}
+                            </h4>
+                            <span className="inline-flex rounded-md bg-[var(--glx-orange)] px-2.5 py-1 text-xs font-bold text-white">
+                                T{Number(movie.minimumAge ?? 0)}
+                            </span>
+                            <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}
+                            >
+                                {movie.status}
+                            </span>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Duration
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-slate-700">
+                                    {Number(movie.durationMinutes ?? 0) > 0
+                                        ? `${movie.durationMinutes} minutes`
+                                        : "Not updated"}
+                                </p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Rating
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-slate-700">
+                                    {movie.ratingAverage !== null && movie.ratingAverage !== undefined
+                                        ? movie.ratingAverage
+                                        : "Not updated"}
+                                    {movie.totalVotes !== null && movie.totalVotes !== undefined
+                                        ? ` (${movie.totalVotes} votes)`
+                                        : ""}
+                                </p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Movie Type
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-slate-700">
+                                    {resolveMovieText(
+                                        movie.movieType?.movieTypeName,
+                                        "Not updated"
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+
+                        {trailerUrl && (
+                            <a
+                                href={trailerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-4 inline-flex rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white"
+                            >
+                                Watch Trailer
+                            </a>
+                        )}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                        <h5 className="text-base font-bold text-slate-800">General Information</h5>
+                        <div className="mt-3 divide-y divide-slate-100">
+                            <MovieDetailRow label="Movie ID" value={movie.movieId} />
+                            <MovieDetailRow
+                                label="Release Date"
+                                value={formatMovieDate(movie.releaseDate)}
+                            />
+                            <MovieDetailRow label="End Date" value={formatMovieDate(movie.endDate)} />
+                            <MovieDetailRow
+                                label="Country"
+                                value={resolveMovieText(movie.country, "Not updated")}
+                            />
+                            <MovieDetailRow
+                                label="Slug"
+                                value={resolveMovieText(movie.slug, "Not updated")}
+                            />
+                            <MovieDetailRow
+                                label="Created At"
+                                value={formatMovieDateTime(movie.createdAt)}
+                            />
+                            <MovieDetailRow
+                                label="Updated At"
+                                value={formatMovieDateTime(movie.updatedAt)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                        <h5 className="text-base font-bold text-slate-800">Production and Cast</h5>
+                        <div className="mt-3 divide-y divide-slate-100">
+                            <MovieDetailRow
+                                label="Producer"
+                                value={resolveMovieText(movie.producer, "Not updated")}
+                            />
+                            <MovieDetailRow
+                                label="Director"
+                                value={resolveMovieText(movie.director, "Not updated")}
+                            />
+                            <MovieDetailRow
+                                label="Actors"
+                                value={
+                                    actors.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {actors.map((actor) => (
+                                                <span
+                                                    key={actor}
+                                                    className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700"
+                                                >
+                                                    {actor}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        "Not updated"
+                                    )
+                                }
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                    <h5 className="text-base font-bold text-slate-800">Noi dung phim</h5>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">
+                        {resolveMovieText(movie.description, "No description")}
+                    </p>
+                </div>
+            </div>
+        </ModalShell>
     );
 };
 
@@ -466,7 +685,9 @@ const MovieManagement = () => {
     const [totalPages, setTotalPages] = useState(1);
 
     const [openCreate, setOpenCreate] = useState(false);
+    const [openView, setOpenView] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
+    const [viewingMovie, setViewingMovie] = useState<MovieResponse | null>(null);
     const [editingMovie, setEditingMovie] = useState<MovieResponse | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<MovieResponse | null>(null);
 
@@ -652,6 +873,16 @@ const MovieManagement = () => {
             status: statusInput,
             page: 1,
         }));
+    };
+
+    const openViewModal = (movie: MovieResponse) => {
+        setViewingMovie(movie);
+        setOpenView(true);
+    };
+
+    const closeViewModal = () => {
+        setOpenView(false);
+        setViewingMovie(null);
     };
 
     const openCreateModal = () => {
@@ -1018,6 +1249,13 @@ const MovieManagement = () => {
                                                 <div className="inline-flex items-center gap-2">
                                                     <button
                                                         type="button"
+                                                        onClick={() => openViewModal(movie)}
+                                                        className="rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-blue)] transition-all duration-300 hover:bg-[var(--glx-blue)] hover:text-white"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button
+                                                        type="button"
                                                         onClick={() => openEditModal(movie)}
                                                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
                                                     >
@@ -1082,6 +1320,8 @@ const MovieManagement = () => {
                     </button>
                 </div>
             </section>
+
+            <MovieViewModal open={openView} movie={viewingMovie} onClose={closeViewModal} />
 
             <ModalShell open={openCreate} onClose={closeCreateModal} title="Add Movie">
                 <form className="space-y-3" onSubmit={submitCreate}>
