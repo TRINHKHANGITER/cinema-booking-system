@@ -1,6 +1,6 @@
 import type { MovieTypeEntity, MovieTypeResponse } from "./movie-type";
 
-export type MovieStatus = "ACTIVE" | "INACTIVE";
+export type MovieStatus = "ACTIVE" | "INACTIVE" | "COMING_SOON" | "STOPPED";
 
 export type MovieEntity = {
     movieId: number;
@@ -31,15 +31,16 @@ export type MovieCreationResquest = {
     description: string;
     durationMinutes: number;
     movieTypeId: number;
+    releaseDate: string;
+    endDate: string;
+    status: MovieStatus;
     slug?: string | null;
     minimumAge?: number | null;
-    imageLandscape?: string | null;
-    imagePortrait?: string | null;
+    imageLandscape?: File | null;
+    imagePortrait?: File | null;
     trailerUrl?: string | null;
     ratingAverage?: number | null;
     totalVotes?: number | null;
-    releaseDate?: string | null;
-    endDate?: string | null;
     country?: string | null;
     producer?: string | null;
     director?: string | null;
@@ -51,15 +52,16 @@ export type MovieUpdateResquest = {
     description?: string;
     durationMinutes?: number;
     movieTypeId?: number;
+    releaseDate?: string | null;
+    endDate?: string | null;
+    status?: MovieStatus;
     slug?: string | null;
     minimumAge?: number | null;
-    imageLandscape?: string | null;
-    imagePortrait?: string | null;
+    imageLandscape?: File | null;
+    imagePortrait?: File | null;
     trailerUrl?: string | null;
     ratingAverage?: number | null;
     totalVotes?: number | null;
-    releaseDate?: string | null;
-    endDate?: string | null;
     country?: string | null;
     producer?: string | null;
     director?: string | null;

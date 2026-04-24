@@ -5,6 +5,90 @@ import type { Showtime } from "../types/showtime";
 const DEFAULT_SEAT_PRICE = 75000;
 const VIP_SEAT_PRICE = 90000;
 const COUPLE_SEAT_PRICE = 160000;
+const DEFAULT_MOVIE_TEXT_FALLBACK = "Dang cap nhat";
+const DEFAULT_MOVIE_PORTRAIT_FALLBACK = "/images/movies/posters/tho-oi.jpg";
+const DEFAULT_MOVIE_LANDSCAPE_FALLBACK = "/images/movies/whoever-steals-this-book.jpg";
+const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, "");
+const BACKEND_API_URL = normalizeBaseUrl(String(import.meta.env.VITE_BACKEND_API_URL ?? ""));
+const BACKEND_ORIGIN = (() => {
+    if (!BACKEND_API_URL) return "";
+    try {
+        return new URL(BACKEND_API_URL).origin;
+    } catch {
+        return "";
+    }
+})();
+const MOVIE_IMAGE_PORTRAIT_BASE_URL = normalizeBaseUrl(
+    String(
+        import.meta.env.VITE_MOVIE_IMAGE_PORTRAIT_API_URL ??
+            (BACKEND_API_URL ? `${BACKEND_API_URL}/image/movie/imagePortrait` : "")
+    )
+);
+const MOVIE_IMAGE_LANDSCAPE_BASE_URL = normalizeBaseUrl(
+    String(
+        import.meta.env.VITE_MOVIE_IMAGE_LANDSCAPE_API_URL ??
+            (BACKEND_API_URL ? `${BACKEND_API_URL}/image/movie/imageLandscape` : "")
+    )
+);
+
+export const resolveMovieText = (
+    value: string | null | undefined,
+    fallback = DEFAULT_MOVIE_TEXT_FALLBACK
+) => {
+    if (value === null || value === undefined) return fallback;
+    const normalized = String(value).trim();
+    return normalized.length > 0 ? normalized : fallback;
+};
+
+const resolveMovieStorageImage = (
+    value: string | null | undefined,
+    baseUrl: string,
+    fallback: string
+) => {
+    if (!value) return fallback;
+
+    const normalized = value.trim();
+    if (!normalized) return fallback;
+
+    if (/^(https?:|blob:|data:)/i.test(normalized)) {
+        return normalized;
+    }
+
+    if (normalized.startsWith("/")) {
+        if (normalized.startsWith("/cinema/api/") && BACKEND_ORIGIN) {
+            return `${BACKEND_ORIGIN}${normalized}`;
+        }
+
+        if (BACKEND_API_URL) {
+            return `${BACKEND_API_URL}${normalized}`;
+        }
+
+        return normalized;
+    }
+
+    if (!baseUrl) {
+        return normalized;
+    }
+
+    const normalizedFileName = normalized.split("/").filter(Boolean).at(-1) ?? normalized;
+    return `${baseUrl}/${normalizedFileName}`;
+};
+
+export const resolveMoviePortraitImage = (value?: string | null) => {
+    return resolveMovieStorageImage(
+        value,
+        MOVIE_IMAGE_PORTRAIT_BASE_URL,
+        DEFAULT_MOVIE_PORTRAIT_FALLBACK
+    );
+};
+
+export const resolveMovieLandscapeImage = (value?: string | null) => {
+    return resolveMovieStorageImage(
+        value,
+        MOVIE_IMAGE_LANDSCAPE_BASE_URL,
+        DEFAULT_MOVIE_LANDSCAPE_FALLBACK
+    );
+};
 
 export const seatUnitPrice = (seat: Seat): number => {
     const typeId = seat.seatTypeId ?? seat.seatType?.seatTypeId;

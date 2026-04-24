@@ -21,15 +21,17 @@ public interface MovieMapper {
     @Mapping(target = "movieId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "imageLandscape", ignore = true)
+    @Mapping(target = "imagePortrait", ignore = true)
     Movie toMovieFromMovieCreationRequest(MovieCreationResquest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "movieId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "movieType", ignore = true)
+    @Mapping(target = "imageLandscape", ignore = true)
+    @Mapping(target = "imagePortrait", ignore = true)
     void updateMovieInfo(@MappingTarget Movie movie, MovieUpdateResquest request);
 
 }

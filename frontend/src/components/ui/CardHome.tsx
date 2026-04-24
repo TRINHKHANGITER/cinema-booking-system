@@ -4,6 +4,7 @@ import BuyTicket from "../icon/buy-ticket";
 import type { Movie } from "../../types/product";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { resolveMoviePortraitImage, resolveMovieText } from "../../utils/utils";
 
 interface CardHomeProps {
   movie: Movie;
@@ -12,6 +13,14 @@ interface CardHomeProps {
 const CardHome = ({ movie }: CardHomeProps) => {
   const detailPath = `/xuat-chieu/${movie.slug ?? movie.movieId}`;
   const hasTrailer = Boolean(movie.trailerUrl?.trim());
+  const movieName = resolveMovieText(movie.movieName, "Movie");
+  const portraitImage = resolveMoviePortraitImage(movie.imagePortrait);
+  const movieRating = resolveMovieText(
+    movie.ratingAverage === null || movie.ratingAverage === undefined
+      ? undefined
+      : String(movie.ratingAverage),
+    "N/A"
+  );
 
   const handleOpenTrailer = () => {
     if (!hasTrailer || !movie.trailerUrl) {
@@ -29,14 +38,14 @@ const CardHome = ({ movie }: CardHomeProps) => {
           <div className="relative overflow-hidden group cursor-pointer rounded-[8px]">
             <Link to={detailPath}>
               <img
-                alt={movie.movieName}
+                alt={movieName}
                 loading="lazy"
                 width={300}
                 height={500}
                 decoding="async"
                 data-nimg={1}
                 className="img__film object-cover duration-500 ease-in-out scale-100 blur-0 grayscale-0"
-                src={movie.imagePortrait ?? undefined}
+                src={portraitImage}
                 style={{ color: "transparent" }}
               />
             </Link>
@@ -47,7 +56,7 @@ const CardHome = ({ movie }: CardHomeProps) => {
                   <Star />
                 </span>
                 <span className="text-[18px] font-bold text-white">
-                  {movie.ratingAverage}
+                  {movieRating}
                 </span>
               </div>
             </div>
@@ -82,7 +91,7 @@ const CardHome = ({ movie }: CardHomeProps) => {
         </div>
 
         <div className="Card_card__title__kFoFc">
-          <h3 className="font-semibold mt-2">{movie.movieName}</h3>
+          <h3 className="font-semibold mt-2">{movieName}</h3>
         </div>
       </div>
     </div>

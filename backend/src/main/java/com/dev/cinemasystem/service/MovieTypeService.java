@@ -161,6 +161,14 @@ public class MovieTypeService {
                 .toList();
     }
 
+    public List<MovieTypeResponse> getMovieTypesForMovieDropdown(MovieTypeStatus status) {
+        List<MovieType> movieTypes = status == null
+                ? movieTypeRepository.findAllByOrderByMovieTypeNameAsc()
+                : movieTypeRepository.findAllByStatusOrderByMovieTypeNameAsc(status);
+
+        return movieTypeMapper.toMovieTypeResponseList(movieTypes);
+    }
+
     private MovieTypeStatus parseMovieTypeStatus(String value) {
         try {
             return MovieTypeStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
@@ -179,4 +187,3 @@ public class MovieTypeService {
         }
     }
 }
-

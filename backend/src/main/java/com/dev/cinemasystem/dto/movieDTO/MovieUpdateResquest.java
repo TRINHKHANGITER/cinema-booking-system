@@ -1,9 +1,11 @@
 package com.dev.cinemasystem.dto.movieDTO;
 
 
+import com.dev.cinemasystem.enums.MovieStatus;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,8 +30,8 @@ public class MovieUpdateResquest {
 
     String slug;
     Integer minimumAge;
-    String imageLandscape;
-    String imagePortrait;
+    MultipartFile imageLandscape;
+    MultipartFile imagePortrait;
     String trailerUrl;
     BigDecimal ratingAverage;
     Integer totalVotes;
@@ -39,4 +41,5 @@ public class MovieUpdateResquest {
     String producer;
     String director;
     String actors;
+    MovieStatus status;
 }

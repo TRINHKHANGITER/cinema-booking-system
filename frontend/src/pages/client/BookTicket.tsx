@@ -20,6 +20,8 @@ import {
     formatTime,
     groupShowtimesByCinema,
     parseActors,
+    resolveMovieLandscapeImage,
+    resolveMoviePortraitImage,
 } from "../../utils/utils";
 import Signin from "../../layouts/signin";
 import { toast } from "sonner";
@@ -121,7 +123,7 @@ const BookTicket = () => {
                             </div>
                             <div className="relative">
                                 <img
-                                    src={selectedMovie?.imageLandscape ?? undefined}
+                                    src={resolveMovieLandscapeImage(selectedMovie?.imageLandscape)}
                                     className="w-[860px] h-full lg:h-[500px] object-cover"
                                 />
                                 <button
@@ -156,7 +158,7 @@ const BookTicket = () => {
                                             loading="lazy"
                                             width="220"
                                             height="280"
-                                            src={selectedMovie?.imagePortrait ?? undefined}
+                                            src={resolveMoviePortraitImage(selectedMovie?.imagePortrait)}
                                             className="border-2 rounded border-white lg:w-[320px] lg:h-100 w-full h-full object-cover duration-500 ease-in-out scale-100 blur-0 grayscale-0"
                                             style={{ color: "transparent" }}
                                         />
@@ -257,7 +259,7 @@ const BookTicket = () => {
                                         loading="lazy"
                                         width="220"
                                         height="280"
-                                        src={selectedMovie?.imagePortrait ?? undefined}
+                                        src={resolveMoviePortraitImage(selectedMovie?.imagePortrait)}
                                         className="border-2 rounded border-white lg:w-[320px] lg:h-[400px] md:w-full md:h-full w-[120px] h-[160px] object-cover col-span-1 duration-500 ease-in-out"
                                         style={{ color: "transparent" }}
                                     />

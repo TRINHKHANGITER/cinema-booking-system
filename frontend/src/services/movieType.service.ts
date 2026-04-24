@@ -9,6 +9,15 @@ import type {
 } from "../types/movie-type";
 
 export const movieTypeService = {
+    getMovieTypeItemList: async (status?: MovieTypeStatus) => {
+        const res = await api.get<ApiResponse<ItemListDto<MovieTypeResponse>>>("/movie-type", {
+            params: {
+                status,
+            },
+        });
+        return res.data;
+    },
+
     filterMovieTypes: async (params: MovieTypeFilterParams) => {
         const query = new URLSearchParams();
         if (params.name?.trim()) query.set("name", params.name.trim());
@@ -45,4 +54,3 @@ export const movieTypeService = {
         return res.data;
     },
 };
-

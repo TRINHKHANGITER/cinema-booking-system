@@ -33,6 +33,18 @@ import java.util.List;
 public class MovieTypeController {
     MovieTypeService movieTypeService;
 
+    @GetMapping
+    public ApiResponse<ItemListDto<MovieTypeResponse>> getMovieTypesForMovieDropdown(
+            @RequestParam(required = false) MovieTypeStatus status
+    ) {
+        return ApiResponse.<ItemListDto<MovieTypeResponse>>builder()
+                .message("Movie types retrieved successfully")
+                .result(ItemListDto.<MovieTypeResponse>builder()
+                        .items(movieTypeService.getMovieTypesForMovieDropdown(status))
+                        .build())
+                .build();
+    }
+
     @GetMapping("/{movieTypeId}")
     public ApiResponse<MovieTypeResponse> getMovieTypeById(@PathVariable Integer movieTypeId) {
         return ApiResponse.<MovieTypeResponse>builder()
@@ -104,4 +116,3 @@ public class MovieTypeController {
                 .build();
     }
 }
-
