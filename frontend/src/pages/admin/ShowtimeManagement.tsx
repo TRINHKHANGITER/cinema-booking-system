@@ -18,7 +18,7 @@ import type {
     ShowTimeStatus,
     ShowTimeUpdateRequest,
 } from "../../types/showtime";
-import { resolveApiErrorMessage } from "../../utils/utils";
+import { resolveApiErrorMessage, resolveMoviePortraitImage } from "../../utils/utils";
 
 const defaultShowtimeStatuses: ShowTimeStatus[] = [
     "SCHEDULED",
@@ -912,6 +912,7 @@ const ShowtimeManagement = () => {
                         <thead className="bg-slate-50 text-left">
                             <tr>
                                 <th className="px-6 py-3 font-bold text-slate-600">Mã suất</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">Ảnh</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Phim</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Địa điểm</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Ngày chiếu</th>
@@ -946,6 +947,13 @@ const ShowtimeManagement = () => {
                                         >
                                             <td className="px-6 py-4 text-slate-600">
                                                 #{row.showTimeId}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <img
+                                                    src={resolveMoviePortraitImage(row.movie?.imagePortrait)}
+                                                    alt={row.movie?.movieName ?? "Movie"}
+                                                    className="h-16 w-12 rounded border border-slate-200 object-cover"
+                                                />
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="font-semibold text-slate-700">
