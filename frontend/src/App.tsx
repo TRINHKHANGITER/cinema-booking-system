@@ -49,6 +49,7 @@ import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import ComboManagement from "./pages/admin/ComboManagement";
 import CinemaManagement from "./pages/admin/CinemaManagement";
+import OrderManagement from "./pages/admin/OrderManagement";
 
 function App() {
     return (
@@ -95,6 +96,7 @@ function App() {
                                 <Route path="combos" element={<ComboManagement />} />
                                 <Route path="movies" element={<MovieManagement />} />
                                 <Route path="showtimes" element={<ShowtimeManagement />} />
+                                <Route path="orders" element={<OrderManagement />} />
                             </Route>
                         </Route>
                     </Routes>

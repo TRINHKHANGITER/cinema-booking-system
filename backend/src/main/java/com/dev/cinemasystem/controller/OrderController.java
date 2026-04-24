@@ -1,12 +1,16 @@
 package com.dev.cinemasystem.controller;
 
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
+import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
+import com.dev.cinemasystem.dto.orderDTO.OrderDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
+import com.dev.cinemasystem.dto.orderDTO.OrderStatusUpdateRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
 import com.dev.cinemasystem.service.OrderService;
 import com.dev.cinemasystem.enums.OrderStatus;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -50,10 +54,52 @@ public class OrderController {
                 .build();
     }
 
+    @GetMapping("/{orderId}/detail")
+    public ApiResponse<OrderDetailResponse> getOrderDetailById(@PathVariable Integer orderId) {
+        return ApiResponse.<OrderDetailResponse>builder()
+                .result(orderService.getOrderDetailById(orderId))
+                .build();
+    }
+
     @GetMapping
     public ApiResponse<List<OrderResponse>> getOrders(OrderStatus status) {
         return ApiResponse.<List<OrderResponse>>builder()
                 .result(orderService.getOrders(status))
+                .build();
+    }
+
+    @GetMapping("/filter")
+    public ApiResponse<PagingDto<OrderResponse>> filterOrders(
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Integer showTimeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.<PagingDto<OrderResponse>>builder()
+                .message("Orders filtered successfully")
+                .result(orderService.filterOrders(customerName, email, phone, showTimeId, status, page, size))
+                .build();
+    }
+
+    @GetMapping("/statuses")
+    public ApiResponse<ItemListDto<String>> getAllOrderStatuses() {
+        return ApiResponse.<ItemListDto<String>>builder()
+                .message("Order statuses retrieved successfully")
+                .result(ItemListDto.<String>builder().items(orderService.getAllOrderStatuses()).build())
+                .build();
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public ApiResponse<OrderResponse> updateOrderStatus(
+            @PathVariable Integer orderId,
+            @RequestBody @Valid OrderStatusUpdateRequest request
+    ) {
+        return ApiResponse.<OrderResponse>builder()
+                .message("Order status updated successfully")
+                .result(orderService.updateStatusOrder(orderId, request.getStatus()))
                 .build();
     }
 

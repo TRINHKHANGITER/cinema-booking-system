@@ -32,6 +32,13 @@ const MOVIE_IMAGE_LANDSCAPE_BASE_URL = normalizeBaseUrl(
             (BACKEND_API_URL ? `${BACKEND_API_URL}/image/movie/imageLandscape` : "")
     )
 );
+const COMBO_IMAGE_BASE_URL = normalizeBaseUrl(
+    String(
+        import.meta.env.VITE_COMBO_IMAGE_API_URL ??
+            (BACKEND_API_URL ? `${BACKEND_API_URL}/image/combo` : "")
+    )
+);
+const DEFAULT_COMBO_IMAGE_FALLBACK = "/images/co-combo-1-extra-premium.png";
 
 export const resolveMovieText = (
     value: string | null | undefined,
@@ -90,6 +97,10 @@ export const resolveMovieLandscapeImage = (value?: string | null) => {
         MOVIE_IMAGE_LANDSCAPE_BASE_URL,
         DEFAULT_MOVIE_LANDSCAPE_FALLBACK
     );
+};
+
+export const resolveComboImage = (value?: string | null) => {
+    return resolveMovieStorageImage(value, COMBO_IMAGE_BASE_URL, DEFAULT_COMBO_IMAGE_FALLBACK);
 };
 
 export const resolveApiErrorMessage = (error: unknown, fallback: string) => {

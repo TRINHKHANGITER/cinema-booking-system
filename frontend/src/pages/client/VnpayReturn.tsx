@@ -5,6 +5,11 @@ import { orderService } from "../../services/order.service";
 import { checkoutService } from "../../services/checkout.service";
 import type { Order } from "../../types/order";
 
+type CheckoutContext = {
+    source?: "ADMIN" | "CLIENT";
+    orderId?: number;
+};
+
 export default function VnpayReturn() {
     const [order, setOrder] = useState<Order | null>(null);
     const location: Location = useLocation();
@@ -20,6 +25,17 @@ export default function VnpayReturn() {
         return Number.isNaN(parsedOrderId) ? null : parsedOrderId;
     }, [txnRef]);
 
+    const isAdminCheckout = useMemo(() => {
+        try {
+            const raw = sessionStorage.getItem("ORDER_CHECKOUT_CONTEXT");
+            if (!raw || !orderId) return false;
+            const context = JSON.parse(raw) as CheckoutContext;
+            return context.source === "ADMIN" && context.orderId === orderId;
+        } catch {
+            return false;
+        }
+    }, [orderId]);
+
     useEffect(() => {
         if (!orderId) return;
 
@@ -27,8 +43,8 @@ export default function VnpayReturn() {
         let isMounted = true;
 
         const getOrder = async () => {
-            const resOrder = await orderService.getOrderByOrderId(orderId);
-            return resOrder.result;
+            const response = await orderService.getOrderByOrderId(orderId);
+            return response.result;
         };
 
         const pollOrder = async () => {
@@ -37,11 +53,10 @@ export default function VnpayReturn() {
                 if (!isMounted) return;
                 setOrder(orderData);
 
-                if (orderData.status === "PAYING") {
+                if (orderData?.status === "PAYING") {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
-            } catch (error) {
-                console.log("Lỗi kiểm tra thanh toán: ", error);
+            } catch {
                 if (isMounted) {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
@@ -51,20 +66,25 @@ export default function VnpayReturn() {
         const syncReturnThenPoll = async () => {
             try {
                 await checkoutService.handleReturn(location.search);
-            } catch (error) {
-                console.log("Không gọi được return callback backend: ", error);
+            } catch {
+                // Fallback to polling order status.
             }
 
             await pollOrder();
         };
 
-        syncReturnThenPoll();
+        void syncReturnThenPoll();
 
         return () => {
             isMounted = false;
             if (timeoutId) clearTimeout(timeoutId);
         };
     }, [location.search, orderId]);
+
+    useEffect(() => {
+        if (!order) return;
+        sessionStorage.removeItem("ORDER_CHECKOUT_CONTEXT");
+    }, [order]);
 
     const orderParams = useMemo(() => {
         if (!order) return [];
@@ -80,7 +100,7 @@ export default function VnpayReturn() {
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="rounded-2xl bg-white px-8 py-6 shadow-lg border border-gray-200">
                     <p className="text-lg font-medium text-gray-700 animate-pulse">
-                        Đang tải thông tin đơn hàng...
+                        Dang tai thong tin don hang...
                     </p>
                 </div>
             </div>
@@ -94,9 +114,9 @@ export default function VnpayReturn() {
             <div className="mx-auto max-w-4xl">
                 <div className="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200">
                     <div className="bg-slate-900 px-8 py-6 text-white">
-                        <h1 className="text-2xl font-bold">Kết quả thanh toán VNPAY</h1>
+                        <h1 className="text-2xl font-bold">Ket qua thanh toan VNPAY</h1>
                         <p className="mt-2 text-sm text-slate-300">
-                            Thông tin chi tiết đơn hàng sau khi thanh toán
+                            Thong tin chi tiet don hang sau khi thanh toan
                         </p>
                     </div>
 
@@ -109,8 +129,8 @@ export default function VnpayReturn() {
                             }`}
                         >
                             {isPaid
-                                ? "Đơn hàng đã được thanh toán thành công."
-                                : "Giao dịch không thành công hoặc đã hết hạn."}
+                                ? "Don hang da duoc thanh toan thanh cong."
+                                : "Giao dich that bai hoac da het han."}
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-gray-200">
@@ -138,15 +158,24 @@ export default function VnpayReturn() {
                                 to="/"
                                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                             >
-                                Quay lại trang chủ
+                                Ve trang chu
                             </Link>
 
                             <Link
                                 to="/phim-dang-chieu"
                                 className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                             >
-                                Tạo giao dịch mới
+                                Tao giao dich moi
                             </Link>
+
+                            {isAdminCheckout && (
+                                <Link
+                                    to="/admin/orders"
+                                    className="inline-flex items-center justify-center rounded-xl border border-[var(--glx-orange)] bg-white px-5 py-3 text-sm font-semibold text-[var(--glx-orange)] transition hover:bg-[var(--glx-orange)] hover:text-white"
+                                >
+                                    Ve quan ly don hang
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

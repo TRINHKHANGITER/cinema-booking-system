@@ -106,5 +106,32 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/auth/**")
                 .build();
     }
+
+
+    @Bean
+    public GroupedOpenApi orderGroup() {
+        return GroupedOpenApi.builder()
+                .group("order")
+                .pathsToMatch("/order/**")
+                .build();
+    }
+
+    
+    @Bean
+    public GroupedOpenApi paymentGroup() {
+        return GroupedOpenApi.builder()
+                .group("payment")
+                .pathsToMatch("/payment/**")
+                .build();
+    }
+
+    
+    @Bean
+    public GroupedOpenApi checkoutVnpayGroup() {
+        return GroupedOpenApi.builder()
+                .group("checkout-vnpay")
+                .pathsToMatch("/checkout/vnpay/**")
+                .build();
+    }
 }
 

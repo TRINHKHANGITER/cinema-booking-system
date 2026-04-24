@@ -22,6 +22,7 @@ const adminNavItems: AdminNavItem[] = [
     { path: "/admin/combos", label: "Quản lý combo" },
     { path: "/admin/movies", label: "Quản lý phim" },
     { path: "/admin/showtimes", label: "Quản lý suất chiếu" },
+    { path: "/admin/orders", label: "Quản lý đơn hàng" },
 ];
 
 const resolveCurrentSection = (pathname: string) => {
@@ -150,6 +151,5 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-
 
 
