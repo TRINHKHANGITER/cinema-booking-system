@@ -112,7 +112,12 @@ public enum ErrorCode {
     PRICE_TICKET_HAS_ACTIVE_TICKETS("PRICE_TICKET_HAS_ACTIVE_TICKETS", HttpStatus.BAD_REQUEST, "Không thể xóa giá vé vì còn vé đang hoạt động sử dụng"),
 
 
+    SHOWTIME_NOT_FOUND("SHOWTIME_NOT_FOUND", HttpStatus.NOT_FOUND, "Không tìm thấy suất chiếu"),
     SHOWTIME_ALREADY_EXISTS("SHOWTIME_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Suất chiếu đã tồn tại cho phim, phòng và thời gian bắt đầu đã cho"),
+    SHOWTIME_STATUS_BLANK("SHOWTIME_STATUS_BLANK", HttpStatus.BAD_REQUEST, "Trạng thái suất chiếu là bắt buộc"),
+    SHOWTIME_BEFORE_MOVIE_RELEASE_DATE("SHOWTIME_BEFORE_MOVIE_RELEASE_DATE", HttpStatus.BAD_REQUEST, "Suất chiếu phải lớn hơn hoặc bằng ngày khởi chiếu của phim"),
+    SHOWTIME_BEFORE_CURRENT_TIME("SHOWTIME_BEFORE_CURRENT_TIME", HttpStatus.BAD_REQUEST, "Suất chiếu phải lớn hơn hoặc bằng ngày giờ hiện tại"),
+    SHOWTIME_HAS_ACTIVE_TICKETS("SHOWTIME_HAS_ACTIVE_TICKETS", HttpStatus.BAD_REQUEST, "Không thể xóa suất chiếu vì còn vé đang hoạt động sử dụng suất chiếu này"),
     START_TIME_BLANK("START_TIME_BLANK", HttpStatus.BAD_REQUEST, "Thời gian bắt đầu là bắt buộc"),
     END_TIME_BLANK("END_TIME_BLANK", HttpStatus.BAD_REQUEST, "Thời gian kết thúc là bắt buộc"),
     INVALID_SHOWTIME_RANGE("INVALID_SHOWTIME_RANGE", HttpStatus.BAD_REQUEST, "endTime phải lớn hơn startTime"),

@@ -1,4 +1,6 @@
+import { isAxiosError } from "axios";
 import type { SelectedCombo } from "../types/combo";
+import type { ApiResponse } from "../types/api";
 import type { Seat } from "../types/seat";
 import type { Showtime } from "../types/showtime";
 
@@ -88,6 +90,23 @@ export const resolveMovieLandscapeImage = (value?: string | null) => {
         MOVIE_IMAGE_LANDSCAPE_BASE_URL,
         DEFAULT_MOVIE_LANDSCAPE_FALLBACK
     );
+};
+
+export const resolveApiErrorMessage = (error: unknown, fallback: string) => {
+    if (isAxiosError(error)) {
+        const payload = error.response?.data as Partial<ApiResponse<unknown>> | undefined;
+        return (
+            (typeof payload?.message === "string" && payload.message.trim()) ||
+            error.message ||
+            fallback
+        );
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+        return error.message;
+    }
+
+    return fallback;
 };
 
 export const seatUnitPrice = (seat: Seat): number => {

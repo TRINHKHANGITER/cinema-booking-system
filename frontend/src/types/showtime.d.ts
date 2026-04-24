@@ -19,17 +19,21 @@ export type ShowTimeEntity = {
 };
 
 export type ShowTimeCreationResquest = {
+    releaseDate: string;
     startTime: string;
     endTime: string;
     roomId: number;
     movieId: number;
+    status: ShowTimeStatus;
 };
 
 export type ShowTimeUpdateResquest = {
+    releaseDate?: string;
     startTime?: string;
     endTime?: string;
     roomId?: number;
     movieId?: number;
+    status?: ShowTimeStatus;
 };
 
 export type ShowTimeResponse = ShowTimeEntity;

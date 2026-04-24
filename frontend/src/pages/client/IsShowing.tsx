@@ -5,6 +5,7 @@ import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { fetchProvincesThunk } from "../../stores/slices/provinceSlice";
 import type { Movie } from "../../types/product";
+import type { ShowTimeResponse } from "../../types/showtime";
 
 const PAGE_SIZE = 2;
 
@@ -14,6 +15,21 @@ const getTodayAsLocalDate = () => {
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
+};
+
+const extractMoviesFromShowtimes = (items: ShowTimeResponse[]): Movie[] => {
+    const movieById = new Map<number, Movie>();
+
+    items.forEach((showtime) => {
+        const movie = showtime.movie;
+        if (!movie) return;
+
+        if (!movieById.has(movie.movieId)) {
+            movieById.set(movie.movieId, movie as Movie);
+        }
+    });
+
+    return Array.from(movieById.values());
 };
 
 const IsShowing = () => {
@@ -60,7 +76,7 @@ const IsShowing = () => {
                 }
 
                 const items = response.result?.items ?? [];
-                setMoviesFromShowtimes(items);
+                setMoviesFromShowtimes(extractMoviesFromShowtimes(items));
                 setTotalPages(response.result?.totalPages ?? 1);
             } catch {
                 if (!isMounted) return;

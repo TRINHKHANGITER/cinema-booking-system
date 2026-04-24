@@ -8,7 +8,22 @@ import type {
     RoomUpdateRequest,
 } from "../types/room";
 
+type GetRoomItemListParams = {
+    cinemaId?: number;
+    status?: RoomStatus;
+};
+
 export const roomService = {
+    getRoomItemList: async (params?: GetRoomItemListParams) => {
+        const res = await api.get<ApiResponse<ItemListDto<RoomResponse>>>("/room", {
+            params: {
+                cinemaId: params?.cinemaId,
+                status: params?.status,
+            },
+        });
+        return res.data;
+    },
+
     filterRooms: async (params: RoomFilterParams) => {
         const query = new URLSearchParams();
         if (params.provinceId) query.set("provinceId", String(params.provinceId));
@@ -43,4 +58,3 @@ export const roomService = {
         return res.data;
     },
 };
-

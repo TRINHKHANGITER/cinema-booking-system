@@ -4,6 +4,7 @@ import { showTimeService } from "../../services/showtimeService";
 import type { ApiResponse, PagingDto } from "../../types/api";
 import type {
     ShowTimeCreationRequest,
+    ShowTimeResponse,
     ShowtimeMovieResponse,
     ShowTimeSearchRequest,
     ShowTimeStatus,
@@ -47,9 +48,9 @@ export type ShowTimeState = {
     loading: boolean;
     code: string | null;
     message: string | null;
-    showtimes: ShowtimeMovieResponse[];
+    showtimes: Array<ShowTimeResponse | ShowtimeMovieResponse>;
     currentShowtime: ShowtimeMovieResponse | null;
-    paging: PagingDto<ShowtimeMovieResponse> | null;
+    paging: PagingDto<ShowTimeResponse | ShowtimeMovieResponse> | null;
     searchItems: ShowtimeSearchItem[];
     selectedDate: string;
 };
@@ -64,7 +65,7 @@ const initialState: ShowTimeState = {
 };
 
 export const fetchShowTimesByFiltersThunk = createAsyncThunk<
-    ApiResponse<PagingDto<ShowtimeMovieResponse>>,
+    ApiResponse<PagingDto<ShowTimeResponse>>,
     ShowTimeFilterParams | undefined,
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchByFilters", async (params, { rejectWithValue }) => {
@@ -124,7 +125,7 @@ export const searchShowTimesThunk = createAsyncThunk<
 });
 
 export const fetchShowTimesByMovieIdThunk = createAsyncThunk<
-    ApiResponse<PagingDto<ShowtimeMovieResponse>>,
+    ApiResponse<PagingDto<ShowTimeResponse>>,
     { movieId: number; status?: ShowTimeStatus; page?: number; size?: number },
     { rejectValue: ApiErrorPayload }
 >("showtime/fetchByMovie", async ({ movieId, status, page, size }, { rejectWithValue }) => {
@@ -203,7 +204,7 @@ const showtimeSlice = createSlice({
         builder
             .addCase(
                 fetchShowTimesByFiltersThunk.fulfilled,
-                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowTimeResponse>>>) => {
                     state.loading = false;
                     state.code = action.payload.code;
                     state.message = action.payload.message ?? null;
@@ -232,7 +233,7 @@ const showtimeSlice = createSlice({
             )
             .addCase(
                 fetchShowTimesByMovieIdThunk.fulfilled,
-                (state, action: PayloadAction<ApiResponse<PagingDto<ShowtimeMovieResponse>>>) => {
+                (state, action: PayloadAction<ApiResponse<PagingDto<ShowTimeResponse>>>) => {
                     state.loading = false;
                     state.code = action.payload.code;
                     state.message = action.payload.message ?? null;

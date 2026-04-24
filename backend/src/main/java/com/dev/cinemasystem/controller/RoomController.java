@@ -27,6 +27,18 @@ import java.util.List;
 public class RoomController {
     RoomService roomService;
 
+    @GetMapping
+    public ApiResponse<ItemListDto<RoomResponse>> getRoomsAsItemList(
+            @RequestParam(required = false) Integer cinemaId,
+            @RequestParam(required = false) RoomStatus status
+    ) {
+        return ApiResponse.<ItemListDto<RoomResponse>>builder()
+                .message("Rooms retrieved successfully")
+                .result(ItemListDto.<RoomResponse>builder()
+                        .items(roomService.getRooms(cinemaId, status))
+                        .build())
+                .build();
+    }
 
     @GetMapping("/{roomId}")
     public ApiResponse<RoomResponse> getRoomById(@PathVariable Integer roomId    ) {

@@ -3,6 +3,7 @@ package com.dev.cinemasystem.controller;
 
 import com.dev.cinemasystem.service.ShowTimeService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.showTimeDTO.*;
 import com.dev.cinemasystem.enums.SortDirection;
@@ -16,6 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping({"/show-time", "/showtime"})
@@ -26,12 +28,13 @@ public class ShowTimeController {
     ShowTimeService showTimeService;
 
     @GetMapping
-    public ApiResponse<PagingDto<ShowtimeMovieResponse>> getShowTimesByFilters(
+    public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimesByFilters(
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
             @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) String movieName,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer movieId,
             @RequestParam(required = false) ShowTimeStatus status,
@@ -40,7 +43,7 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "showtime") String sortBy,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return ApiResponse.<PagingDto<ShowtimeMovieResponse>>builder()
+        return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
                 .message("ShowTimes retrieved successfully")
                 .result(showTimeService.getShowTimesByFilters(
                         provinceId,
@@ -48,7 +51,7 @@ public class ShowTimeController {
                         movieTypeId,
                         releaseDate,
                         releaseDateCondition,
-                        name,
+                        movieName != null && !movieName.isBlank() ? movieName : name,
                         movieId,
                         status,
                         page,
@@ -56,6 +59,15 @@ public class ShowTimeController {
                         sortBy,
                         direction
                 ))
+                .build();
+    }
+
+    @GetMapping("/statuses")
+    public ApiResponse<ItemListDto<String>> getAllShowTimeStatuses() {
+        List<String> statuses = showTimeService.getAllShowTimeStatuses();
+        return ApiResponse.<ItemListDto<String>>builder()
+                .message("ShowTime statuses retrieved successfully")
+                .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
 

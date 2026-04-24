@@ -245,6 +245,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     );
 
     List<ShowTime> findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(Integer movieId);
+    List<ShowTime> findAllByRoom_RoomIdAndStatusNot(Integer roomId, ShowTimeStatus status);
     boolean existsByMovie_MovieIdAndStatusIn(Integer movieId, Collection<ShowTimeStatus> statuses);
 
 

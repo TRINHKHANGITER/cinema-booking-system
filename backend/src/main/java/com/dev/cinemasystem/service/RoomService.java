@@ -56,6 +56,22 @@ public class RoomService {
         return roomMapper.toRoomResponse(room);
     }
 
+    public List<RoomResponse> getRooms(Integer cinemaId, RoomStatus status) {
+        List<Room> rooms;
+
+        if (cinemaId != null && status != null) {
+            rooms = roomRepository.findAllByCinema_CinemaIdAndStatusOrderByRoomNameAsc(cinemaId, status);
+        } else if (cinemaId != null) {
+            rooms = roomRepository.findAllByCinema_CinemaIdOrderByRoomNameAsc(cinemaId);
+        } else if (status != null) {
+            rooms = roomRepository.findAllByStatusOrderByRoomNameAsc(status);
+        } else {
+            rooms = roomRepository.findAllByOrderByRoomNameAsc();
+        }
+
+        return roomMapper.toRoomResponseList(rooms);
+    }
+
     public RoomResponse createRoom(RoomCreationResquest request) {
         if (request == null) {
             log.error("Room creation request is null");
