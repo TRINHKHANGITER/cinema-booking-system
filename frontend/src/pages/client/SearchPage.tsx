@@ -7,6 +7,12 @@ import type { Province } from "../../types/province";
 import type { FullShowtimeMovieResponse } from "../../types/showtime";
 import { formatTime } from "../../utils/utils";
 
+type SearchFilters = {
+    keyword: string;
+    provinceId: string;
+    day: string;
+};
+
 const getTodayAsLocalDate = () => {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -45,6 +51,15 @@ const SearchPage = () => {
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [results, setResults] = useState<FullShowtimeMovieResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({
+        keyword: "",
+        provinceId: "",
+        day: "",
+    });
 
     const today = useMemo(() => getTodayAsLocalDate(), []);
 
@@ -85,11 +100,11 @@ const SearchPage = () => {
     }, []);
 
     const fetchResults = async () => {
-        const trimmedKeyword = keyword.trim();
-        const hasProvince = Boolean(provinceId);
-        const hasDay = Boolean(day);
+        const trimmedKeyword = appliedFilters.keyword.trim();
+        const hasProvince = Boolean(appliedFilters.provinceId);
+        const hasDay = Boolean(appliedFilters.day);
 
-        const effectiveDay = hasDay ? day : today;
+        const effectiveDay = hasDay ? appliedFilters.day : today;
         const releaseDateCondition = hasDay ? "EQ" : "GTE";
 
         setIsLoading(true);
@@ -97,24 +112,30 @@ const SearchPage = () => {
         try {
             const response = await showTimeService.getGroupedShowTimesByFilters({
                 movieName: trimmedKeyword || undefined,
-                provinceId: hasProvince ? Number(provinceId) : undefined,
+                provinceId: hasProvince ? Number(appliedFilters.provinceId) : undefined,
                 releaseDate: effectiveDay,
                 releaseDateCondition,
                 status: "SELLING",
-                page: 1,
-                size: 200,
+                page: currentPage,
+                size: pageSize,
                 sortBy: "showtime",
                 direction: "ASC",
             });
 
             if (response.code !== "SUCCESS") {
                 setResults([]);
+                setTotalPages(1);
+                setTotalItems(0);
                 return;
             }
 
             setResults(response.result?.items ?? []);
+            setTotalPages(Math.max(1, response.result?.totalPages ?? 1));
+            setTotalItems(response.result?.totalItems ?? 0);
         } catch {
             setResults([]);
+            setTotalPages(1);
+            setTotalItems(0);
         } finally {
             setIsLoading(false);
         }
@@ -122,9 +143,7 @@ const SearchPage = () => {
 
     useEffect(() => {
         void fetchResults();
-        // Initial load only.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [appliedFilters, currentPage, pageSize]);
 
     const sortedResults = useMemo(() => {
         return [...results].sort((first, second) => {
@@ -147,24 +166,50 @@ const SearchPage = () => {
     }, [results]);
 
     const filterMessage = useMemo(() => {
-        if (!day && provinceId) {
+        if (!appliedFilters.day && appliedFilters.provinceId) {
             return `Dang ap dung: khu vuc da chon, ngay >= ${today}`;
         }
 
-        if (day && !provinceId) {
-            return `Dang ap dung: ngay ${day}, tat ca khu vuc`;
+        if (appliedFilters.day && !appliedFilters.provinceId) {
+            return `Dang ap dung: ngay ${appliedFilters.day}, tat ca khu vuc`;
         }
 
-        if (day && provinceId) {
+        if (appliedFilters.day && appliedFilters.provinceId) {
             return "Dang ap dung: khu vuc + ngay cu the";
         }
 
         return `Dang ap dung: tat ca khu vuc, ngay >= ${today}`;
-    }, [day, provinceId, today]);
+    }, [appliedFilters, today]);
+
+    const visiblePageButtons = useMemo(() => {
+        const maxButtons = 5;
+        if (totalPages <= maxButtons) {
+            return Array.from({ length: totalPages }, (_, index) => index + 1);
+        }
+
+        let start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, start + maxButtons - 1);
+
+        if (end - start + 1 < maxButtons) {
+            start = Math.max(1, end - maxButtons + 1);
+        }
+
+        const pages: number[] = [];
+        for (let page = start; page <= end; page += 1) {
+            pages.push(page);
+        }
+
+        return pages;
+    }, [currentPage, totalPages]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        void fetchResults();
+        setCurrentPage(1);
+        setAppliedFilters({
+            keyword,
+            provinceId,
+            day,
+        });
     };
 
     return (
@@ -241,6 +286,27 @@ const SearchPage = () => {
                     </form>
 
                     <p className="text-sm text-gray-500 mb-4">{filterMessage}</p>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs text-gray-500">Tong: {totalItems}</span>
+                        <label className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>Moi trang</span>
+                            <select
+                                value={pageSize}
+                                onChange={(event) => {
+                                    const nextSize = Number(event.target.value);
+                                    setPageSize(nextSize);
+                                    setCurrentPage(1);
+                                }}
+                                className="h-8 border border-[#D0D0D0] rounded px-2 outline-none focus:border-[#034EA2]"
+                            >
+                                {[1, 3, 5, 10, 20].map((size) => (
+                                    <option key={size} value={size}>
+                                        {size}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
 
                     <div className="space-y-4">
                         {isLoading ? (
@@ -266,6 +332,42 @@ const SearchPage = () => {
                                 })}
                             </div>
                         )}
+                    </div>
+
+                    <div className="mb-10 flex flex-wrap items-center justify-center gap-2">
+                        <button
+                            type="button"
+                            className="px-3 py-1.5 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1 || isLoading}
+                        >
+                            Truoc
+                        </button>
+
+                        {visiblePageButtons.map((page) => (
+                            <button
+                                key={page}
+                                type="button"
+                                className={`px-3 py-1.5 border rounded text-sm ${
+                                    currentPage === page
+                                        ? "bg-[#034ea2] text-white border-[#034ea2]"
+                                        : "bg-white text-[#333333]"
+                                }`}
+                                onClick={() => setCurrentPage(page)}
+                                disabled={isLoading}
+                            >
+                                {page}
+                            </button>
+                        ))}
+
+                        <button
+                            type="button"
+                            className="px-3 py-1.5 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages || isLoading}
+                        >
+                            Sau
+                        </button>
                     </div>
                 </div>
 
