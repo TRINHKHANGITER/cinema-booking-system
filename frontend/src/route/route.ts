@@ -1,14 +1,17 @@
 import Booking from "../pages/client/Booking";
-import IsShowing from "../pages/client/IsShowing";
 import Home from "../pages/client/Home";
-import BookTicket from "../pages/client/BookTicket";
+import IsShowing from "../pages/client/IsShowing";
 import VnpayReturn from "../pages/client/VnpayReturn";
+import ShowtimesPageRoute from "./ShowtimesPageRoute";
 
 const routePath = {
     login: "/login",
     home: "/",
     phim_dang_chieu: "/phim-dang-chieu",
     xuat_chieu: "/xuat-chieu/:slug",
+    xuat_chieu_province: "/xuat-chieu/:slug/province/:province",
+    xuat_chieu_day: "/xuat-chieu/:slug/day/:day",
+    xuat_chieu_province_day: "/xuat-chieu/:slug/province/:province/day/:day",
     dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
     checkout_vnpay_return: "/checkout/vnpay/return",
 };
@@ -16,7 +19,7 @@ const routePath = {
 const cusPublicRoutes = [
     {
         path: routePath.home,
-        label: "Trang chủ",
+        label: "Trang chu",
         isContent: false,
         type: "CUSTOMER",
         component: Home,
@@ -25,7 +28,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.phim_dang_chieu,
-        label: "Phim đang chiếu",
+        label: "Phim dang chieu",
         isContent: false,
         type: "CUSTOMER",
         component: IsShowing,
@@ -34,16 +37,43 @@ const cusPublicRoutes = [
 
     {
         path: routePath.xuat_chieu,
-        label: "Xuất chiếu",
+        label: "Xuat chieu",
         isContent: false,
         type: "CUSTOMER",
-        component: BookTicket,
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_province,
+        label: "Xuat chieu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_day,
+        label: "Xuat chieu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_province_day,
+        label: "Xuat chieu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
         isPrivate: false,
     },
 
     {
         path: routePath.dat_ve,
-        label: "Đặt vé",
+        label: "Dat ve",
         isContent: false,
         type: "CUSTOMER",
         component: Booking,
