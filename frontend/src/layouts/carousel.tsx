@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { provinceService } from "../services/province.service";
 import { showTimeService } from "../services/showtimeService";
 import type { Province } from "../types/province";
-import type { ShowTimeResponse } from "../types/showtime";
+import type { FullShowtimeMovieResponse, ShowTimeResponse } from "../types/showtime";
 import { formatTime } from "../utils/utils";
 
 type OpenDropdown = "" | "province" | "movie" | "cinema" | "date" | "time";
@@ -35,12 +35,12 @@ const formatDateLabel = (value: string) => {
     return `${day}/${month}/${year}`;
 };
 
-const getMovieOptions = (showtimes: ShowTimeResponse[]): MovieOption[] => {
+const getMovieOptions = (groupedShowtimes: FullShowtimeMovieResponse[]): MovieOption[] => {
     const movieMap = new Map<number, MovieOption>();
 
-    showtimes.forEach((showtime) => {
-        const movie = showtime.movie;
-        if (!movie || movieMap.has(movie.movieId)) return;
+    groupedShowtimes.forEach((groupedShowtime) => {
+        const movie = groupedShowtime.movie;
+        if (movieMap.has(movie.movieId)) return;
 
         const normalizedSlug =
             typeof movie.slug === "string" && movie.slug.trim().length > 0
@@ -242,7 +242,7 @@ const HeroSlider = () => {
             setIsMovieLoading(true);
 
             try {
-                const response = await showTimeService.getShowTimesByFilters({
+                const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: selectedProvinceId,
                     status: "SELLING",
                     page: 1,

@@ -38,11 +38,13 @@ export type ShowTimeUpdateResquest = {
 
 export type ShowTimeResponse = ShowTimeEntity;
 
-export type ShowtimeMovieResponse = MovieResponse & {
+export type FullShowtimeMovieResponse = {
+    movie: MovieResponse;
     showTimes: ShowTimeResponse[];
 };
 
-export type ShowtimeMovieMeResponse = ShowtimeMovieResponse;
+export type ShowtimeMovieResponse = FullShowtimeMovieResponse;
+export type ShowtimeMovieMeResponse = FullShowtimeMovieResponse;
 
 export type ShowTimeSearchDto = {
     showTimeId: number;
@@ -83,6 +85,6 @@ export type Province = ProvinceResponse;
 export type Cinema = CinemaResponse;
 export type RoomType = RoomTypeResponse;
 export type Room = RoomResponse;
-export type ShowtimeDetail = ShowtimeMovieResponse;
+export type ShowtimeDetail = FullShowtimeMovieResponse;
 export type ShowtimeSearchItem = ShowTimeSearchDto;
 export type Showtime = ShowtimeSearchItem;

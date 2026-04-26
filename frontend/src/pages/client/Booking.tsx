@@ -38,6 +38,7 @@ const Booking = () => {
 
     const user = useAppSelector((store) => store.auth.user);
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
+    const selectedMovie = showDetail?.movie;
 
     const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
     const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
@@ -402,8 +403,8 @@ const Booking = () => {
                             <div className="bg-white p-4 grid grid-cols-3 xl:gap-2 items-center">
                                 <div className="row-span-2 md:row-span-1 xl:row-span-2 block md:hidden xl:block">
                                     <img
-                                        src={resolveMoviePortraitImage(showDetail?.imagePortrait)}
-                                        alt={showDetail?.movieName}
+                                        src={resolveMoviePortraitImage(selectedMovie?.imagePortrait)}
+                                        alt={selectedMovie?.movieName}
                                         width={100}
                                         height={150}
                                         className="xl:w-full xl:h-full w-[78px] h-[110px] rounded object-cover"
@@ -413,14 +414,14 @@ const Booking = () => {
 
                                 <div className="flex-1 col-span-2 md:col-span-1 xl:col-span-2">
                                     <h3 className="text-sm xl:text-base font-bold xl:mb-2">
-                                        {showDetail?.movieName}
+                                        {selectedMovie?.movieName}
                                     </h3>
                                     <p className="text-sm inline-block">
                                         {selectedShowTime?.room?.roomType?.roomTypeName}
                                     </p>
-                                    {(showDetail?.minimumAge ?? 0) > 0 && (
+                                    {(selectedMovie?.minimumAge ?? 0) > 0 && (
                                         <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold ml-2">
-                                            T{showDetail?.minimumAge}
+                                            T{selectedMovie?.minimumAge}
                                         </span>
                                     )}
                                 </div>

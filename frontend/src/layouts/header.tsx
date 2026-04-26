@@ -336,13 +336,13 @@ scale-100 blur-0 grayscale-0)'
 
                     <div className="hidden xl:flex xl:grow xl:justify-end items-center relative transition-all duration-300">
                         <div className="search mr-4">
-                            <a
-                                href=""
+                            <Link
+                                to="/search"
                                 className="font-light cursor-pointer text-sm text-[#777]"
                                 title="Tìm kiếm"
                             >
                                 <Search />
-                            </a>
+                            </Link>
                         </div>
                         {isSignedIn ? (
                             <div className="md:px-2 py-4 relative items-center text-left md:cursor-pointer group transition-all duration-500 ease-in-out md:flex hidden">
@@ -633,21 +633,27 @@ scale-100 blur-0 grayscale-0)'
                 {/* inout tìm kiếm */}
                 <div className="mt-4">
                     <div className="relative">
-                        <svg
-                            aria-hidden="true"
-                            focusable="false"
-                            data-prefix="fas"
-                            data-icon="magnifying-glass"
-                            className="w-4 h-4 svg-inline--fa fa-magnifying-glass absolute top-[30%] left-[5%] text-[#333333]"
-                            role="img"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 512 512"
+                        <Link
+                            to="/search"
+                            className="absolute top-[30%] left-[5%] text-[#333333]"
+                            onClick={() => setOpen(false)}
                         >
-                            <path
-                                fill="currentColor"
-                                d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"
-                            />
-                        </svg>
+                            <svg
+                                aria-hidden="true"
+                                focusable="false"
+                                data-prefix="fas"
+                                data-icon="magnifying-glass"
+                                className="w-4 h-4 svg-inline--fa fa-magnifying-glass"
+                                role="img"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 512 512"
+                            >
+                                <path
+                                    fill="currentColor"
+                                    d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"
+                                />
+                            </svg>
+                        </Link>
                         <input
                             type="text"
                             placeholder="Tìm kiếm"
@@ -931,3 +937,5 @@ scale-100 blur-0 grayscale-0)'
 };
 
 export default Header;
+
+

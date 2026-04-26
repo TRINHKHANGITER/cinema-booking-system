@@ -1,12 +1,14 @@
 import Booking from "../pages/client/Booking";
 import Home from "../pages/client/Home";
 import IsShowing from "../pages/client/IsShowing";
+import SearchPage from "../pages/client/SearchPage";
 import VnpayReturn from "../pages/client/VnpayReturn";
 import ShowtimesPageRoute from "./ShowtimesPageRoute";
 
 const routePath = {
     login: "/login",
     home: "/",
+    search: "/search",
     phim_dang_chieu: "/phim-dang-chieu",
     xuat_chieu: "/xuat-chieu/:slug",
     xuat_chieu_province: "/xuat-chieu/:slug/province/:province",
@@ -23,6 +25,15 @@ const cusPublicRoutes = [
         isContent: false,
         type: "CUSTOMER",
         component: Home,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.search,
+        label: "Search",
+        isContent: false,
+        type: "CUSTOMER",
+        component: SearchPage,
         isPrivate: false,
     },
 

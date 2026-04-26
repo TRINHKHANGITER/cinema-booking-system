@@ -7,6 +7,7 @@ import { bookingService } from "../../services/booking.service";
 import { checkoutService } from "../../services/checkout.service";
 import { cinemaService } from "../../services/cinema.service";
 import { comboService } from "../../services/combo.service";
+import { movieService } from "../../services/movie.service";
 import { orderService } from "../../services/order.service";
 import { provinceService } from "../../services/province.service";
 import { showTimeService } from "../../services/showtimeService";
@@ -18,6 +19,7 @@ import type { ProvinceResponse } from "../../types/province";
 import type { Seat } from "../../types/seat";
 import type { ShowTimeResponse } from "../../types/showtime";
 import type { UserResponse } from "../../types/user";
+import type { Movie } from "../../types/movie";
 import {
     calculateTotalPrice,
     formatTime,
@@ -445,7 +447,39 @@ const OrderManagement = () => {
                 return formatTime(showtime.startTime).startsWith(showtimeTime);
             });
 
-            setShowtimeResults(mappedItems);
+            const uniqueMovieIds = Array.from(
+                new Set(
+                    mappedItems
+                        .map((item) => item.movieId)
+                        .filter((movieId): movieId is number => Number.isInteger(movieId))
+                )
+            );
+
+            const movieById = new Map<number, Movie>();
+            if (uniqueMovieIds.length > 0) {
+                const movieResponses = await Promise.all(
+                    uniqueMovieIds.map(async (movieId) => {
+                        try {
+                            return await movieService.getMovieByIdAndStatus(movieId);
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                movieResponses.forEach((movieResponse, index) => {
+                    if (movieResponse?.code === "SUCCESS" && movieResponse.result) {
+                        movieById.set(uniqueMovieIds[index], movieResponse.result);
+                    }
+                });
+            }
+
+            const hydratedShowtimes = mappedItems.map((item) => ({
+                ...item,
+                movie: movieById.get(item.movieId) ?? item.movie,
+            }));
+
+            setShowtimeResults(hydratedShowtimes);
             setShowtimeTotalItems(result.totalItems ?? 0);
             setShowtimeTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {

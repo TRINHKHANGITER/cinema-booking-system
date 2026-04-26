@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import ArrowRight from "../../components/icon/arrowRight";
 import Calendar from "../../components/icon/calendar";
@@ -12,6 +12,7 @@ import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { fetchCinemasThunk } from "../../stores/slices/cinemaSlice";
 import { fetchMovieByIdThunk, fetchMoviesThunk } from "../../stores/slices/movieSlice";
+import type { Movie } from "../../types/movie";
 import type { Province } from "../../types/province";
 import type { ShowTimeResponse } from "../../types/showtime";
 import {
@@ -49,8 +50,14 @@ const isValidDayParam = (value?: string) => {
     return /^\d{4}-\d{2}-\d{2}$/.test(value);
 };
 
+type ShowtimesLocationState = {
+    movieId?: number | string;
+    movie?: Movie;
+};
+
 const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useAppDispatch();
 
     const user = useAppSelector((state) => state.auth.user);
@@ -62,6 +69,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
     const [showtimes, setShowtimes] = useState<ShowTimeResponse[]>([]);
     const [isShowtimeLoading, setIsShowtimeLoading] = useState(false);
     const [openSignIn, setOpenSignIn] = useState(false);
+    const [fallbackRightMovies, setFallbackRightMovies] = useState<Movie[]>([]);
 
     const [selectedProvinceId, setSelectedProvinceId] =
         useState<ProvinceFilterValue>("all");
@@ -94,11 +102,54 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         return /^\d+$/.test(slug) ? Number(slug) : null;
     }, [slug]);
 
-    const selectedMovie = useMemo(() => {
+    const locationMovieId = useMemo(() => {
+        const state = location.state as ShowtimesLocationState | null;
+        if (!state) return null;
+
+        if (typeof state.movieId === "number") return state.movieId;
+        if (typeof state.movieId === "string" && /^\d+$/.test(state.movieId)) {
+            return Number(state.movieId);
+        }
+
+        if (state.movie?.movieId) return state.movie.movieId;
+        return null;
+    }, [location.state]);
+
+    const locationMovie = useMemo(() => {
+        const state = location.state as ShowtimesLocationState | null;
+        return state?.movie ?? null;
+    }, [location.state]);
+
+    const [persistedMovieId, setPersistedMovieId] = useState<number | null>(
+        numericMovieId ?? locationMovieId ?? locationMovie?.movieId ?? null
+    );
+    const [persistedMovie, setPersistedMovie] = useState<Movie | null>(locationMovie);
+
+    useEffect(() => {
         if (numericMovieId) {
+            setPersistedMovieId(numericMovieId);
+            return;
+        }
+
+        if (locationMovieId) {
+            setPersistedMovieId(locationMovieId);
+        }
+    }, [locationMovieId, numericMovieId]);
+
+    useEffect(() => {
+        if (!locationMovie?.movieId) return;
+        setPersistedMovie(locationMovie);
+    }, [locationMovie]);
+
+    const preferredMovieId = numericMovieId ?? locationMovieId ?? persistedMovieId ?? null;
+
+    const selectedMovie = useMemo(() => {
+        if (preferredMovieId) {
             return (
-                currentMovie ??
-                movies.find((movie) => movie.movieId === numericMovieId) ??
+                (currentMovie?.movieId === preferredMovieId ? currentMovie : null) ??
+                movies.find((movie) => movie.movieId === preferredMovieId) ??
+                (persistedMovie?.movieId === preferredMovieId ? persistedMovie : null) ??
+                (locationMovie?.movieId === preferredMovieId ? locationMovie : null) ??
                 null
             );
         }
@@ -106,17 +157,29 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         return (
             movies.find(
                 (movie) => movie.slug === slug || String(movie.movieId) === slug
-            ) ?? null
+            ) ??
+            persistedMovie ??
+            (locationMovie && locationMovie.slug === slug ? locationMovie : null) ??
+            null
         );
-    }, [currentMovie, movies, numericMovieId, slug]);
+    }, [currentMovie, locationMovie, movies, persistedMovie, preferredMovieId, slug]);
+
+    useEffect(() => {
+        if (!selectedMovie?.movieId) return;
+        setPersistedMovie(selectedMovie);
+        setPersistedMovieId(selectedMovie.movieId);
+    }, [selectedMovie]);
 
     const bookingSlug = useMemo(() => {
         const normalizedMovieSlug = selectedMovie?.slug?.trim();
         if (normalizedMovieSlug) return normalizedMovieSlug;
+        const persistedMovieSlug = persistedMovie?.slug?.trim();
+        if (persistedMovieSlug) return persistedMovieSlug;
         if (slug.trim()) return slug.trim();
+        if (preferredMovieId) return String(preferredMovieId);
         if (selectedMovie?.movieId) return String(selectedMovie.movieId);
         return "";
-    }, [selectedMovie, slug]);
+    }, [persistedMovie, preferredMovieId, selectedMovie, slug]);
 
     useEffect(() => {
         dispatch(fetchCinemasThunk({ isShowing: true, status: "ACTIVE" }));
@@ -139,21 +202,21 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
     }, [dispatch, selectedCinemaId]);
 
     useEffect(() => {
-        if (!numericMovieId) return;
-        dispatch(fetchMovieByIdThunk({ movieId: numericMovieId, status: "ACTIVE" }));
-    }, [dispatch, numericMovieId]);
+        if (!preferredMovieId) return;
+        dispatch(fetchMovieByIdThunk({ movieId: preferredMovieId, status: "ACTIVE" }));
+    }, [dispatch, preferredMovieId]);
 
     useEffect(() => {
         let isUnmounted = false;
 
         const resolveMovieBySlug = async () => {
-            if (numericMovieId || selectedMovie || !slug.trim()) return;
+            if (preferredMovieId || selectedMovie || !slug.trim()) return;
 
             try {
-                const response = await showTimeService.getShowTimesByFilters({
+                const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: effectiveProvinceId,
-                    releaseDate: effectiveDay,
-                    releaseDateCondition: "EQ",
+                    releaseDate: today,
+                    releaseDateCondition: "GTE",
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -170,6 +233,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
 
                 if (!matchedMovie?.movieId) return;
 
+                setPersistedMovie(matchedMovie);
+                setPersistedMovieId(matchedMovie.movieId);
                 dispatch(
                     fetchMovieByIdThunk({
                         movieId: matchedMovie.movieId,
@@ -188,11 +253,11 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         };
     }, [
         dispatch,
-        effectiveDay,
         effectiveProvinceId,
-        numericMovieId,
+        preferredMovieId,
         selectedMovie,
         slug,
+        today,
     ]);
 
     useEffect(() => {
@@ -227,7 +292,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         let isUnmounted = false;
 
         const fetchShowtimes = async () => {
-            if (!selectedMovie?.movieId) {
+            const targetMovieId = selectedMovie?.movieId ?? preferredMovieId;
+            if (!targetMovieId) {
                 setShowtimes([]);
                 return;
             }
@@ -236,7 +302,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
 
             try {
                 const response = await showTimeService.getShowTimesByFilters({
-                    movieId: selectedMovie.movieId,
+                    movieId: targetMovieId,
                     provinceId: effectiveProvinceId,
                     releaseDate: effectiveDay,
                     releaseDateCondition: "EQ",
@@ -271,7 +337,69 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         return () => {
             isUnmounted = true;
         };
-    }, [effectiveDay, effectiveProvinceId, selectedMovie?.movieId]);
+    }, [effectiveDay, effectiveProvinceId, preferredMovieId, selectedMovie?.movieId]);
+
+    useEffect(() => {
+        if (movies.length > 0) {
+            setFallbackRightMovies([]);
+            return;
+        }
+
+        let isUnmounted = false;
+
+        const fetchFallbackRightMovies = async () => {
+            try {
+                const response = await showTimeService.getGroupedShowTimesByFilters({
+                    provinceId: effectiveProvinceId,
+                    releaseDate: today,
+                    releaseDateCondition: "GTE",
+                    status: "SELLING",
+                    page: 1,
+                    size: 12,
+                    sortBy: "releaseDate",
+                    direction: "ASC",
+                });
+
+                if (isUnmounted || response.code !== "SUCCESS") {
+                    setFallbackRightMovies([]);
+                    return;
+                }
+
+                const uniqueMovies = (response.result?.items ?? []).reduce<Movie[]>(
+                    (accumulator, item) => {
+                        if (!accumulator.some((movie) => movie.movieId === item.movie.movieId)) {
+                            accumulator.push(item.movie);
+                        }
+                        return accumulator;
+                    },
+                    []
+                );
+
+                setFallbackRightMovies(uniqueMovies);
+            } catch {
+                if (!isUnmounted) {
+                    setFallbackRightMovies([]);
+                }
+            }
+        };
+
+        void fetchFallbackRightMovies();
+
+        return () => {
+            isUnmounted = true;
+        };
+    }, [effectiveProvinceId, movies.length, today]);
+
+    const rightSideMovies = useMemo(() => {
+        const source = movies.length > 0 ? movies : fallbackRightMovies;
+        const merged = [...source];
+
+        if (selectedMovie && !merged.some((movie) => movie.movieId === selectedMovie.movieId)) {
+            merged.unshift(selectedMovie);
+        }
+
+        return merged.slice(0, 4);
+    }, [fallbackRightMovies, movies, selectedMovie]);
 
     const groupedShowtimes = useMemo<GroupedCinemaShowtimes[]>(() => {
         const groupedByCinema = new Map<string, GroupedCinemaShowtimes>();
@@ -318,19 +446,24 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         nextDay: string,
         useCustomDay: boolean
     ) => {
+        const normalizedSlug =
+            selectedMovie?.slug?.trim() ||
+            persistedMovie?.slug?.trim() ||
+            (preferredMovieId ? String(preferredMovieId) : slug);
+
         if (nextProvinceId === "all") {
             if (useCustomDay && nextDay !== today) {
-                return `/xuat-chieu/${slug}/day/${nextDay}`;
+                return `/xuat-chieu/${normalizedSlug}/day/${nextDay}`;
             }
 
-            return `/xuat-chieu/${slug}`;
+            return `/xuat-chieu/${normalizedSlug}`;
         }
 
         if (useCustomDay && nextDay !== today) {
-            return `/xuat-chieu/${slug}/province/${nextProvinceId}/day/${nextDay}`;
+            return `/xuat-chieu/${normalizedSlug}/province/${nextProvinceId}/day/${nextDay}`;
         }
 
-        return `/xuat-chieu/${slug}/province/${nextProvinceId}`;
+        return `/xuat-chieu/${normalizedSlug}/province/${nextProvinceId}`;
     };
 
     const handleProvinceChange = (rawProvinceId: string) => {
@@ -341,7 +474,12 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         setSelectedProvinceId(nextProvinceId);
 
         const targetPath = buildShowtimesPath(nextProvinceId, selectedDay, isCustomDay);
-        navigate(targetPath);
+        navigate(targetPath, {
+            state: {
+                movieId: preferredMovieId ?? selectedMovie?.movieId ?? persistedMovie?.movieId,
+                movie: selectedMovie ?? persistedMovie ?? locationMovie ?? undefined,
+            } satisfies ShowtimesLocationState,
+        });
     };
 
     const handleDayChange = (rawDay: string) => {
@@ -356,7 +494,12 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
             nextDay,
             nextIsCustomDay
         );
-        navigate(targetPath);
+        navigate(targetPath, {
+            state: {
+                movieId: preferredMovieId ?? selectedMovie?.movieId ?? persistedMovie?.movieId,
+                movie: selectedMovie ?? persistedMovie ?? locationMovie ?? undefined,
+            } satisfies ShowtimesLocationState,
+        });
     };
 
     const handleOpenTrailer = () => {
@@ -588,7 +731,6 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                                                                         }}
                                                                         to={`/dat-ve/${
                                                                             bookingSlug ||
-                                                                            show.movie?.slug ||
                                                                             show.movieId
                                                                         }/showtime/${
                                                                             show.showTimeId
@@ -618,8 +760,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                         </div>
                         <div className="movie__content">
                             <div className="flex flex-col gap-12 justify-between">
-                                {movies.slice(0, 4).map((movie, index) => (
-                                    <Card key={index} w={400} h={250} movie={movie} />
+                                {rightSideMovies.map((movie) => (
+                                    <Card key={movie.movieId} w={400} h={250} movie={movie} />
                                 ))}
                             </div>
                         </div>

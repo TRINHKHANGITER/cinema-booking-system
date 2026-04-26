@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Location from "../../components/icon/location";
-import CardHome from "../../components/ui/CardHome";
+import CardShowtime from "../../components/ui/CardShowtime";
 import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { fetchProvincesThunk } from "../../stores/slices/provinceSlice";
-import type { Movie } from "../../types/product";
-import type { ShowTimeResponse } from "../../types/showtime";
+import type { FullShowtimeMovieResponse } from "../../types/showtime";
 
-const PAGE_SIZE = 2;
+const PAGE_SIZE = 8;
 
 const getTodayAsLocalDate = () => {
     const now = new Date();
@@ -17,27 +16,13 @@ const getTodayAsLocalDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
-const extractMoviesFromShowtimes = (items: ShowTimeResponse[]): Movie[] => {
-    const movieById = new Map<number, Movie>();
-
-    items.forEach((showtime) => {
-        const movie = showtime.movie;
-        if (!movie) return;
-
-        if (!movieById.has(movie.movieId)) {
-            movieById.set(movie.movieId, movie as Movie);
-        }
-    });
-
-    return Array.from(movieById.values());
-};
-
 const IsShowing = () => {
     const dispatch = useAppDispatch();
     const provinces = useAppSelector((state) => state.province.provinces);
     const [activeTab, setActiveTab] = useState(0);
     const [selectedProvinceId, setSelectedProvinceId] = useState<number | undefined>(undefined);
-    const [moviesFromShowtimes, setMoviesFromShowtimes] = useState<Movie[]>([]);
+    const [movieShowtimeGroups, setMovieShowtimeGroups] =
+        useState<FullShowtimeMovieResponse[]>([]);
     const [isLoadingMovies, setIsLoadingMovies] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -65,22 +50,27 @@ const IsShowing = () => {
 
                 const response =
                     activeTab === 1
-                        ? await showTimeService.getUpcomingShowTimesByProvince(releaseDate, filters)
-                        : await showTimeService.getTodayShowTimesByProvince(releaseDate, filters);
+                        ? await showTimeService.getUpcomingGroupedShowTimesByProvince(
+                              releaseDate,
+                              filters
+                          )
+                        : await showTimeService.getTodayGroupedShowTimesByProvince(
+                              releaseDate,
+                              filters
+                          );
 
                 if (!isMounted) return;
                 if (response.code !== "SUCCESS") {
-                    setMoviesFromShowtimes([]);
+                    setMovieShowtimeGroups([]);
                     setTotalPages(1);
                     return;
                 }
 
-                const items = response.result?.items ?? [];
-                setMoviesFromShowtimes(extractMoviesFromShowtimes(items));
+                setMovieShowtimeGroups(response.result?.items ?? []);
                 setTotalPages(response.result?.totalPages ?? 1);
             } catch {
                 if (!isMounted) return;
-                setMoviesFromShowtimes([]);
+                setMovieShowtimeGroups([]);
                 setTotalPages(1);
             } finally {
                 if (isMounted) {
@@ -89,7 +79,7 @@ const IsShowing = () => {
             }
         };
 
-        fetchShowtimesByTab();
+        void fetchShowtimesByTab();
 
         return () => {
             isMounted = false;
@@ -116,6 +106,11 @@ const IsShowing = () => {
 
         return pages;
     }, [currentPage, totalPages]);
+
+    const movies = useMemo(
+        () => movieShowtimeGroups.map((item) => item.movie),
+        [movieShowtimeGroups]
+    );
 
     return (
         <div>
@@ -215,9 +210,9 @@ const IsShowing = () => {
                                     <p className="col-span-full text-sm text-gray-500">
                                         Đang tải phim...
                                     </p>
-                                ) : moviesFromShowtimes.length > 0 ? (
-                                    moviesFromShowtimes.map((movie, index) => (
-                                        <CardHome key={`${movie.movieId}-${index}`} movie={movie} />
+                                ) : movies.length > 0 ? (
+                                    movies.map((movie) => (
+                                        <CardShowtime key={movie.movieId} movie={movie} />
                                     ))
                                 ) : (
                                     <p className="col-span-full text-sm text-gray-500">
@@ -258,7 +253,9 @@ const IsShowing = () => {
                                     <button
                                         type="button"
                                         className="px-3 py-1.5 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                        onClick={() =>
+                                            setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                                        }
                                         disabled={currentPage === totalPages || isLoadingMovies}
                                     >
                                         Sau
@@ -278,7 +275,7 @@ const IsShowing = () => {
 
                         <div className="leading-5 content__data__full">
                             <div className="text-sm">
-                                {moviesFromShowtimes.slice(0, 5).map((movie, index) => (
+                                {movies.slice(0, 5).map((movie, index) => (
                                     <div key={`${movie.movieId}-${index}-seo`}>
                                         <p style={{ marginBottom: "11px" }}>
                                             <a href="">
@@ -340,4 +337,3 @@ const IsShowing = () => {
 };
 
 export default IsShowing;
-

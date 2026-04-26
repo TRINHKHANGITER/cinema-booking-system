@@ -62,6 +62,41 @@ public class ShowTimeController {
                 .build();
     }
 
+    @GetMapping("/grouped")
+    public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getGroupedShowTimesByFilters(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) Integer cinemaId,
+            @RequestParam(required = false) Integer movieTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
+            @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) String movieName,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer movieId,
+            @RequestParam(required = false) ShowTimeStatus status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "showtime") String sortBy,
+            @RequestParam(defaultValue = "ASC") SortDirection direction
+    ) {
+        return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
+                .message("Grouped showtimes retrieved successfully")
+                .result(showTimeService.getGroupedShowTimesByFilters(
+                        provinceId,
+                        cinemaId,
+                        movieTypeId,
+                        releaseDate,
+                        releaseDateCondition,
+                        movieName != null && !movieName.isBlank() ? movieName : name,
+                        movieId,
+                        status,
+                        page,
+                        size,
+                        sortBy,
+                        direction
+                ))
+                .build();
+    }
+
     @GetMapping("/statuses")
     public ApiResponse<ItemListDto<String>> getAllShowTimeStatuses() {
         List<String> statuses = showTimeService.getAllShowTimeStatuses();
@@ -73,15 +108,15 @@ public class ShowTimeController {
 
     
     @GetMapping("/{showTimeId}")
-    public ApiResponse<ShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
+    public ApiResponse<FullShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
                 .message("ShowTime retrieved successfully")
                 .result(showTimeService.getShowTimeById(showTimeId))
                 .build();
     }
 
     @GetMapping("/cinema/{cinemaId}")
-    public ApiResponse<PagingDto<ShowtimeMovieResponse>> getShowTimes(
+    public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getShowTimes(
             @PathVariable Integer cinemaId,
             @RequestParam(defaultValue = "SCHEDULED") ShowTimeStatus status,
             @RequestParam(defaultValue = "0") Integer page,
@@ -89,23 +124,23 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "showtime") String sortBy,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return ApiResponse.<PagingDto<ShowtimeMovieResponse>>builder()
+        return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
                 .message("ShowTimes retrieved successfully")
                 .result(showTimeService.getShowTimes(cinemaId, status, page, size, sortBy, direction))
                 .build();
     }
 
     @PostMapping
-    public ApiResponse<ShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
+    public ApiResponse<FullShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
                 .message("ShowTime created successfully")
                 .result(showTimeService.createShowTime(request))
                 .build();
     }
 
     @PatchMapping("/{showTimeId}")
-    public ApiResponse<ShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
+    public ApiResponse<FullShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
                 .message("ShowTime updated successfully")
                 .result(showTimeService.updateShowTime(showTimeId, request))
                 .build();

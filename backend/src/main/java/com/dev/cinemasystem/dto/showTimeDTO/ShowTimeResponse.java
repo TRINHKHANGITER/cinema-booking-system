@@ -24,7 +24,6 @@ public class ShowTimeResponse {
     Integer roomId;
     Integer movieId;
     RoomResponse room;
-    MovieResponse movie;
     ShowTimeStatus status;
 
 }
