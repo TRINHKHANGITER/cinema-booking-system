@@ -622,6 +622,12 @@ const OrderManagement = () => {
         setIsWizardOpen(false);
     }, [releaseCurrentPayingOrder, resetWizardState]);
 
+    const closeWizardWithConfirm = useCallback(async () => {
+        const shouldClose = window.confirm("Bạn có chắc muốn hủy đặt chỗ và đóng tạo đơn không?");
+        if (!shouldClose) return;
+        await closeWizard();
+    }, [closeWizard]);
+
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
@@ -1287,7 +1293,7 @@ const OrderManagement = () => {
             <ModalShell
                 open={isWizardOpen}
                 onClose={() => {
-                    void closeWizard();
+                    void closeWizardWithConfirm();
                 }}
                 title="Tạo đơn hàng mới"
                 panelClassName="max-w-[1300px]"
