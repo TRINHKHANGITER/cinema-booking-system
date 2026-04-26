@@ -141,6 +141,11 @@ public enum ErrorCode {
     PASSWORD_NOT_BLANK("PASSWORD_NOT_BLANK", HttpStatus.BAD_REQUEST, "Mật khẩu là bắt buộc"),
     EMAIL_OR_USERNAME_NOT_BLANK("EMAIL_OR_USERNAME_NOT_BLANK", HttpStatus.BAD_REQUEST, "Email hoặc tên đăng nhập là bắt buộc"),
 
+    GEMINI_API_KEY_MISSING("GEMINI_API_KEY_MISSING", HttpStatus.BAD_REQUEST, "Thiếu cấu hình GEMINI_API_KEY"),
+    GEMINI_API_URL_MISSING("GEMINI_API_URL_MISSING", HttpStatus.BAD_REQUEST, "Thiếu cấu hình GEMINI_API_URL"),
+    GEMINI_API_CALL_FAILED("GEMINI_API_CALL_FAILED", HttpStatus.BAD_GATEWAY, "Không gọi được Gemini API"),
+    GEMINI_EMPTY_RESPONSE("GEMINI_EMPTY_RESPONSE", HttpStatus.BAD_GATEWAY, "Gemini không trả về nội dung"),
+
 
 
     ;
