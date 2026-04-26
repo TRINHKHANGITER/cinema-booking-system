@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import ChoiceFood from "../../components/ui/ChoiceFood";
 import Pay from "../../components/ui/Pay";
 import ChoiceSeat from "../../components/ui/ChoiceSeat";
@@ -34,6 +34,7 @@ const formatCountdown = (totalSeconds: number) => {
 const Booking = () => {
     const dispatch = useAppDispatch();
     const { state } = useLocation();
+    const { showtimeId } = useParams<{ showtimeId: string }>();
 
     const user = useAppSelector((store) => store.auth.user);
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
@@ -46,6 +47,10 @@ const Booking = () => {
     const [step, setStep] = useState<1 | 2 | 3>(1);
 
     const showTimeId = useMemo(() => {
+        if (showtimeId && /^[0-9]+$/.test(showtimeId)) {
+            return Number(showtimeId);
+        }
+
         if (!state || typeof state !== "object") return null;
 
         const maybeState = state as {
@@ -57,7 +62,7 @@ const Booking = () => {
         if (typeof raw === "number") return raw;
         if (typeof raw === "string" && /^[0-9]+$/.test(raw)) return Number(raw);
         return null;
-    }, [state]);
+    }, [showtimeId, state]);
 
     const orderStorageKey = useMemo(
         () => (showTimeId ? `BOOKING_ORDER_${showTimeId}` : null),

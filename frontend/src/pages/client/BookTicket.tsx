@@ -61,6 +61,14 @@ const BookTicket = () => {
         );
     }, [currentMovie, movies, numericMovieId, slug]);
 
+    const bookingSlug = useMemo(() => {
+        const normalizedMovieSlug = selectedMovie?.slug?.trim();
+        if (normalizedMovieSlug) return normalizedMovieSlug;
+        if (slug?.trim()) return slug.trim();
+        if (selectedMovie?.movieId) return String(selectedMovie.movieId);
+        return "";
+    }, [selectedMovie, slug]);
+
     useEffect(() => {
         dispatch(fetchCinemasThunk({ isShowing: true, status: "ACTIVE" }));
     }, [dispatch]);
@@ -450,8 +458,16 @@ const BookTicket = () => {
                                                                                     );
                                                                                 }
                                                                             }}
-                                                                            state={show}
-                                                                            to={`/dat-ve/${slug}`}
+                                                                            state={{
+                                                                                showTimeId:
+                                                                                    show.showTimeId,
+                                                                            }}
+                                                                            to={`/dat-ve/${
+                                                                                bookingSlug ||
+                                                                                show.movieId
+                                                                            }/showtime/${
+                                                                                show.showTimeId
+                                                                            }`}
                                                                             key={show.showTimeId}
                                                                             className="py-2 md:px-8 px-6 border border-gray-300 rounded text-sm font-normal text-black-10 active:bg-[#034ea2] transition-all duration-500 ease-in-out hover:text-white hover:bg-[#034ea2]"
                                                                         >

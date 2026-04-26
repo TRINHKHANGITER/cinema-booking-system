@@ -9,7 +9,7 @@ const routePath = {
     home: "/",
     phim_dang_chieu: "/phim-dang-chieu",
     xuat_chieu: "/xuat-chieu/:slug",
-    dat_ve: "/dat-ve/:slug",
+    dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
     checkout_vnpay_return: "/checkout/vnpay/return",
 };
 

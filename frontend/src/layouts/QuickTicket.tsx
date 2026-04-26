@@ -1,10 +1,11 @@
 import { useState } from "react";
 
 const steps = [
-  { id: 1, label: "Chọn phim" },
+  { id: 1, label: "Chọn khu vực" }, // chọn province
   { id: 2, label: "Chọn rạp" },
-  { id: 3, label: "Chọn ngày" },
-  { id: 4, label: "Chọn giờ" },
+  { id: 3, label: "Chọn phim" },
+  { id: 4, label: "Chọn ngày" },  
+  { id: 5, label: "Chọn giờ" },  // chọn suất
 ];
 
 const QuickBooking = () => {
