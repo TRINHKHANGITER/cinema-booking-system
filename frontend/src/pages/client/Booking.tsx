@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import ChoiceFood from "../../components/ui/ChoiceFood";
@@ -7,7 +8,12 @@ import type { SelectedCombo } from "../../types/combo";
 import type { Seat } from "../../types/seat";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slices/showtimeSlice";
-import { calculateTotalPrice, formatTime, groupSelectedSeats } from "../../utils/utils";
+import {
+    calculateTotalPrice,
+    formatTime,
+    groupSelectedSeats,
+    resolveMoviePortraitImage,
+} from "../../utils/utils";
 import { checkoutService } from "../../services/checkout.service";
 import { bookingService } from "../../services/booking.service";
 import { orderService } from "../../services/order.service";
@@ -391,7 +397,7 @@ const Booking = () => {
                             <div className="bg-white p-4 grid grid-cols-3 xl:gap-2 items-center">
                                 <div className="row-span-2 md:row-span-1 xl:row-span-2 block md:hidden xl:block">
                                     <img
-                                        src={showDetail?.imagePortrait ?? undefined}
+                                        src={resolveMoviePortraitImage(showDetail?.imagePortrait)}
                                         alt={showDetail?.movieName}
                                         width={100}
                                         height={150}

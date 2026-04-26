@@ -1,11 +1,13 @@
 package com.dev.cinemasystem.dto.movieDTO;
 
 
+import com.dev.cinemasystem.enums.MovieStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,17 +36,24 @@ public class MovieCreationResquest {
 
     String slug;
     Integer minimumAge;
-    String imageLandscape;
-    String imagePortrait;
+    MultipartFile imageLandscape;
+    MultipartFile imagePortrait;
     String trailerUrl;
     BigDecimal ratingAverage;
     Integer totalVotes;
+
+    @NotNull(message = "RELEASE_DATE_BLANK")
     LocalDate releaseDate;
+
+    @NotNull(message = "END_DATE_BLANK")
     LocalDate endDate;
     String country;
     String producer;
     String director;
     String actors;
+
+    @NotNull(message = "MOVIE_STATUS_BLANK")
+    MovieStatus status;
 
 }
 

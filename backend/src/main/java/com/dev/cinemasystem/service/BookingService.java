@@ -41,6 +41,7 @@ public class BookingService {
     UserRepository userRepository;
     PriceTicketRepository priceTicketRepository;
     PaymentRepository paymentRepository;
+    TicketRepository ticketRepository;
     OrderMapper orderMapper;
 
     @Transactional
@@ -222,7 +223,7 @@ public class BookingService {
             throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
         }
 
-        releaseAllHeldSeats(order);
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
         cancelOrderCombos(orderId);
         expirePendingPayments(orderId, PaymentStatus.CANCELLED);
 
@@ -265,7 +266,7 @@ public class BookingService {
             return;
         }
 
-        releaseAllHeldSeats(order);
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
         cancelOrderCombos(orderId);
         order.setStatus(failedStatus);
         orderRepository.save(order);
@@ -302,12 +303,21 @@ public class BookingService {
 
         List<Order> expiredOrders = orderRepository.findAllByStatusAndExpiredAtBefore(OrderStatus.PAYING, now);
         for (Order expiredOrder : expiredOrders) {
-            releaseAllHeldSeats(expiredOrder);
+            releaseSeats(expiredOrder, EnumSet.of(ShowTimeSeatStatus.HELD));
             cancelOrderCombos(expiredOrder.getOrderId());
             expirePendingPayments(expiredOrder.getOrderId(), PaymentStatus.EXPIRED);
             expiredOrder.setStatus(OrderStatus.EXPIRED);
             orderRepository.save(expiredOrder);
         }
+    }
+
+    @Transactional
+    public void releaseReservedSeatsAndCancelTickets(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD, ShowTimeSeatStatus.SOLD));
+        cancelActiveTickets(orderId);
     }
 
     private Order resolveOrderForHold(HoldSeatRequest request, ShowTime showTime) {
@@ -438,20 +448,26 @@ public class BookingService {
         }
     }
 
-    private void releaseAllHeldSeats(Order order) {
-        List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
-                order.getOrderId(),
-                ShowTimeSeatStatus.HELD
-        );
+    private void releaseSeats(Order order, Set<ShowTimeSeatStatus> targetStatuses) {
+        List<ShowTimeSeat> reservedSeats = showTimeSeatRepository.findAllByOrder_OrderId(order.getOrderId());
+        if (reservedSeats.isEmpty()) {
+            return;
+        }
 
-        for (ShowTimeSeat seat : heldSeats) {
+        List<ShowTimeSeat> changedSeats = new ArrayList<>();
+        for (ShowTimeSeat seat : reservedSeats) {
+            if (!targetStatuses.contains(seat.getStatus())) {
+                continue;
+            }
+
             seat.setStatus(ShowTimeSeatStatus.AVAILABLE);
             seat.setOrder(null);
             seat.setHoldExpiresAt(null);
+            changedSeats.add(seat);
         }
 
-        if (!heldSeats.isEmpty()) {
-            showTimeSeatRepository.saveAll(heldSeats);
+        if (!changedSeats.isEmpty()) {
+            showTimeSeatRepository.saveAll(changedSeats);
         }
     }
 
@@ -474,6 +490,26 @@ public class BookingService {
         }
         if (!pendingPayments.isEmpty()) {
             paymentRepository.saveAll(pendingPayments);
+        }
+    }
+
+    private void cancelActiveTickets(Integer orderId) {
+        List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(orderId);
+        if (tickets.isEmpty()) {
+            return;
+        }
+
+        List<Ticket> changedTickets = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            if (ticket.getStatus() != TicketStatus.ACTIVE) {
+                continue;
+            }
+            ticket.setStatus(TicketStatus.CANCELLED);
+            changedTickets.add(ticket);
+        }
+
+        if (!changedTickets.isEmpty()) {
+            ticketRepository.saveAll(changedTickets);
         }
     }
 

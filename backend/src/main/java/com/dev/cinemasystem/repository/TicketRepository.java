@@ -10,6 +10,9 @@ import java.util.List;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Integer> {
     List<Ticket> findAllByStatus(TicketStatus status);
+    boolean existsByPriceTicket_PriceTicketIdAndStatus(Integer priceTicketId, TicketStatus status);
+    boolean existsBySeat_SeatIdAndStatus(Integer seatId, TicketStatus status);
+    boolean existsByShow_ShowTimeIdAndStatus(Integer showTimeId, TicketStatus status);
 
     List<Ticket> findAllByOrder_OrderId(int orderId);
 

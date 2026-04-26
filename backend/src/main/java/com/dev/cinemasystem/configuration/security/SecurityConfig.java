@@ -36,6 +36,7 @@ public class SecurityConfig {
             "/cinema/**",
             "/room/**",
             "/room-type/**",
+            "/roomType/**",
             "/seat/**",
             "/seat-type/**",
             "/movie/**",
@@ -47,6 +48,7 @@ public class SecurityConfig {
             "/showtime-seat/**",
             "/booking/**",
             "/checkout/vnpay/**",
+            "/image/**",
 
             // Swagger
             "/swagger-ui/**",

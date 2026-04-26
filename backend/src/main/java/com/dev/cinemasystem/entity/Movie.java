@@ -25,7 +25,7 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer movieId;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 255, unique = true)
     String movieName;
 
     @Column(columnDefinition = "TEXT")

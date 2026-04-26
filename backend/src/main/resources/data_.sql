@@ -102,15 +102,15 @@ INSERT INTO province (province_name, status) VALUES
 
 
 -- user (password = bcrypt hash of "Password@123")
-INSERT INTO users (full_name, phone_number, date_of_birth, sex, username, password_hash, email, role, created_at, updated_at, status) VALUES
--- ('Nguyễn Văn Admin',  '0901000001', '1985-03-15', 'MALE',   'admin',        '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'admin@cinema.vn',        'ADMIN', NOW(), NOW(), 'ACTIVE'),
-('Trần Thị Staff',    '0901000002', '1995-07-20', 'FEMALE', 'staff01',      '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'staff01@cinema.vn',      'STAFF', NOW(), NOW(), 'ACTIVE'),
-('Lê Minh Tuấn',      '0901000003', '1998-01-10', 'MALE',   'leminhtuán',   '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'leminhtuán@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
-('Phạm Thị Hoa',      '0901000004', '2000-05-25', 'FEMALE', 'phamthihoa',   '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'phamthihoa@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
-('Hoàng Đức Mạnh',    '0901000005', '1997-09-30', 'MALE',   'hoangeucmanh', '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'hoangeucmanh@gmail.com', 'USER',  NOW(), NOW(), 'LOCKED'),
-('Vũ Thị Lan',        '0901000006', '2001-12-05', 'FEMALE', 'vuthilan',     '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'vuthilan@gmail.com',     'USER',  NOW(), NOW(), 'SUSPENDED'),
-('Đặng Văn Hùng',     '0901000007', '1993-04-18', 'MALE',   'dangvanhung',  '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'dangvanhung@gmail.com',  'USER',  NOW(), NOW(), 'DELETED'),
-('Bùi Thị Mai',       '0901000008', '1999-08-22', 'FEMALE', 'buithimai',    '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'buithimai@gmail.com',    'USER',  NOW(), NOW(), 'DELETED');
+INSERT INTO users (full_name, phone_number, date_of_birth, sex, password_hash, email, role, created_at, updated_at, status) VALUES
+-- ('Nguyễn Văn Admin',  '0901000001', '1985-03-15', 'MALE',         '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'admin@cinema.vn',        'ADMIN', NOW(), NOW(), 'ACTIVE'),
+('Trần Thị Staff',    '0901000002', '1995-07-20', 'FEMALE',       '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'staff01@cinema.vn',      'STAFF', NOW(), NOW(), 'ACTIVE'),
+('Lê Minh Tuấn',      '0901000003', '1998-01-10', 'MALE',    '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'leminhtuán@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
+('Phạm Thị Hoa',      '0901000004', '2000-05-25', 'FEMALE',    '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'phamthihoa@gmail.com',   'USER',  NOW(), NOW(), 'ACTIVE'),
+('Hoàng Đức Mạnh',    '0901000005', '1997-09-30', 'MALE',  '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'hoangeucmanh@gmail.com', 'USER',  NOW(), NOW(), 'LOCKED'),
+('Vũ Thị Lan',        '0901000006', '2001-12-05', 'FEMALE',      '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'vuthilan@gmail.com',     'USER',  NOW(), NOW(), 'SUSPENDED'),
+('Đặng Văn Hùng',     '0901000007', '1993-04-18', 'MALE',   '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'dangvanhung@gmail.com',  'USER',  NOW(), NOW(), 'DELETED'),
+('Bùi Thị Mai',       '0901000008', '1999-08-22', 'FEMALE',     '$2a$10$6N.77r.YdmDx/FtNGnojXu24ALzHxNpHA8eJ2dfAytM68XLZbis9i', 'buithimai@gmail.com',    'USER',  NOW(), NOW(), 'DELETED');
 
 -- cinema
 -- cinema (Galaxy)
@@ -1396,12 +1396,12 @@ INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
 (3, 2, 200000, 'ACTIVE');
 -- combo
 INSERT INTO combo (combo_name, image, description, price, status) VALUES
-('Combo 1',        'https://example.com/combos/combo1.jpg', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
-('Combo 2',        'https://example.com/combos/combo2.jpg', 'Bắp lớn + 2 Pepsi lớn',                         200000, 'AVAILABLE'),
-('Combo 3',        'https://example.com/combos/combo3.jpg', 'Bắp caramel + 7UP + Nachos',                    175000, 'AVAILABLE'),
-('Combo Đôi',      'https://example.com/combos/combo4.jpg', '2 Bắp vừa + 2 Pepsi lớn',                       230000, 'AVAILABLE'),
-('Combo Gia Đình', 'https://example.com/combos/combo5.jpg', '1 Bắp lớn + 2 Pepsi + Nachos + Gummy',          310000, 'AVAILABLE'),
-('Combo Nhẹ',      'https://example.com/combos/combo6.jpg', 'Bắp nhỏ + Nước suối',                            80000, 'AVAILABLE');
+('Combo 1',        '1.png', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
+('Combo 2',        '2.png', 'Bắp lớn + 2 Pepsi lớn',                         200000, 'AVAILABLE'),
+('Combo 3',        '3.png', 'Bắp caramel + 7UP + Nachos',                    175000, 'AVAILABLE'),
+('Combo Đôi',      '4.png', '2 Bắp vừa + 2 Pepsi lớn',                       230000, 'AVAILABLE'),
+('Combo Gia Đình', '5.jfif', '1 Bắp lớn + 2 Pepsi + Nachos + Gummy',          310000, 'AVAILABLE'),
+('Combo Nhẹ',      '6.jfif', 'Bắp nhỏ + Nước suối',                            80000, 'AVAILABLE');
 
 
 -- order
@@ -1559,5 +1559,6 @@ SET status = 'HELD',
     updated_at = NOW()
 WHERE show_time_id = 9
   AND seat_id IN (3, 13, 14);
+
 
 

@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.seatTypeDTO;
 
+import com.dev.cinemasystem.enums.SeatTypeStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,5 +14,7 @@ public class SeatTypeUpdateRequest {
     String seatTypeName;
 
     String description;
+
+    SeatTypeStatus status;
 
 }

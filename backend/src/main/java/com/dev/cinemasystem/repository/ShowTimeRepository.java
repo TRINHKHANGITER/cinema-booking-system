@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -244,6 +245,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     );
 
     List<ShowTime> findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(Integer movieId);
+    List<ShowTime> findAllByRoom_RoomIdAndStatusNot(Integer roomId, ShowTimeStatus status);
+    boolean existsByMovie_MovieIdAndStatusIn(Integer movieId, Collection<ShowTimeStatus> statuses);
 
 
 }

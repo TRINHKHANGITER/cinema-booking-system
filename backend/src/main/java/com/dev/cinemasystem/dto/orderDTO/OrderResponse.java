@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.orderDTO;
 
+import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.enums.OrderStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class OrderResponse {
     Integer orderId;
     Integer userId;
+    UserResponse user;
     Integer showTimeId;
 
     BigDecimal ticketTotal;

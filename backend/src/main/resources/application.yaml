@@ -9,11 +9,15 @@ spring:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:20MB}
+      max-request-size: ${MAX_REQUEST_SIZE:50MB}
 
   jpa:
     hibernate:
-      # ddl-auto: update
-      ddl-auto: create
+       ddl-auto: update
+#      ddl-auto: create
     show-sql: true
 
 jwt:
@@ -25,8 +29,15 @@ springdoc:
   api-docs:
     path: /api-docs
 
+
 storage:
-  image-dir: data/image
+  image-combo-pattern: /image/combo/**
+  image-combo-dir: data/image/combo
+  image-movie-imageLandscape-pattern: /image/movie/imageLandscape/**
+  image-movie-imageLandscape-dir: data/image/movie/imageLandscape
+  image-movie-imagePortrait-pattern: /image/movie/imagePortrait/**
+  image-movie-imagePortrait-dir: data/image/movie/imagePortrait
+
 
 
 gemini:

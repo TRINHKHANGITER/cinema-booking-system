@@ -16,6 +16,7 @@ export type CinemaCreationRequest = {
     provinceId: number;
     addressText: string;
     description?: string | null;
+    status?: CinemaStatus;
 };
 
 export type CinemaUpdateRequest = {
@@ -23,6 +24,15 @@ export type CinemaUpdateRequest = {
     provinceId?: number;
     addressText?: string;
     description?: string | null;
+    status?: CinemaStatus;
+};
+
+export type CinemaFilterParams = {
+    name?: string;
+    provinceId?: number;
+    status?: CinemaStatus | "";
+    page?: number;
+    size?: number;
 };
 
 export type CinemaResponse = CinemaEntity & {

@@ -15,12 +15,22 @@ export type PriceTicketCreationResquest = {
     price: number;
     roomTypeId: number;
     seatTypeId: number;
+    status?: PriceTicketStatus;
 };
 
 export type PriceTicketUpdateResquest = {
     price?: number;
     roomTypeId?: number;
     seatTypeId?: number;
+    status?: PriceTicketStatus;
+};
+
+export type PriceTicketFilterParams = {
+    roomTypeId?: number;
+    seatTypeId?: number;
+    status?: PriceTicketStatus | "";
+    page?: number;
+    size?: number;
 };
 
 export type PriceTicketResponse = PriceTicketEntity & {

@@ -1,4 +1,16 @@
 @import "tailwindcss";
+:root {
+  --glx-blue: #034ea2;
+  --glx-blue-strong: #023878;
+  --glx-orange: #f58020;
+  --glx-orange-soft: #fb9440;
+  --glx-bg-soft: #f6f8fc;
+  --glx-surface: #ffffff;
+  --glx-text-primary: #1f2937;
+  --glx-text-muted: #64748b;
+  --glx-border: #dbe3ef;
+}
+
 * {
   font-family: "Nunito Sans", sans-serif;
 }

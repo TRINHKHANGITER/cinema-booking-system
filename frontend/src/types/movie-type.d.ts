@@ -10,11 +10,20 @@ export type MovieTypeEntity = {
 export type MovieTypeCreationRequest = {
     movieTypeName: string;
     description: string;
+    status?: MovieTypeStatus;
 };
 
 export type MovieTypeUpdateRequest = {
     movieTypeName?: string;
     description?: string;
+    status?: MovieTypeStatus;
+};
+
+export type MovieTypeFilterParams = {
+    name?: string;
+    status?: MovieTypeStatus | "";
+    page?: number;
+    size?: number;
 };
 
 export type MovieTypeResponse = MovieTypeEntity;

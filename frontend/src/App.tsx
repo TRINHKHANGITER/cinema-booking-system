@@ -35,6 +35,21 @@ import { cusPublicRoutes } from "./route/route";
 import DefaultLayout from "./layouts/DefaultLayout";
 import { Toaster } from "sonner";
 import AuthInitializer from "./layouts/AuthInitializer";
+import AdminGuard from "./layouts/AdminGuard";
+import AdminLayout from "./layouts/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import MovieManagement from "./pages/admin/MovieManagement";
+import MovieTypeManagement from "./pages/admin/MovieTypeManagement";
+import PriceTicketManagement from "./pages/admin/PriceTicketManagement";
+import ProvinceManagement from "./pages/admin/ProvinceManagement";
+import RoomTypeManagement from "./pages/admin/RoomTypeManagement";
+import RoomManagement from "./pages/admin/RoomManagement";
+import SeatTypeManagement from "./pages/admin/SeatTypeManagement";
+import ShowtimeManagement from "./pages/admin/ShowtimeManagement";
+import UserManagement from "./pages/admin/UserManagement";
+import ComboManagement from "./pages/admin/ComboManagement";
+import CinemaManagement from "./pages/admin/CinemaManagement";
+import OrderManagement from "./pages/admin/OrderManagement";
 
 function App() {
     return (
@@ -66,6 +81,24 @@ function App() {
 
                             return null;
                         })}
+
+                        <Route element={<AdminGuard />}>
+                            <Route path="/admin" element={<AdminLayout />}>
+                                <Route index element={<Dashboard />} />
+                                <Route path="users" element={<UserManagement />} />
+                                <Route path="provinces" element={<ProvinceManagement />} />
+                                <Route path="cinemas" element={<CinemaManagement />} />
+                                <Route path="movie-types" element={<MovieTypeManagement />} />
+                                <Route path="room-types" element={<RoomTypeManagement />} />
+                                <Route path="rooms" element={<RoomManagement />} />
+                                <Route path="seat-types" element={<SeatTypeManagement />} />
+                                <Route path="price-tickets" element={<PriceTicketManagement />} />
+                                <Route path="combos" element={<ComboManagement />} />
+                                <Route path="movies" element={<MovieManagement />} />
+                                <Route path="showtimes" element={<ShowtimeManagement />} />
+                                <Route path="orders" element={<OrderManagement />} />
+                            </Route>
+                        </Route>
                     </Routes>
                 </AuthInitializer>
             </Router>

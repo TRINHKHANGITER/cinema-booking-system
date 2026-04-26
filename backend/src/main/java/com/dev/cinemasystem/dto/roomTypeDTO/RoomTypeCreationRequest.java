@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.roomTypeDTO;
 
+import com.dev.cinemasystem.enums.RoomTypeStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,5 +17,7 @@ public class RoomTypeCreationRequest {
 
     @NotBlank(message = "DESCRIPTION_BLANK")
     String description;
+
+    RoomTypeStatus status;
 
 }

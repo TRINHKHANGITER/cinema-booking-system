@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.cinemaDTO;
 
+import com.dev.cinemasystem.enums.CinemaStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,4 +24,6 @@ public class CinemaCreationRequest {
     String addressText;
 
     String description;
+
+    CinemaStatus status;
 }

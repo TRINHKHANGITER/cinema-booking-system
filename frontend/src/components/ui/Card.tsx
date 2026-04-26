@@ -2,6 +2,7 @@ import Star from "../icon/star";
 import BuyTicket from "../icon/buy-ticket";
 import type { Movie } from "../../types/product";
 import { Link } from "react-router-dom";
+import { resolveMovieLandscapeImage, resolveMovieText } from "../../utils/utils";
 
 type CardProps = {
   w?: number;
@@ -11,6 +12,14 @@ type CardProps = {
 
 const Card = ({ w = 140, h = 200, movie }: CardProps) => {
   const detailPath = `/xuat-chieu/${movie.slug ?? movie.movieId}`;
+  const movieName = resolveMovieText(movie.movieName, "Movie");
+  const imageLandscape = resolveMovieLandscapeImage(movie.imageLandscape);
+  const movieRating = resolveMovieText(
+    movie.ratingAverage === null || movie.ratingAverage === undefined
+      ? undefined
+      : String(movie.ratingAverage),
+    "N/A"
+  );
 
   return (
     <div
@@ -33,12 +42,12 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
 
           <Link to={detailPath}>
             <img
-              alt={movie.movieName}
+              alt={movieName}
               width={w}
               height={h}
               style={{ width: w, height: h }}
               className="object-cover duration-500 ease-in-out object-center"
-              src={movie.imageLandscape ?? undefined}
+              src={imageLandscape}
             />
           </Link>
 
@@ -48,7 +57,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
                 <Star />
               </span>
               <span className="text-[18px] font-bold text-white">
-                {movie.ratingAverage}
+                {movieRating}
               </span>
             </div>
           </div>
@@ -63,7 +72,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
 
       <div className="mt-2" style={{ width: w }}>
         <Link className="text-sm font-semibold" to={detailPath}>
-          {movie.movieName}
+          {movieName}
         </Link>
       </div>
     </div>

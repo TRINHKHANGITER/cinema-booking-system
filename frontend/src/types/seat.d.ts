@@ -17,6 +17,7 @@ export type SeatCreationResquest = {
     seatColumn: number;
     seatTypeId: number;
     roomId: number;
+    status?: SeatStatus;
 };
 
 export type SeatUpdateResquest = {
@@ -24,6 +25,7 @@ export type SeatUpdateResquest = {
     seatColumn?: number;
     seatTypeId?: number;
     roomId?: number;
+    status?: SeatStatus;
 };
 
 export type SeatResponse = SeatEntity & {

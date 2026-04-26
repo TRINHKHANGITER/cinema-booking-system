@@ -1,18 +1,21 @@
 package com.dev.cinemasystem.service;
 
+import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
+import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
+import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
 import com.dev.cinemasystem.entity.Cinema;
 import com.dev.cinemasystem.entity.Province;
+import com.dev.cinemasystem.enums.CinemaStatus;
+import com.dev.cinemasystem.enums.RoomStatus;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.CinemaMapper;
 import com.dev.cinemasystem.repository.CinemaRepository;
 import com.dev.cinemasystem.repository.ProvinceRepository;
-import com.dev.cinemasystem.dto.apiDTO.PagingDto;
-import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
-import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
-import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
-import com.dev.cinemasystem.enums.CinemaStatus;
-import com.dev.cinemasystem.enums.ShowTimeStatus;
+import com.dev.cinemasystem.repository.RoomRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,10 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -33,44 +40,64 @@ public class CinemaService {
     CinemaRepository cinemaRepository;
     ProvinceRepository provinceRepository;
     CinemaMapper cinemaMapper;
+    RoomRepository roomRepository;
 
     public CinemaResponse getCinemaById(Integer cinemaId) {
-        var cinema = cinemaRepository.findById(cinemaId)
+        Cinema cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
-        log.info("Retrieved cinema with id: {}", cinemaId);
+
         return cinemaMapper.toResponse(cinema);
     }
 
-    public PagingDto<CinemaResponse> getAllCinemas(Integer provinceId, CinemaStatus status, int page, int size) {
-        if (page < 1) {
-            log.error("Invalid page number: {}", page);
-            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
-        }
-        if (size < 1) {
-            log.error("Invalid page size: {}", size);
-            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
-        }
+    public PagingDto<CinemaResponse> getAllCinemas(
+            Integer provinceId,
+            CinemaStatus status,
+            Integer page,
+            Integer size
+    ) {
+        return filterCinemas(null, provinceId, status != null ? status.name() : null, page, size);
+    }
+
+    public PagingDto<CinemaResponse> filterCinemas(
+            String name,
+            Integer provinceId,
+            String status,
+            Integer page,
+            Integer size
+    ) {
+        validatePageAndSize(page, size);
 
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Cinema> cinemaPage;
+        Specification<Cinema> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        if (provinceId != null && status != null) {
-            cinemaPage = cinemaRepository.findByProvince_ProvinceIdAndStatus(provinceId, status, pageable);
-        } else if (provinceId != null) {
-            cinemaPage = cinemaRepository.findByProvince_ProvinceId(provinceId, pageable);
-        } else if (status != null) {
-            cinemaPage = cinemaRepository.findByStatus(status, pageable);
-        } else {
-            cinemaPage = cinemaRepository.findAll(pageable);
-        }
+            if (name != null && !name.isBlank()) {
+                String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(builder.like(builder.lower(root.get("cinemaName")), keyword));
+            }
 
+            if (provinceId != null) {
+                predicates.add(builder.equal(root.get("province").get("provinceId"), provinceId));
+            }
+
+            if (status != null && !status.isBlank()) {
+                predicates.add(builder.equal(root.get("status"), parseCinemaStatus(status)));
+            }
+
+            if (query != null) {
+                query.orderBy(builder.asc(builder.lower(root.get("cinemaName"))));
+            }
+
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Cinema> cinemaPage = cinemaRepository.findAll(specification, pageable);
         List<CinemaResponse> cinemaResponses = cinemaMapper.toResponseList(cinemaPage.getContent());
-        log.info("Retrieved {} cinemas", cinemaResponses.size());
 
         return PagingDto.<CinemaResponse>builder()
                 .items(cinemaResponses)
-                .pageSize(size)
-                .currentPage(page)
+                .currentPage(cinemaPage.getNumber() + 1)
+                .pageSize(cinemaPage.getSize())
                 .totalItems(cinemaPage.getTotalElements())
                 .totalPages(cinemaPage.getTotalPages())
                 .build();
@@ -87,44 +114,57 @@ public class CinemaService {
         } else {
             cinemas = cinemaRepository.findAllByFilters(provinceId, status);
         }
-        log.info("Retrieved {} cinemas with filters provinceId={}, isShowing={}, status={}", cinemas.size(), provinceId, isShowing, status);
         return cinemaMapper.toResponseList(cinemas);
     }
 
     public CinemaResponse createCinema(CinemaCreationRequest request) {
         if (request == null) {
-            log.error("Cinema creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        String normalizedName = normalizeCinemaName(request.getCinemaName());
+        if (cinemaRepository.existsByCinemaNameIgnoreCase(normalizedName)) {
+            throw new AppException(ErrorCode.CINEMA_NAME_EXISTS);
         }
 
         Province province = provinceRepository.findById(request.getProvinceId())
                 .orElseThrow(() -> new AppException(ErrorCode.PROVINCE_NOT_FOUND));
 
-        if (cinemaRepository.existsByCinemaName(request.getCinemaName())) {
-            throw new AppException(ErrorCode.CINEMA_ALREADY_EXISTS);
-        }
-
         Cinema cinema = Cinema.builder()
-                .cinemaName(request.getCinemaName())
+                .cinemaName(normalizedName)
                 .province(province)
-                .addressText(request.getAddressText())
-                .description(request.getDescription())
-                .status(CinemaStatus.ACTIVE)
+                .addressText(normalizeAddress(request.getAddressText()))
+                .description(normalizeOptionalText(request.getDescription()))
+                .status(request.getStatus() != null ? request.getStatus() : CinemaStatus.ACTIVE)
                 .build();
 
-        cinemaRepository.save(cinema);
-        log.info("Created cinema with name: {}", cinema.getCinemaName());
-        return cinemaMapper.toResponse(cinema);
+        Cinema savedCinema = cinemaRepository.save(cinema);
+        return cinemaMapper.toResponse(savedCinema);
     }
 
     @Transactional
-    public CinemaResponse updateCinema(int cinemaId, CinemaUpdateRequest request) {
+    public CinemaResponse updateCinema(Integer cinemaId, CinemaUpdateRequest request) {
+        if (request == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
         Cinema existingCinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
 
-        if (request == null) {
-            log.error("Cinema update request is null");
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+        if (request.getCinemaName() != null) {
+            String normalizedName = normalizeCinemaName(request.getCinemaName());
+            if (cinemaRepository.existsByCinemaNameIgnoreCaseAndCinemaIdNot(normalizedName, cinemaId)) {
+                throw new AppException(ErrorCode.CINEMA_NAME_EXISTS);
+            }
+            request.setCinemaName(normalizedName);
+        }
+
+        if (request.getAddressText() != null) {
+            request.setAddressText(normalizeAddress(request.getAddressText()));
+        }
+
+        if (request.getDescription() != null) {
+            request.setDescription(normalizeOptionalText(request.getDescription()));
         }
 
         cinemaMapper.updateEntityFromRequest(existingCinema, request);
@@ -135,18 +175,67 @@ public class CinemaService {
             existingCinema.setProvince(province);
         }
 
-        Cinema saved = cinemaRepository.save(existingCinema);
-        log.info("Updated cinema with id={}", saved.getCinemaId());
-        return cinemaMapper.toResponse(saved);
+        Cinema savedCinema = cinemaRepository.save(existingCinema);
+        return cinemaMapper.toResponse(savedCinema);
     }
 
     public boolean deleteCinemaById(Integer cinemaId) {
-        var cinema = cinemaRepository.findById(cinemaId)
+        Cinema cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
+
+        boolean hasActiveRooms = roomRepository.existsByCinema_CinemaIdAndStatus(cinemaId, RoomStatus.ACTIVE);
+        if (hasActiveRooms) {
+            throw new AppException(ErrorCode.CINEMA_HAS_ACTIVE_ROOMS);
+        }
+
         cinema.setStatus(CinemaStatus.INACTIVE);
         cinemaRepository.save(cinema);
-        log.info("Deleted cinema with id: {}", cinemaId);
         return true;
+    }
+
+    public List<String> getAllCinemaStatuses() {
+        return Arrays.stream(CinemaStatus.values())
+                .map(Enum::name)
+                .toList();
+    }
+
+    private CinemaStatus parseCinemaStatus(String value) {
+        try {
+            return CinemaStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception exception) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private void validatePageAndSize(Integer page, Integer size) {
+        if (page == null || page < 1) {
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+        if (size == null || size < 1 || size > 100) {
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }
+
+    private String normalizeCinemaName(String value) {
+        if (value == null || value.isBlank()) {
+            throw new AppException(ErrorCode.CINEMA_BLANK);
+        }
+        return value.trim();
+    }
+
+    private String normalizeAddress(String value) {
+        if (value == null || value.isBlank()) {
+            throw new AppException(ErrorCode.ADDRESS_BLANK);
+        }
+        return value.trim();
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isBlank() ? null : normalized;
     }
 }
 

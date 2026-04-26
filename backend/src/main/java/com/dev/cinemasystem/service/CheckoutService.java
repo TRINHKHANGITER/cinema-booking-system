@@ -113,7 +113,7 @@ public class CheckoutService {
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
                 paymentRepository.save(payment);
-                bookingService.markOrderFailed(orderId, OrderStatus.FAILED);
+                bookingService.markOrderFailed(orderId, OrderStatus.EXPIRED);
             }
         } else {
             paymentRepository.save(payment);
@@ -171,7 +171,7 @@ public class CheckoutService {
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            bookingService.markOrderFailed(orderId, OrderStatus.FAILED);
+            bookingService.markOrderFailed(orderId, OrderStatus.EXPIRED);
         }
     }
 

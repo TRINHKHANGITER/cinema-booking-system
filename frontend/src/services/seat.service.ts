@@ -1,5 +1,5 @@
 import api from "../lib/axios";
-import type { ApiResponse, PagingDto } from "../types/api";
+import type { ApiResponse, ItemListDto, PagingDto } from "../types/api";
 import type { Seat, SeatCreationRequest, SeatStatus } from "../types/seat";
 
 type GetAllSeatsParams = {
@@ -11,7 +11,7 @@ type GetAllSeatsParams = {
 };
 
 export const seatService = {
-    getSeatsByRoom: async (roomId: number, status: SeatStatus = "ACTIVE") => {
+    getSeatsByRoom: async (roomId: number, status?: SeatStatus) => {
         const res = await api.get<ApiResponse<Seat[]>>("/seat", {
             params: {
                 roomId,
@@ -19,6 +19,11 @@ export const seatService = {
             },
         });
 
+        return res.data;
+    },
+
+    getAllSeatStatuses: async () => {
+        const res = await api.get<ApiResponse<ItemListDto<SeatStatus>>>("/seat/statuses");
         return res.data;
     },
 

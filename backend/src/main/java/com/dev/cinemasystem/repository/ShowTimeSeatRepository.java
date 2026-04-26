@@ -37,6 +37,11 @@ public interface ShowTimeSeatRepository extends JpaRepository<ShowTimeSeat, Inte
     List<ShowTimeSeat> findAllByOrder_OrderId(Integer orderId);
 
     List<ShowTimeSeat> findAllByStatusAndHoldExpiresAtBefore(ShowTimeSeatStatus status, LocalDateTime holdExpiresAt);
+    boolean existsBySeat_SeatIdAndStatusAndHoldExpiresAtAfter(
+            Integer seatId,
+            ShowTimeSeatStatus status,
+            LocalDateTime holdExpiresAt
+    );
 
     @Query("""
         select sts

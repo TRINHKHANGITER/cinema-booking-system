@@ -2,6 +2,7 @@ package com.dev.cinemasystem.dto.roomDTO;
 
 
 import jakarta.validation.constraints.Min;
+import com.dev.cinemasystem.enums.RoomStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,5 +24,7 @@ public class RoomUpdateResquest {
 
     @Min(value = 1, message = "CINEMA_ID_INVALID")
     Integer cinemaId;
+
+    RoomStatus status;
 
 }

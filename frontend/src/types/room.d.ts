@@ -17,6 +17,7 @@ export type RoomCreationResquest = {
     capacity: number;
     roomTypeId: number;
     cinemaId: number;
+    status?: RoomStatus;
 };
 
 export type RoomUpdateResquest = {
@@ -24,6 +25,17 @@ export type RoomUpdateResquest = {
     capacity?: number;
     roomTypeId?: number;
     cinemaId?: number;
+    status?: RoomStatus;
+};
+
+export type RoomFilterParams = {
+    provinceId?: number;
+    cinemaId?: number;
+    roomTypeId?: number;
+    name?: string;
+    status?: RoomStatus | "";
+    page?: number;
+    size?: number;
 };
 
 export type RoomResponse = RoomEntity & {

@@ -6,5 +6,22 @@ export type ProvinceEntity = {
     status: ProvinceStatus;
 };
 
+export type ProvinceCreationRequest = {
+    provinceName: string;
+    status?: ProvinceStatus;
+};
+
+export type ProvinceUpdateRequest = {
+    provinceName?: string;
+    status?: ProvinceStatus;
+};
+
+export type ProvinceFilterParams = {
+    name?: string;
+    status?: ProvinceStatus | "";
+    page?: number;
+    size?: number;
+};
+
 export type ProvinceResponse = ProvinceEntity;
 export type Province = ProvinceEntity;

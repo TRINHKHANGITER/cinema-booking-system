@@ -1,16 +1,18 @@
 package com.dev.cinemasystem.service;
 
-
+import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeCreationRequest;
+import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
+import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeUpdateRequest;
 import com.dev.cinemasystem.entity.MovieType;
+import com.dev.cinemasystem.enums.MovieStatus;
+import com.dev.cinemasystem.enums.MovieTypeStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.MovieTypeMapper;
+import com.dev.cinemasystem.repository.MovieRepository;
 import com.dev.cinemasystem.repository.MovieTypeRepository;
-import com.dev.cinemasystem.dto.apiDTO.PagingDto;
-import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeResponse;
-import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeCreationRequest;
-import com.dev.cinemasystem.dto.movieTypeDTO.MovieTypeUpdateRequest;
-import com.dev.cinemasystem.enums.MovieTypeStatus;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,9 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -28,101 +34,156 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MovieTypeService {
 
-   MovieTypeMapper movieTypeMapper;
+    MovieTypeMapper movieTypeMapper;
+    MovieTypeRepository movieTypeRepository;
+    MovieRepository movieRepository;
 
-   MovieTypeRepository movieTypeRepository;
-
-
-
-
-    public MovieTypeResponse getMovieTypeById(Integer movieTypeId){
-        var movieType = movieTypeRepository.findById(movieTypeId)
+    public MovieTypeResponse getMovieTypeById(Integer movieTypeId) {
+        MovieType movieType = movieTypeRepository.findById(movieTypeId)
                 .orElseThrow(() -> {
                     log.error("Movie type with id {} not found", movieTypeId);
                     return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
                 });
-        log.info("Retrieving movie type with id: {}", movieTypeId);
+
         return movieTypeMapper.toMovieTypeResponse(movieType);
     }
 
-    public MovieTypeResponse createMovieType(MovieTypeCreationRequest request){
-        if(request == null){
-            log.error("Movie type creation request is null");
+    public MovieTypeResponse createMovieType(MovieTypeCreationRequest request) {
+        if (request == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-        if(movieTypeRepository.findByMovieTypeName(request.getMovieTypeName()) != null){
-            log.error("Movie type name {} already exists", request.getMovieTypeName());
+
+        String normalizedName = request.getMovieTypeName().trim();
+        if (movieTypeRepository.existsByMovieTypeNameIgnoreCase(normalizedName)) {
             throw new AppException(ErrorCode.MOVIE_TYPE_NAME_EXISTS);
         }
-        var movieType = movieTypeMapper.toMovieTypeFromMovieCreationRequest(request);
-        movieType.setStatus(MovieTypeStatus.ACTIVE);
-        log.info("Creating movie type with name: {}", movieType.getMovieTypeName());
-        return movieTypeMapper.toMovieTypeResponse(movieTypeRepository.save(movieType));
+
+        MovieType movieType = movieTypeMapper.toMovieTypeFromMovieCreationRequest(request);
+        movieType.setMovieTypeName(normalizedName);
+        movieType.setStatus(request.getStatus() != null ? request.getStatus() : MovieTypeStatus.ACTIVE);
+
+        MovieType savedMovieType = movieTypeRepository.save(movieType);
+        return movieTypeMapper.toMovieTypeResponse(savedMovieType);
     }
 
-    public PagingDto<MovieTypeResponse> getAllMovieTypes( MovieTypeStatus status, Integer page, Integer size){
-        if (page < 1) {
-            log.error("Invalid page number: {}", page);
-            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
-        }
-        if (size < 1 ) {
-            log.error("Invalid page size: {}", size);
-            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
-        }
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<MovieType> movieTypePage;
-        if(status != null){
-            movieTypePage = movieTypeRepository.findAllByStatus(status, pageable);
-        }else{
-            movieTypePage = movieTypeRepository.findAll(pageable);
-        }
+    public PagingDto<MovieTypeResponse> getAllMovieTypes(MovieTypeStatus status, Integer page, Integer size) {
+        return filterMovieTypes(null, status != null ? status.name() : null, page, size);
+    }
 
-        log.info("Fetching movie types - page: {}, size: {}", page, size);
-        List<MovieTypeResponse> movieTypeResponses = movieTypeMapper.toMovieTypeResponseList(movieTypePage.getContent());
-        return  PagingDto.<MovieTypeResponse>builder()
+    public PagingDto<MovieTypeResponse> filterMovieTypes(
+            String name,
+            String status,
+            Integer page,
+            Integer size
+    ) {
+        validatePageAndSize(page, size);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Specification<MovieType> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (name != null && !name.isBlank()) {
+                String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
+                predicates.add(builder.like(builder.lower(root.get("movieTypeName")), keyword));
+            }
+
+            if (status != null && !status.isBlank()) {
+                predicates.add(builder.equal(root.get("status"), parseMovieTypeStatus(status)));
+            }
+
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<MovieType> movieTypePage = movieTypeRepository.findAll(specification, pageable);
+        List<MovieTypeResponse> movieTypeResponses = movieTypeMapper.toMovieTypeResponseList(
+                movieTypePage.getContent()
+        );
+
+        return PagingDto.<MovieTypeResponse>builder()
                 .items(movieTypeResponses)
-                .currentPage(page)
-                .pageSize(size)
+                .currentPage(movieTypePage.getNumber() + 1)
+                .pageSize(movieTypePage.getSize())
                 .totalItems(movieTypePage.getTotalElements())
                 .totalPages(movieTypePage.getTotalPages())
                 .build();
     }
 
-    public MovieTypeResponse  updateMovieType(Integer movieTypeId, MovieTypeUpdateRequest request){
-        var movieType = movieTypeRepository.findById(movieTypeId)
+    public MovieTypeResponse updateMovieType(Integer movieTypeId, MovieTypeUpdateRequest request) {
+        if (request == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        MovieType movieType = movieTypeRepository.findById(movieTypeId)
                 .orElseThrow(() -> {
                     log.error("Movie type with id {} not found", movieTypeId);
                     return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
                 });
-        if(request == null){
-            log.error("Movie type update request is null");
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
-        if(request.getMovieTypeName() != null){
-           MovieType movietype2 = movieTypeRepository.findByMovieTypeName(request.getMovieTypeName());
-            if( movietype2!= null && movietype2.getMovieTypeId() != movieTypeId){
-                log.error("Movie type name {} already exists", request.getMovieTypeName());
+
+        if (request.getMovieTypeName() != null && !request.getMovieTypeName().isBlank()) {
+            String normalizedName = request.getMovieTypeName().trim();
+            if (movieTypeRepository.existsByMovieTypeNameIgnoreCaseAndMovieTypeIdNot(
+                    normalizedName,
+                    movieTypeId
+            )) {
                 throw new AppException(ErrorCode.MOVIE_TYPE_NAME_EXISTS);
             }
+            request.setMovieTypeName(normalizedName);
         }
-        log.info("Updating movie type with id: {}", movieTypeId);
-        movieTypeMapper.updateMovieTypeInfo(movieType, request);
-        return movieTypeMapper.toMovieTypeResponse(movieTypeRepository.save(movieType));
 
+        movieTypeMapper.updateMovieTypeInfo(movieType, request);
+        MovieType savedMovieType = movieTypeRepository.save(movieType);
+        return movieTypeMapper.toMovieTypeResponse(savedMovieType);
     }
 
-    public boolean deleteMovieType(Integer movieTypeId){
-        var movie = movieTypeRepository.findById(movieTypeId)
+    public boolean deleteMovieType(Integer movieTypeId) {
+        MovieType movieType = movieTypeRepository.findById(movieTypeId)
                 .orElseThrow(() -> {
-                    log.error("movieTypeId with id {} not found", movieTypeId);
-                    return new AppException(ErrorCode.MOVIE_NOT_FOUND);
+                    log.error("Movie type with id {} not found", movieTypeId);
+                    return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
                 });
-        movie.setStatus(MovieTypeStatus.INACTIVE);
-        movieTypeRepository.save(movie);
-        log.info("Deleted movie with id: {}", movieTypeId);
+
+        boolean hasActiveMovies = movieRepository.existsByMovieType_MovieTypeIdAndStatus(
+                movieTypeId,
+                MovieStatus.ACTIVE
+        );
+        if (hasActiveMovies) {
+            throw new AppException(ErrorCode.MOVIE_TYPE_HAS_ACTIVE_MOVIES);
+        }
+
+        movieType.setStatus(MovieTypeStatus.INACTIVE);
+        movieTypeRepository.save(movieType);
         return true;
     }
 
+    public List<String> getAllMovieTypeStatuses() {
+        return Arrays.stream(MovieTypeStatus.values())
+                .map(Enum::name)
+                .toList();
+    }
 
+    public List<MovieTypeResponse> getMovieTypesForMovieDropdown(MovieTypeStatus status) {
+        List<MovieType> movieTypes = status == null
+                ? movieTypeRepository.findAllByOrderByMovieTypeNameAsc()
+                : movieTypeRepository.findAllByStatusOrderByMovieTypeNameAsc(status);
+
+        return movieTypeMapper.toMovieTypeResponseList(movieTypes);
+    }
+
+    private MovieTypeStatus parseMovieTypeStatus(String value) {
+        try {
+            return MovieTypeStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private void validatePageAndSize(Integer page, Integer size) {
+        if (page == null || page < 1) {
+            throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
+        }
+
+        if (size == null || size < 1 || size > 100) {
+            throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }
 }
-

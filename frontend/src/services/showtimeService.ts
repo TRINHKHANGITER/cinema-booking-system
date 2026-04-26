@@ -1,7 +1,8 @@
 import api from "../lib/axios";
-import type { ApiResponse, PagingDto } from "../types/api";
+import type { ApiResponse, ItemListDto, PagingDto } from "../types/api";
 import type {
     ShowTimeCreationRequest,
+    ShowTimeResponse,
     ShowtimeMovieResponse,
     ShowTimeSearchRequest,
     ShowTimeStatus,
@@ -18,6 +19,7 @@ type ShowTimeFilterParams = {
     movieTypeId?: number;
     releaseDate?: string;
     releaseDateCondition?: ReleaseDateCondition;
+    movieName?: string;
     name?: string;
     movieId?: number;
     status?: ShowTimeStatus;
@@ -47,14 +49,18 @@ type ShowTimeLocationFilterParams = {
 
 export const showTimeService = {
     getShowTimesByFilters: async (params?: ShowTimeFilterParams) => {
-        const res = await api.get<ApiResponse<PagingDto<ShowtimeMovieResponse>>>("/showtime", {
+        const normalizedMovieName =
+            params?.movieName?.trim() || params?.name?.trim() || undefined;
+
+        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
             params: {
                 provinceId: params?.provinceId,
                 cinemaId: params?.cinemaId,
                 movieTypeId: params?.movieTypeId,
                 releaseDate: params?.releaseDate,
                 releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-                name: params?.name?.trim() || undefined,
+                movieName: normalizedMovieName,
+                name: normalizedMovieName,
                 movieId: params?.movieId,
                 status: params?.status,
                 page: params?.page ?? 1,
@@ -64,6 +70,11 @@ export const showTimeService = {
             },
         });
 
+        return res.data;
+    },
+
+    getAllShowTimeStatuses: async () => {
+        const res = await api.get<ApiResponse<ItemListDto<ShowTimeStatus>>>("/showtime/statuses");
         return res.data;
     },
 
