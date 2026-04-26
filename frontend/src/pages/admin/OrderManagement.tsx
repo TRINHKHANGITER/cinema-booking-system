@@ -54,13 +54,7 @@ const statusClassByOrderStatus: Record<OrderStatus, string> = {
     EXPIRED: "bg-rose-100 text-rose-700",
 };
 
-const defaultOrderStatuses: OrderStatus[] = [
-    "PAYING",
-    "PAID",
-    "CANCELLED",
-    "REFUNDED",
-    "EXPIRED",
-];
+const defaultOrderStatuses: OrderStatus[] = ["PAYING", "PAID", "CANCELLED", "REFUNDED", "EXPIRED"];
 
 const formatCountdown = (totalSeconds: number | null) => {
     if (totalSeconds === null) return "--:--:--";
@@ -92,6 +86,69 @@ const parseApiErrorCode = (error: unknown) => {
 const buildTemporaryPassword = () => {
     const randomPart = Math.random().toString(36).slice(2, 8);
     return `Temp@${randomPart}9`;
+};
+
+const mapOrderDetailToShowtime = (detail: OrderDetail): ShowTimeResponse => {
+    const showTime = detail.showTime;
+    return {
+        showTimeId: showTime.showTimeId,
+        releaseDate: showTime.releaseDate,
+        startTime: showTime.startTime,
+        endTime: showTime.endTime,
+        status: "SELLING",
+        roomId: showTime.roomId,
+        movieId: showTime.movieId,
+        movie: {
+            movieId: showTime.movieId,
+            movieName: showTime.movieName,
+        } as ShowTimeResponse["movie"],
+        room: {
+            roomId: showTime.roomId,
+            roomName: showTime.roomName,
+            cinema: {
+                cinemaId: showTime.cinemaId,
+                cinemaName: showTime.cinemaName,
+                province: {
+                    provinceId: showTime.provinceId,
+                    provinceName: showTime.provinceName,
+                },
+            },
+        } as ShowTimeResponse["room"],
+    } as ShowTimeResponse;
+};
+
+const mapOrderDetailToSeats = (detail: OrderDetail): Seat[] => {
+    return [...detail.seats]
+        .sort((first, second) => {
+            if (first.seatRow === second.seatRow) {
+                return first.seatColumn - second.seatColumn;
+            }
+            return first.seatRow.localeCompare(second.seatRow);
+        })
+        .map(
+            (seat) =>
+                ({
+                    seatId: seat.seatId,
+                    seatRow: seat.seatRow,
+                    seatColumn: seat.seatColumn,
+                    seatTypeId: seat.seatTypeId,
+                    status: "ACTIVE",
+                }) as Seat
+        );
+};
+
+const mapOrderDetailToCombos = (detail: OrderDetail): SelectedCombo[] => {
+    return detail.combos
+        .filter((combo) => combo.status === "ACTIVE" && combo.quantity > 0)
+        .map((combo) => ({
+            comboId: combo.comboId,
+            comboName: combo.comboName,
+            image: combo.comboImage,
+            description: null,
+            price: combo.unitPrice,
+            quantity: combo.quantity,
+            status: "AVAILABLE",
+        }));
 };
 
 const ModalShell = ({ open, title, onClose, panelClassName, children }: ModalShellProps) => {
@@ -200,6 +257,7 @@ const OrderManagement = () => {
     const [statusTargetOrder, setStatusTargetOrder] = useState<Order | null>(null);
     const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [resumingOrderId, setResumingOrderId] = useState<number | null>(null);
 
     const visiblePages = useMemo(() => {
         const maxButtons = 5;
@@ -220,10 +278,7 @@ const OrderManagement = () => {
         return pages;
     }, [filters.page, totalPages]);
 
-    const selectedSeatGroups = useMemo(
-        () => groupSelectedSeats(selectedSeats),
-        [selectedSeats]
-    );
+    const selectedSeatGroups = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
 
     const availableStatusTransitions = useMemo<OrderStatus[]>(() => {
         if (!statusTargetOrder) return [];
@@ -359,8 +414,7 @@ const OrderManagement = () => {
             setIsShowtimeLoading(true);
             const response = await showTimeService.getShowTimesByFilters({
                 movieName: showtimeKeyword.trim() || undefined,
-                provinceId:
-                    showtimeProvinceId === "" ? undefined : Number(showtimeProvinceId),
+                provinceId: showtimeProvinceId === "" ? undefined : Number(showtimeProvinceId),
                 cinemaId: showtimeCinemaId === "" ? undefined : Number(showtimeCinemaId),
                 releaseDate: showtimeDate || undefined,
                 status: "SELLING",
@@ -602,6 +656,48 @@ const OrderManagement = () => {
         setIsWizardOpen(true);
     };
 
+    const continuePayingOrder = async (targetOrder: Order) => {
+        if (targetOrder.status !== "PAYING") {
+            toast.error("Chỉ có thể tiếp tục với đơn đang ở trạng thái PAYING.");
+            return;
+        }
+
+        try {
+            setResumingOrderId(targetOrder.orderId);
+            const response = await orderService.getOrderDetailByOrderId(targetOrder.orderId);
+            if (response.code !== "SUCCESS" || !response.result) {
+                toast.error(response.message || "Không thể tải thông tin đơn để tiếp tục.");
+                return;
+            }
+
+            const detail = response.result;
+            if (detail.status !== "PAYING") {
+                toast.error("Đơn hàng không còn ở trạng thái PAYING.");
+                await fetchOrders();
+                return;
+            }
+
+            if (!detail.user) {
+                toast.error("Không tìm thấy thông tin khách hàng của đơn này.");
+                return;
+            }
+
+            resetWizardState();
+            setSelectedCustomer(detail.user);
+            setSelectedShowtime(mapOrderDetailToShowtime(detail));
+            setSelectedSeats(mapOrderDetailToSeats(detail));
+            setSelectedCombos(mapOrderDetailToCombos(detail));
+            setOrderId(detail.orderId);
+            setOrderExpiredAt(detail.expiredAt ?? null);
+            setWizardStep(3);
+            setIsWizardOpen(true);
+        } catch (error) {
+            toast.error(resolveApiErrorMessage(error, "Không thể tiếp tục đơn hàng này"));
+        } finally {
+            setResumingOrderId(null);
+        }
+    };
+
     const selectCustomer = async (customer: UserResponse) => {
         if (orderId) {
             await releaseCurrentPayingOrder();
@@ -614,7 +710,11 @@ const OrderManagement = () => {
     };
 
     const createCustomer = async () => {
-        if (!newCustomer.fullName.trim() || !newCustomer.email.trim() || !newCustomer.phoneNumber.trim()) {
+        if (
+            !newCustomer.fullName.trim() ||
+            !newCustomer.email.trim() ||
+            !newCustomer.phoneNumber.trim()
+        ) {
             toast.error("Vui lòng nhập đủ họ tên, email, số điện thoại.");
             return;
         }
@@ -832,7 +932,7 @@ const OrderManagement = () => {
 
     const goBackWizardStep = () => {
         if (wizardStep === 1) return;
-        setWizardStep((prev) => (Math.max(1, prev - 1) as WizardStep));
+        setWizardStep((prev) => Math.max(1, prev - 1) as WizardStep);
     };
 
     const openOrderDetail = async (targetOrderId: number) => {
@@ -914,9 +1014,7 @@ const OrderManagement = () => {
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                             Quản trị đơn hàng
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Quản lý đơn hàng
-                        </h2>
+                        <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý đơn hàng</h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
                             Tìm kiếm đơn theo khách hàng, suất chiếu, trạng thái và tạo đơn mới theo
                             luồng đặt vé.
@@ -1036,19 +1134,28 @@ const OrderManagement = () => {
                         <tbody className="divide-y divide-[var(--glx-border)]">
                             {isLoadingOrders ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                                    <td
+                                        colSpan={8}
+                                        className="px-6 py-10 text-center text-slate-500"
+                                    >
                                         Đang tải đơn hàng...
                                     </td>
                                 </tr>
                             ) : orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                                    <td
+                                        colSpan={8}
+                                        className="px-6 py-10 text-center text-slate-500"
+                                    >
                                         Không tìm thấy đơn hàng
                                     </td>
                                 </tr>
                             ) : (
                                 orders.map((order) => (
-                                    <tr key={order.orderId} className="bg-white hover:bg-slate-50/80">
+                                    <tr
+                                        key={order.orderId}
+                                        className="bg-white hover:bg-slate-50/80"
+                                    >
                                         <td className="px-6 py-4 font-semibold text-slate-700">
                                             #{order.orderId}
                                         </td>
@@ -1086,7 +1193,9 @@ const OrderManagement = () => {
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => void openOrderDetail(order.orderId)}
+                                                    onClick={() =>
+                                                        void openOrderDetail(order.orderId)
+                                                    }
                                                     className="rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white"
                                                 >
                                                     Chi tiết
@@ -1099,6 +1208,20 @@ const OrderManagement = () => {
                                                         className="rounded-md border border-[var(--glx-orange)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-orange)] transition hover:bg-[var(--glx-orange)] hover:text-white"
                                                     >
                                                         Đổi trạng thái
+                                                    </button>
+                                                )}
+                                                {order.status === "PAYING" && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            void continuePayingOrder(order)
+                                                        }
+                                                        disabled={resumingOrderId === order.orderId}
+                                                        className="rounded-md border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                                    >
+                                                        {resumingOrderId === order.orderId
+                                                            ? "Đang mở..."
+                                                            : "Tiếp tục"}
                                                     </button>
                                                 )}
                                             </div>
@@ -1347,10 +1470,13 @@ const OrderManagement = () => {
                                                     <td className="px-4 py-3 text-right">
                                                         <button
                                                             type="button"
-                                                            onClick={() => void selectCustomer(customer)}
+                                                            onClick={() =>
+                                                                void selectCustomer(customer)
+                                                            }
                                                             className="rounded-md border border-[var(--glx-blue)] px-3 py-1 text-xs font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white"
                                                         >
-                                                            {selectedCustomer?.userId === customer.userId
+                                                            {selectedCustomer?.userId ===
+                                                            customer.userId
                                                                 ? "Đã chọn"
                                                                 : "Chọn"}
                                                         </button>
@@ -1436,7 +1562,10 @@ const OrderManagement = () => {
                                 >
                                     <option value="">Tất cả tỉnh/thành</option>
                                     {provinces.map((province) => (
-                                        <option key={province.provinceId} value={province.provinceId}>
+                                        <option
+                                            key={province.provinceId}
+                                            value={province.provinceId}
+                                        >
                                             {province.provinceName}
                                         </option>
                                     ))}
@@ -1545,7 +1674,8 @@ const OrderManagement = () => {
                                                         {showtime.room?.cinema?.cinemaName ?? "-"}
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-600">
-                                                        {showtime.room?.cinema?.province?.provinceName ??
+                                                        {showtime.room?.cinema?.province
+                                                            ?.provinceName ??
                                                             showtime.room?.cinema?.provinceName ??
                                                             "-"}
                                                     </td>
@@ -1561,7 +1691,9 @@ const OrderManagement = () => {
                                                     <td className="px-4 py-3 text-right">
                                                         <button
                                                             type="button"
-                                                            onClick={() => void selectShowtime(showtime)}
+                                                            onClick={() =>
+                                                                void selectShowtime(showtime)
+                                                            }
                                                             className="rounded-md border border-[var(--glx-blue)] px-3 py-1 text-xs font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white"
                                                         >
                                                             {selectedShowtime?.showTimeId ===
@@ -1770,7 +1902,9 @@ const OrderManagement = () => {
                                                         </div>
                                                     </div>
                                                     <div className="font-semibold text-slate-700">
-                                                        {formatCurrency(combo.price * combo.quantity)}
+                                                        {formatCurrency(
+                                                            combo.price * combo.quantity
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))
@@ -1795,7 +1929,9 @@ const OrderManagement = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setComboPage((prev) => Math.max(1, prev - 1))}
+                                        onClick={() =>
+                                            setComboPage((prev) => Math.max(1, prev - 1))
+                                        }
                                         disabled={comboPage === 1 || isComboLoading}
                                         className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40"
                                     >
@@ -1807,7 +1943,9 @@ const OrderManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setComboPage((prev) => Math.min(comboTotalPages, prev + 1))
+                                            setComboPage((prev) =>
+                                                Math.min(comboTotalPages, prev + 1)
+                                            )
                                         }
                                         disabled={comboPage >= comboTotalPages || isComboLoading}
                                         className="rounded-md border border-slate-200 px-2 py-1 disabled:opacity-40"
@@ -1896,7 +2034,10 @@ const OrderManagement = () => {
 
                                 <div className="mt-3 space-y-2 text-sm">
                                     {selectedSeatGroups.map((group) => (
-                                        <div key={group.label} className="flex justify-between gap-2">
+                                        <div
+                                            key={group.label}
+                                            className="flex justify-between gap-2"
+                                        >
                                             <div>
                                                 <div className="font-semibold text-slate-700">
                                                     {group.count}x {group.label}
@@ -2036,7 +2177,9 @@ const OrderManagement = () => {
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-slate-500">Thời gian thanh toán:</span>{" "}
+                                        <span className="text-slate-500">
+                                            Thời gian thanh toán:
+                                        </span>{" "}
                                         <span className="font-semibold text-slate-700">
                                             {formatDateTime(detailOrder.paidAt)}
                                         </span>
@@ -2139,8 +2282,8 @@ const OrderManagement = () => {
                                                         {seat.seatLabel} - {seat.seatTypeName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Ticket: {seat.ticketStatus ?? "-"} | Seat map:{" "}
-                                                        {seat.showTimeSeatStatus ?? "-"}
+                                                        Ticket: {seat.ticketStatus ?? "-"} | Seat
+                                                        map: {seat.showTimeSeatStatus ?? "-"}
                                                     </div>
                                                 </div>
                                                 <div className="font-semibold text-slate-700">
@@ -2184,7 +2327,9 @@ const OrderManagement = () => {
                         </div>
 
                         <div className="rounded-md border border-slate-200 p-4">
-                            <h4 className="text-base font-bold text-slate-800">Lịch sử thanh toán</h4>
+                            <h4 className="text-base font-bold text-slate-800">
+                                Lịch sử thanh toán
+                            </h4>
                             {detailOrder.payments.length === 0 ? (
                                 <p className="mt-3 text-sm text-slate-500">Không có giao dịch.</p>
                             ) : (
