@@ -143,3 +143,12 @@ Error:
 - CORS hiện allow: `http://localhost:5173`, `http://localhost:3000`, `https://*.devtunnels.ms`.
 - Ảnh tĩnh được phục vụ từ thư mục `data/image/**`.
 - Compile đã được kiểm tra thành công bằng `mvn -DskipTests compile` (có warning dependency trùng trong `pom.xml`, nhưng build vẫn pass).
+
+
+
+## tài khoản test
+Ngân hàng: NCB
+Số thẻ: 9704198526191432198
+Tên chủ thẻ:NGUYEN VAN A
+Ngày phát hành:07/15
+Mật khẩu OTP:123456

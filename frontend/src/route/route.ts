@@ -5,6 +5,7 @@ import SearchPage from "../pages/client/SearchPage";
 import VnpayReturn from "../pages/client/VnpayReturn";
 import ShowtimesPageRoute from "./ShowtimesPageRoute";
 import QuickBookingPage from "../pages/client/QuickBooking";
+import OrderHistoryPage from "../pages/client/OrderHistory";
 
 const routePath = {
     login: "/login",
@@ -16,6 +17,7 @@ const routePath = {
     xuat_chieu_day: "/xuat-chieu/:slug/day/:day",
     xuat_chieu_province_day: "/xuat-chieu/:slug/province/:province/day/:day",
     dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
+    lich_su_dat_ve: "/lich-su-dat-ve",
     checkout_vnpay_return: "/checkout/vnpay/return",
     dat_ve_quick: "/dat-ve-quick",
 };
@@ -90,6 +92,15 @@ const cusPublicRoutes = [
         isContent: false,
         type: "CUSTOMER",
         component: Booking,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.lich_su_dat_ve,
+        label: "Lich su dat ve",
+        isContent: false,
+        type: "CUSTOMER",
+        component: OrderHistoryPage,
         isPrivate: false,
     },
 

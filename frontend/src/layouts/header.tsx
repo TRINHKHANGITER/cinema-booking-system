@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Arrow from "../components/icon/arrow";
 import Close from "../components/icon/close";
 import Member from "../components/icon/member";
@@ -8,22 +8,64 @@ import Search from "../components/icon/search";
 import Signin from "./signin";
 import Register from "./register";
 import { useAuthStore } from "../stores/slices/authSlice";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { routePath } from "../route/route";
+import { orderService } from "../services/order.service";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
+    const navigate = useNavigate();
     const { user, accessToken, signOut } = useAuthStore();
     const isSignedIn = Boolean(accessToken);
 
     const [open, setOpen] = useState<boolean>(false);
     const [openSignIn, setOpenSignIn] = useState<boolean>(false);
     const [openRegister, setOpenRegister] = useState<boolean>(false);
+    const [payingOrderCount, setPayingOrderCount] = useState<number>(0);
 
     const [openMenu, setOpenMenu] = useState<MenuType | null>(null);
 
     const toggleMenu = (menu: MenuType) => {
         setOpenMenu(openMenu === menu ? null : menu);
+    };
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        if (!isSignedIn || !user?.userId) {
+            setPayingOrderCount(0);
+            return;
+        }
+
+        const fetchPayingOrders = async () => {
+            try {
+                const response = await orderService.getOrders("PAYING");
+                if (isCancelled) return;
+
+                const count = (response.result ?? []).filter(
+                    (order) => order.userId === user.userId
+                ).length;
+                setPayingOrderCount(count);
+            } catch {
+                if (!isCancelled) {
+                    setPayingOrderCount(0);
+                }
+            }
+        };
+
+        void fetchPayingOrders();
+        const interval = setInterval(() => {
+            void fetchPayingOrders();
+        }, 30000);
+
+        return () => {
+            isCancelled = true;
+            clearInterval(interval);
+        };
+    }, [isSignedIn, user?.userId]);
+
+    const goToPayingTab = () => {
+        navigate(`${routePath.lich_su_dat_ve}?tab=paying`);
     };
     return (
         <header className="pt-5 pb-2 lg:pt-3 min-h-20 block bg-white">
@@ -346,6 +388,19 @@ scale-100 blur-0 grayscale-0)'
                                 <Search />
                             </Link>
                         </div>
+                        {isSignedIn && payingOrderCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={goToPayingTab}
+                                className="mr-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-all duration-300"
+                                title={"C\u00F3 \u0111\u01A1n \u0111ang ch\u1EDD thanh to\u00E1n"}
+                            >
+                                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f58020] px-1 text-[11px] text-white">
+                                    {payingOrderCount}
+                                </span>
+                                <span>{"Th\u00F4ng b\u00E1o"}</span>
+                            </button>
+                        )}
                         {isSignedIn ? (
                             <div className="md:px-2 py-4 relative items-center text-left md:cursor-pointer group transition-all duration-500 ease-in-out md:flex hidden">
                                 <div className="w-[40px] h-[40px] leading-[62px] text-center rounded-full bg-[#D0D0D0] border-4 border-solid border-[#E9E9E2] flex-none mr-4">
@@ -389,7 +444,9 @@ scale-100 blur-0 grayscale-0)'
                                     >
                                         <ul className="flex flex-col">
                                             <li>
-                                                <a className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer">
+                                                <a
+                                                    className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"
+                                                >
                                                     <svg
                                                         aria-hidden="true"
                                                         focusable="false"
@@ -406,7 +463,10 @@ scale-100 blur-0 grayscale-0)'
                                                 </a>
                                             </li>
                                             <li>
-                                                <a className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer">
+                                                <a
+                                                    onClick={() => navigate(routePath.lich_su_dat_ve)}
+                                                    className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"
+                                                >
                                                     <svg
                                                         aria-hidden="true"
                                                         focusable="false"
@@ -589,6 +649,15 @@ scale-100 blur-0 grayscale-0)'
                             </span>
                             Đăng nhập
                         </a>
+                        {isSignedIn && payingOrderCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={goToPayingTab}
+                                className="ml-2 rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-700"
+                            >
+                                {payingOrderCount}
+                            </button>
+                        )}
                         <button
                             className="ml-4"
                             data-hs-overlay="#hs-overlay-unstyled"

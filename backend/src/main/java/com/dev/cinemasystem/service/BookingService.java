@@ -42,6 +42,7 @@ public class BookingService {
     PriceTicketRepository priceTicketRepository;
     PaymentRepository paymentRepository;
     TicketRepository ticketRepository;
+    OrderSeatSnapshotRepository orderSeatSnapshotRepository;
     OrderMapper orderMapper;
 
     @Transactional
@@ -127,6 +128,7 @@ public class BookingService {
                 order.getOrderId(),
                 ShowTimeSeatStatus.HELD
         );
+        upsertSeatSnapshots(order, heldSeats);
 
         return toHoldSeatResponse(order, heldSeats);
     }
@@ -157,6 +159,7 @@ public class BookingService {
                 order.getOrderId(),
                 ShowTimeSeatStatus.HELD
         );
+        upsertSeatSnapshots(order, heldSeats);
 
         return toHoldSeatResponse(order, heldSeats);
     }
@@ -223,6 +226,7 @@ public class BookingService {
             throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
         }
 
+        snapshotCurrentHeldSeats(order);
         releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
         cancelOrderCombos(orderId);
         expirePendingPayments(orderId, PaymentStatus.CANCELLED);
@@ -266,6 +270,7 @@ public class BookingService {
             return;
         }
 
+        snapshotCurrentHeldSeats(order);
         releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
         cancelOrderCombos(orderId);
         order.setStatus(failedStatus);
@@ -290,6 +295,15 @@ public class BookingService {
 
         List<ShowTimeSeat> expiredHeldSeats = showTimeSeatRepository
                 .findAllByStatusAndHoldExpiresAtBefore(ShowTimeSeatStatus.HELD, now);
+
+        Map<Integer, List<ShowTimeSeat>> expiredHeldByOrderId = expiredHeldSeats.stream()
+                .filter(seat -> seat.getOrder() != null)
+                .collect(java.util.stream.Collectors.groupingBy(seat -> seat.getOrder().getOrderId()));
+
+        for (List<ShowTimeSeat> seats : expiredHeldByOrderId.values()) {
+            Order order = seats.get(0).getOrder();
+            upsertSeatSnapshots(order, seats);
+        }
 
         for (ShowTimeSeat seat : expiredHeldSeats) {
             seat.setStatus(ShowTimeSeatStatus.AVAILABLE);
@@ -511,6 +525,49 @@ public class BookingService {
         if (!changedTickets.isEmpty()) {
             ticketRepository.saveAll(changedTickets);
         }
+    }
+
+    private void snapshotCurrentHeldSeats(Order order) {
+        List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
+                order.getOrderId(),
+                ShowTimeSeatStatus.HELD
+        );
+        if (heldSeats.isEmpty()) {
+            return;
+        }
+        upsertSeatSnapshots(order, heldSeats);
+    }
+
+    private void upsertSeatSnapshots(Order order, List<ShowTimeSeat> seats) {
+        orderSeatSnapshotRepository.deleteByOrder_OrderId(order.getOrderId());
+        if (seats == null || seats.isEmpty()) {
+            return;
+        }
+
+        int roomTypeId = order.getShowTime().getRoom().getRoomType().getRoomTypeId();
+
+        List<OrderSeatSnapshot> snapshots = seats.stream()
+                .sorted(Comparator
+                        .comparing((ShowTimeSeat item) -> item.getSeat().getSeatRow())
+                        .thenComparing(item -> item.getSeat().getSeatColumn()))
+                .map(showTimeSeat -> {
+                    Seat seat = showTimeSeat.getSeat();
+                    Integer seatTypeId = seat.getSeatType().getSeatTypeId();
+                    BigDecimal unitPrice = resolveSeatPrice(roomTypeId, seatTypeId);
+                    return OrderSeatSnapshot.builder()
+                            .order(order)
+                            .seatId(seat.getSeatId())
+                            .seatRow(seat.getSeatRow())
+                            .seatColumn(seat.getSeatColumn())
+                            .seatLabel(seat.getSeatRow() + seat.getSeatColumn())
+                            .seatTypeId(seatTypeId)
+                            .seatTypeName(seat.getSeatType().getSeatTypeName())
+                            .unitPrice(unitPrice)
+                            .build();
+                })
+                .toList();
+
+        orderSeatSnapshotRepository.saveAll(snapshots);
     }
 
     private HoldSeatResponse toHoldSeatResponse(Order order, List<ShowTimeSeat> heldSeats) {
