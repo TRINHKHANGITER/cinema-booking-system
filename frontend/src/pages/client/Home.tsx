@@ -148,7 +148,7 @@ const Home = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Phim IMAX
+                                                {/* Phim IMAX */}
                                             </a>
                                         </li>
                                     </ul>

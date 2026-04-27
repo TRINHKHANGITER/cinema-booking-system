@@ -102,9 +102,11 @@ const SearchPage = () => {
     const fetchResults = async () => {
         const trimmedKeyword = appliedFilters.keyword.trim();
         const hasProvince = Boolean(appliedFilters.provinceId);
-        const hasDay = Boolean(appliedFilters.day);
+        const safeDay =
+            appliedFilters.day && appliedFilters.day >= today ? appliedFilters.day : "";
+        const hasDay = Boolean(safeDay);
 
-        const effectiveDay = hasDay ? appliedFilters.day : today;
+        const effectiveDay = hasDay ? safeDay : today;
         const releaseDateCondition = hasDay ? "EQ" : "GTE";
 
         setIsLoading(true);
@@ -204,11 +206,13 @@ const SearchPage = () => {
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        const normalizedDay = day && day < today ? today : day;
+        setDay(normalizedDay);
         setCurrentPage(1);
         setAppliedFilters({
             keyword,
             provinceId,
-            day,
+            day: normalizedDay,
         });
     };
 
@@ -269,7 +273,11 @@ const SearchPage = () => {
                                 <input
                                     type="date"
                                     value={day}
-                                    onChange={(event) => setDay(event.target.value)}
+                                    min={today}
+                                    onChange={(event) => {
+                                        const nextDay = event.target.value;
+                                        setDay(nextDay && nextDay < today ? today : nextDay);
+                                    }}
                                     className="w-full h-10 border border-[#D0D0D0] rounded px-3 outline-none focus:border-[#034EA2]"
                                 />
                             </div>

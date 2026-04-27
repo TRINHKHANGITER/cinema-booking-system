@@ -82,9 +82,10 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         return Number(province);
     }, [province]);
     const normalizedDay = useMemo(() => {
-        if (!isValidDayParam(day)) return undefined;
-        return day;
-    }, [day]);
+        const rawDay = day ?? "";
+        if (!isValidDayParam(rawDay)) return undefined;
+        return rawDay >= today ? rawDay : today;
+    }, [day, today]);
 
     const effectiveProvinceId = normalizedProvinceId;
     const effectiveDay = normalizedDay ?? today;
@@ -483,7 +484,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
     };
 
     const handleDayChange = (rawDay: string) => {
-        const nextDay = rawDay || today;
+        const normalizedRawDay = rawDay && rawDay < today ? today : rawDay;
+        const nextDay = normalizedRawDay || today;
         const nextIsCustomDay = nextDay !== today;
 
         setSelectedDay(nextDay);
@@ -667,6 +669,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                                     <input
                                         type="date"
                                         value={selectedDay}
+                                        min={today}
                                         onChange={(event) => {
                                             handleDayChange(event.target.value);
                                         }}
