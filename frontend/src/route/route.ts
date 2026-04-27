@@ -4,6 +4,7 @@ import IsShowing from "../pages/client/IsShowing";
 import SearchPage from "../pages/client/SearchPage";
 import VnpayReturn from "../pages/client/VnpayReturn";
 import ShowtimesPageRoute from "./ShowtimesPageRoute";
+import QuickBookingPage from "../pages/client/QuickBooking";
 
 const routePath = {
     login: "/login",
@@ -16,6 +17,7 @@ const routePath = {
     xuat_chieu_province_day: "/xuat-chieu/:slug/province/:province/day/:day",
     dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
     checkout_vnpay_return: "/checkout/vnpay/return",
+    dat_ve_quick: "/dat-ve-quick",
 };
 
 const cusPublicRoutes = [
@@ -88,6 +90,15 @@ const cusPublicRoutes = [
         isContent: false,
         type: "CUSTOMER",
         component: Booking,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.dat_ve_quick,
+        label: "Dat ve quick",
+        isContent: false,
+        type: "CUSTOMER",
+        component: QuickBookingPage,
         isPrivate: false,
     },
 

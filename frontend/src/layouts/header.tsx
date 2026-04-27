@@ -9,6 +9,7 @@ import Signin from "./signin";
 import Register from "./register";
 import { useAuthStore } from "../stores/slices/authSlice";
 import { Link } from "react-router-dom";
+import { routePath } from "../route/route";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
@@ -49,7 +50,7 @@ scale-100 blur-0 grayscale-0)'
                         />
                     </Link>
                     {/* repo */}
-                    <a className="xl:hidden grow text-left block mr-4" href="/booking/">
+                    <Link className="xl:hidden grow text-left block mr-4" to={routePath.dat_ve_quick}>
                         <img
                             alt="Ticket"
                             loading="lazy"
@@ -60,11 +61,11 @@ scale-100 blur-0 grayscale-0)'
                             style={{ color: "transparent" }}
                             src={"../../images/btn-ticket.webp"}
                         />
-                    </a>
+                    </Link>
                     {/* phần center */}
                     <div className="hidden xl:flex screen1200:grow screen1200:basis-full items-center gap-8 px-5 transition-all duration-300 ease-in-out">
                         <div className="grow md:flex hidden items-center justify-center">
-                            <Link to="/" className="md:block hidden mr-4">
+                            <Link to={routePath.dat_ve_quick} className="md:block hidden mr-4">
                                 <img
                                     src={"../../images/btn-ticket.webp"}
                                     alt="Ticket"
@@ -74,6 +75,7 @@ scale-100 blur-0 grayscale-0)'
                                     className='max-w-min w-[84px] h-[27px] lg:w-[112px] lg:h-[36px] object-cover duration-500 ease-in-out group-hover:opacity-100"
       scale-100 blur-0 grayscale-0)'
                                     style={{ color: "transparent" }}
+
                                 />
                             </Link>
                             <div className="hover relative">
@@ -666,7 +668,11 @@ scale-100 blur-0 grayscale-0)'
 
                 {/*mua vé và đăng kí */}
                 <div className="flex gap-2 mt-4 justify-center">
-                    <a className="md:hidden block text-center w-full">
+                    <Link
+                        className="md:hidden block text-center w-full"
+                        to={routePath.dat_ve_quick}
+                        onClick={() => setOpen(false)}
+                    >
                         <img
                             alt="Ticket"
                             loading="lazy"
@@ -678,7 +684,7 @@ scale-100 blur-0 grayscale-0)'
                             style={{ color: "transparent" }}
                             src="/images/btn-ticket.png"
                         />
-                    </a>
+                    </Link>
                     <div className="flex justify-center items-center w-full">
                         <div className="flex items-center flex-wrap justify-center flex-auto mr-1">
                             <a className="cursor-pointer logo__header grow-0">
