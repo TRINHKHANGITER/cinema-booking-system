@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { OrderComboRequest, OrderComboStatus } from "../types/orderCombo";
+import type { OrderComboRequest } from "../types/orderCombo";
 
 export const orderComboService = {
     createOrderCombo: async (data: OrderComboRequest) => {
@@ -12,12 +12,8 @@ export const orderComboService = {
         return res.data;
     },
 
-    getOrdersCombo: async (status?: OrderComboStatus) => {
-        const res = await axios.get(`/orderCombo`, {
-            params: {
-                status,
-            },
-        });
+    getOrdersCombo: async () => {
+        const res = await axios.get(`/orderCombo`);
         return res.data;
     },
 };

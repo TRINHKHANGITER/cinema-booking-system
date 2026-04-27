@@ -3,7 +3,6 @@ package com.dev.cinemasystem.service;
 import com.dev.cinemasystem.dto.ticket.TicketCreationRequest;
 import com.dev.cinemasystem.dto.ticket.TicketResponse;
 import com.dev.cinemasystem.entity.*;
-import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.TicketMapper;
@@ -53,7 +52,6 @@ public class TicketService {
         ticket.setPriceTicket(priceTicket);
         ticket.setUnitPrice(priceTicket.getPrice());
         ticket.setQrCode(buildQr(order.getOrderId(), showTime.getShowTimeId(), seat.getSeatId()));
-        ticket.setStatus(TicketStatus.ACTIVE);
 
         return ticketMapper.toTicketResponse(ticketRepository.save(ticket));
     }
@@ -84,7 +82,6 @@ public class TicketService {
                     .priceTicket(priceTicket)
                     .unitPrice(priceTicket.getPrice())
                     .qrCode(buildQr(order.getOrderId(), showTimeId, seatId))
-                    .status(TicketStatus.ACTIVE)
                     .build();
 
             responses.add(ticketMapper.toTicketResponse(ticketRepository.save(ticket)));
@@ -100,12 +97,8 @@ public class TicketService {
         return ticketMapper.toTicketResponse(ticket);
     }
 
-    public List<TicketResponse> getTickets(TicketStatus status) {
-        var tickets = status == null
-                ? ticketRepository.findAll()
-                : ticketRepository.findAllByStatus(status);
-
-        return tickets.stream().map(ticketMapper::toTicketResponse).toList();
+    public List<TicketResponse> getTickets() {
+        return ticketRepository.findAll().stream().map(ticketMapper::toTicketResponse).toList();
     }
 
     public List<TicketResponse> getTicketsByOrderId(int orderId) {

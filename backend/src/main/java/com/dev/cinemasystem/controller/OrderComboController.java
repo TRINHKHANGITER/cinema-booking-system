@@ -4,7 +4,6 @@ import com.dev.cinemasystem.dto.orderCombo.OrderComboCreationRequest;
 import com.dev.cinemasystem.dto.orderCombo.OrderComboResponse;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.service.OrderComboService;
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,9 +33,9 @@ public class OrderComboController {
     }
 
     @GetMapping
-    public ApiResponse<List<OrderComboResponse>> getOrdersCombo(@RequestParam(required = false)OrderComboStatus status) {
+    public ApiResponse<List<OrderComboResponse>> getOrdersCombo() {
         return ApiResponse.<List<OrderComboResponse>>builder()
-                .result(orderComboService.getOrdersCombo(status))
+                .result(orderComboService.getOrdersCombo())
                 .build();
     }
 }

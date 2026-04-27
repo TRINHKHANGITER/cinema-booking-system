@@ -19,7 +19,6 @@ public interface TicketMapper {
     @Mapping(target = "checkedInAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "status", ignore = true)
     Ticket toTicket(TicketCreationRequest ticketCreationRequest);
 
     @Mapping(target = "orderId", source = "order.orderId")

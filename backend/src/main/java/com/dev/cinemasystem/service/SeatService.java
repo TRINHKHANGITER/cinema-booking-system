@@ -15,7 +15,6 @@ import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
 import com.dev.cinemasystem.enums.SeatStatus;
-import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -193,7 +192,7 @@ public class SeatService {
                     return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
 
-        boolean hasActiveTickets = ticketRepository.existsBySeat_SeatIdAndStatus(seatId, TicketStatus.ACTIVE);
+        boolean hasActiveTickets = ticketRepository.existsBySeat_SeatId(seatId);
         boolean hasActiveHolds = showTimeSeatRepository.existsBySeat_SeatIdAndStatusAndHoldExpiresAtAfter(
                 seatId,
                 ShowTimeSeatStatus.HELD,

@@ -1,5 +1,39 @@
 use `cinema_booking_system_test`;
 
+-- ticket unique key migration:
+-- keep historical tickets for expired orders, but still prevent duplicate seat in same order
+SET @has_old_ticket_uq := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'ticket'
+      AND index_name = 'uq_ticket_show_seat'
+);
+SET @sql_ticket_drop_uq := IF(
+    @has_old_ticket_uq > 0,
+    'ALTER TABLE ticket DROP INDEX uq_ticket_show_seat',
+    'SELECT 1'
+);
+PREPARE stmt_ticket_drop_uq FROM @sql_ticket_drop_uq;
+EXECUTE stmt_ticket_drop_uq;
+DEALLOCATE PREPARE stmt_ticket_drop_uq;
+
+SET @has_new_ticket_uq := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'ticket'
+      AND index_name = 'uq_ticket_order_show_seat'
+);
+SET @sql_ticket_add_uq := IF(
+    @has_new_ticket_uq = 0,
+    'ALTER TABLE ticket ADD CONSTRAINT uq_ticket_order_show_seat UNIQUE (order_id, show_id, seat_id)',
+    'SELECT 1'
+);
+PREPARE stmt_ticket_add_uq FROM @sql_ticket_add_uq;
+EXECUTE stmt_ticket_add_uq;
+DEALLOCATE PREPARE stmt_ticket_add_uq;
+
 
 
 -- DROP TABLE IF EXISTS order_detail;
@@ -1440,12 +1474,12 @@ INSERT INTO orders (
       (4, 9, 255000,      0, 80000, 175000, 175000, DATE_ADD(NOW(), INTERVAL 5 MINUTE), NOW(), NOW(), 'PAYING');
 
 -- orderCombo
-INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, status) VALUES
-(1, 1, 1, 125000, 'ACTIVE'),
-(2, 4, 1, 230000, 'ACTIVE'),
-(4, 1, 1, 125000, 'ACTIVE'),
-(5, 5, 1, 310000, 'ACTIVE'),
-(7, 3, 1, 175000, 'ACTIVE');
+INSERT INTO order_combo (order_id, combo_id, quantity, unit_price) VALUES
+(1, 1, 1, 125000),
+(2, 4, 1, 230000),
+(4, 1, 1, 125000),
+(5, 5, 1, 310000),
+(7, 3, 1, 175000);
 
 -- payment
 -- INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
@@ -1504,8 +1538,7 @@ INSERT INTO ticket (
     qr_code,
     checked_in_at,
     created_at,
-    updated_at,
-    status
+    updated_at
 ) 
 SELECT
     src.order_id,
@@ -1516,25 +1549,23 @@ SELECT
     src.qr_code,
     src.checked_in_at,
     src.created_at,
-    src.updated_at,
-    src.status
+    src.updated_at
 FROM (
-    SELECT 1 AS order_id, 1 AS show_id, 73 AS seat_id, 'QR-20260325-001' AS qr_code, NULL AS checked_in_at, '2026-03-25 10:31:00' AS created_at, '2026-03-25 10:31:00' AS updated_at, 'ACTIVE' AS status
-    UNION ALL SELECT 1, 1, 74, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00', 'ACTIVE'
-    UNION ALL SELECT 2, 1, 1, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'ACTIVE'
-    UNION ALL SELECT 2, 1, 2, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00', 'ACTIVE'
-    UNION ALL SELECT 3, 2, 25, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'ACTIVE'
-    UNION ALL SELECT 3, 2, 26, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00', 'ACTIVE'
-    UNION ALL SELECT 5, 3, 85, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'ACTIVE'
-    UNION ALL SELECT 5, 3, 86, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00', 'ACTIVE'
-    UNION ALL SELECT 5, 4, 120, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'ACTIVE'
-    UNION ALL SELECT 5, 4, 121, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00', 'ACTIVE'
-    UNION ALL SELECT 6, 5, 130, 'QR-20260325-011', NULL, '2026-03-26 14:01:00', '2026-03-26 14:30:00', 'ACTIVE'
-    UNION ALL SELECT 7, 6, 49, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'ACTIVE'
-    UNION ALL SELECT 7, 7, 140, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00', 'ACTIVE'
-    UNION ALL SELECT 8, 8, 3, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
-    UNION ALL SELECT 8, 9, 13, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
-    UNION ALL SELECT 8, 9, 14, NULL, NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00', 'CANCELLED'
+    SELECT 1 AS order_id, 1 AS show_id, 73 AS seat_id, 'QR-20260325-001' AS qr_code, NULL AS checked_in_at, '2026-03-25 10:31:00' AS created_at, '2026-03-25 10:31:00' AS updated_at
+    UNION ALL SELECT 1, 1, 74, 'QR-20260325-002', NULL, '2026-03-25 10:31:00', '2026-03-25 10:31:00'
+    UNION ALL SELECT 2, 1, 1, 'QR-20260325-003', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00'
+    UNION ALL SELECT 2, 1, 2, 'QR-20260325-004', NULL, '2026-03-25 13:01:00', '2026-03-25 13:01:00'
+    UNION ALL SELECT 3, 2, 25, 'QR-20260325-005', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00'
+    UNION ALL SELECT 3, 2, 26, 'QR-20260325-006', NULL, '2026-03-25 16:46:00', '2026-03-25 16:46:00'
+    UNION ALL SELECT 5, 3, 85, 'QR-20260325-007', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00'
+    UNION ALL SELECT 5, 3, 86, 'QR-20260325-008', NULL, '2026-03-26 09:16:00', '2026-03-26 09:16:00'
+    UNION ALL SELECT 5, 4, 120, 'QR-20260325-009', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00'
+    UNION ALL SELECT 5, 4, 121, 'QR-20260325-010', NULL, '2026-03-26 09:17:00', '2026-03-26 09:17:00'
+    UNION ALL SELECT 7, 6, 49, 'QR-20260325-012', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00'
+    UNION ALL SELECT 7, 7, 140, 'QR-20260325-013', NULL, '2026-03-27 10:01:00', '2026-03-27 10:01:00'
+    UNION ALL SELECT 9, 9, 3, 'QR-20260328-014', NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00'
+    UNION ALL SELECT 9, 9, 13, 'QR-20260328-015', NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00'
+    UNION ALL SELECT 9, 9, 14, 'QR-20260328-016', NULL, '2026-03-28 15:31:00', '2026-03-28 15:31:00'
 ) src
 JOIN show_time st ON st.show_time_id = src.show_id
 JOIN room r ON r.room_id = st.room_id
@@ -1546,11 +1577,12 @@ set show_time.release_date = now(6),
 
 UPDATE show_time_seat sts
 JOIN ticket t ON t.show_id = sts.show_time_id AND t.seat_id = sts.seat_id
+JOIN orders o ON o.order_id = t.order_id
 SET sts.status = 'SOLD',
     sts.order_id = t.order_id,
     sts.hold_expires_at = NULL,
     sts.updated_at = NOW()
-WHERE t.status IN ('ACTIVE', 'USED');
+WHERE o.status = 'PAID';
 
 UPDATE show_time_seat
 SET status = 'HELD',

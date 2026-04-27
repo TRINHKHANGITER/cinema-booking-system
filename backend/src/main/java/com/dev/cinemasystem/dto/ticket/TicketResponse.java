@@ -1,6 +1,4 @@
 package com.dev.cinemasystem.dto.ticket;
-
-import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,5 +21,4 @@ public class TicketResponse {
     LocalDateTime checkedInAt;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
-    TicketStatus status;
 }

@@ -1,6 +1,4 @@
 package com.dev.cinemasystem.dto.orderCombo;
-
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -17,5 +15,4 @@ public class OrderComboResponse {
     Integer comboId;
     Integer quantity;
     BigDecimal unitPrice;
-    OrderComboStatus status;
 }

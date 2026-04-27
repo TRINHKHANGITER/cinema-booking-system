@@ -6,7 +6,6 @@ import com.dev.cinemasystem.entity.Combo;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.OrderCombo;
 import com.dev.cinemasystem.enums.ComboStatus;
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderComboMapper;
@@ -43,7 +42,6 @@ public class OrderComboService {
         orderCombo.setOrder(order);
         orderCombo.setCombo(combo);
         orderCombo.setUnitPrice(combo.getPrice());
-        orderCombo.setStatus(OrderComboStatus.ACTIVE);
 
         return orderComboMapper.toComboResponse(orderComboRepository.save(orderCombo));
     }
@@ -55,11 +53,7 @@ public class OrderComboService {
         return orderComboMapper.toComboResponse(orderCombo);
     }
 
-    public List<OrderComboResponse> getOrdersCombo(OrderComboStatus status) {
-        var ordersCombo = status == null
-                ? orderComboRepository.findAll()
-                : orderComboRepository.findAllByStatus(status);
-
-        return ordersCombo.stream().map(orderComboMapper::toComboResponse).toList();
+    public List<OrderComboResponse> getOrdersCombo() {
+        return orderComboRepository.findAll().stream().map(orderComboMapper::toComboResponse).toList();
     }
 }

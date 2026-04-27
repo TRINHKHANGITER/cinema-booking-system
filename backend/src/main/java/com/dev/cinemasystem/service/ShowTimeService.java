@@ -16,7 +16,6 @@ import com.dev.cinemasystem.enums.SeatStatus;
 import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.enums.SortDirection;
-import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.MovieMapper;
@@ -302,11 +301,7 @@ public class ShowTimeService {
                     return new AppException(ErrorCode.SHOWTIME_NOT_FOUND);
                 });
 
-        boolean hasActiveTickets = ticketRepository.existsByShow_ShowTimeIdAndStatus(
-                showTimeId,
-                TicketStatus.ACTIVE
-        );
-        if (hasActiveTickets) {
+        if (ticketRepository.existsByShow_ShowTimeId(showTimeId)) {
             throw new AppException(ErrorCode.SHOWTIME_HAS_ACTIVE_TICKETS);
         }
 

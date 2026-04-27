@@ -141,7 +141,7 @@ const mapOrderDetailToSeats = (detail: OrderDetail): Seat[] => {
 
 const mapOrderDetailToCombos = (detail: OrderDetail): SelectedCombo[] => {
     return detail.combos
-        .filter((combo) => combo.status === "ACTIVE" && combo.quantity > 0)
+        .filter((combo) => combo.quantity > 0)
         .map((combo) => ({
             comboId: combo.comboId,
             comboName: combo.comboName,
@@ -839,7 +839,7 @@ const OrderManagement = () => {
                 image: combo.image,
                 description: combo.description,
                 price: combo.price,
-                status: combo.status,
+                status: "AVAILABLE",
                 quantity: nextQuantity,
             },
         ]);
@@ -2322,8 +2322,7 @@ const OrderManagement = () => {
                                                         {seat.seatLabel} - {seat.seatTypeName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Ticket: {seat.ticketStatus ?? "-"} | Seat
-                                                        map: {seat.showTimeSeatStatus ?? "-"}
+                                                        Seat map: {seat.showTimeSeatStatus ?? "-"}
                                                     </div>
                                                 </div>
                                                 <div className="font-semibold text-slate-700">
@@ -2353,7 +2352,7 @@ const OrderManagement = () => {
                                                         {combo.quantity}x {combo.comboName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Trạng thái: {combo.status}
+                                                        Số lượng: {combo.quantity}
                                                     </div>
                                                 </div>
                                                 <div className="font-semibold text-slate-700">
@@ -2464,7 +2463,7 @@ const OrderManagement = () => {
                                 </select>
                                 <p className="text-xs text-slate-500">
                                     Khi chuyển sang CANCELLED hoặc REFUNDED, hệ thống sẽ nhả ghế và
-                                    hủy ticket ACTIVE của đơn.
+                                    xóa ticket/combo đang giữ của đơn.
                                 </p>
                             </>
                         )}

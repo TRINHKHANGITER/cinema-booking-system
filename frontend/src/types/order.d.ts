@@ -1,8 +1,6 @@
 import type { UserResponse } from "./user";
 import type { PaymentStatus } from "./payment";
-import type { OrderComboStatus } from "./orderCombo";
 import type { ShowTimeSeatStatus } from "./showtime-seat";
-import type { TicketStatus } from "./ticket";
 
 export type OrderStatus = "PAYING" | "PAID" | "CANCELLED" | "REFUNDED" | "EXPIRED";
 
@@ -68,7 +66,6 @@ export type OrderSeatDetail = {
     seatTypeId: number;
     seatTypeName: string;
     showTimeSeatStatus: ShowTimeSeatStatus | null;
-    ticketStatus: TicketStatus | null;
     unitPrice: number | null;
 };
 
@@ -80,7 +77,6 @@ export type OrderComboDetail = {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
-    status: OrderComboStatus;
 };
 
 export type OrderPaymentDetail = {

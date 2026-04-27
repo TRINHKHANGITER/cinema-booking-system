@@ -12,14 +12,12 @@ import com.dev.cinemasystem.dto.orderDTO.OrderShowTimeDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.OrderCombo;
-import com.dev.cinemasystem.entity.OrderSeatSnapshot;
 import com.dev.cinemasystem.entity.Payment;
 import com.dev.cinemasystem.entity.Seat;
 import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
@@ -27,7 +25,6 @@ import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
 import com.dev.cinemasystem.repository.OrderComboRepository;
 import com.dev.cinemasystem.repository.OrderRepository;
-import com.dev.cinemasystem.repository.OrderSeatSnapshotRepository;
 import com.dev.cinemasystem.repository.PaymentRepository;
 import com.dev.cinemasystem.repository.ShowTimeRepository;
 import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
@@ -67,7 +64,6 @@ public class OrderService {
     UserRepository userRepository;
     ShowTimeRepository showTimeRepository;
     OrderComboRepository orderComboRepository;
-    OrderSeatSnapshotRepository orderSeatSnapshotRepository;
     ShowTimeSeatRepository showTimeSeatRepository;
     PaymentRepository paymentRepository;
     TicketRepository ticketRepository;
@@ -222,12 +218,10 @@ public class OrderService {
         OrderResponse orderResponse = orderMapper.toOrderResponse(order);
         List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(orderId);
         List<ShowTimeSeat> showTimeSeats = showTimeSeatRepository.findAllByOrder_OrderId(orderId);
-        List<OrderSeatSnapshot> seatSnapshots = orderSeatSnapshotRepository
-                .findAllByOrder_OrderIdOrderBySeatRowAscSeatColumnAsc(orderId);
         List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(orderId);
         List<Payment> payments = paymentRepository.findAllByOrder_OrderIdOrderByPaymentIdDesc(orderId);
 
-        List<OrderSeatDetailResponse> seatDetails = buildSeatDetails(tickets, showTimeSeats, seatSnapshots);
+        List<OrderSeatDetailResponse> seatDetails = buildSeatDetails(tickets, showTimeSeats);
         List<OrderComboDetailResponse> comboDetails = orderCombos.stream()
                 .map(orderCombo -> OrderComboDetailResponse.builder()
                         .orderComboId(orderCombo.getOrderComboId())
@@ -237,7 +231,6 @@ public class OrderService {
                         .quantity(orderCombo.getQuantity())
                         .unitPrice(orderCombo.getUnitPrice())
                         .lineTotal(orderCombo.getUnitPrice().multiply(BigDecimal.valueOf(orderCombo.getQuantity())))
-                        .status(orderCombo.getStatus())
                         .build())
                 .toList();
 
@@ -288,22 +281,7 @@ public class OrderService {
     }
 
     private void cancelOrderCombos(Integer orderId) {
-        List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(orderId);
-        if (orderCombos.isEmpty()) {
-            return;
-        }
-
-        boolean changed = false;
-        for (OrderCombo orderCombo : orderCombos) {
-            if (orderCombo.getStatus() == OrderComboStatus.ACTIVE) {
-                orderCombo.setStatus(OrderComboStatus.CANCELLED);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            orderComboRepository.saveAll(orderCombos);
-        }
+        orderComboRepository.deleteAllByOrder_OrderId(orderId);
     }
 
     private void cancelPendingPayments(Integer orderId) {
@@ -323,8 +301,7 @@ public class OrderService {
 
     private List<OrderSeatDetailResponse> buildSeatDetails(
             List<Ticket> tickets,
-            List<ShowTimeSeat> showTimeSeats,
-            List<OrderSeatSnapshot> seatSnapshots
+            List<ShowTimeSeat> showTimeSeats
     ) {
         if (!tickets.isEmpty()) {
             Map<Integer, ShowTimeSeat> showTimeSeatBySeatId = showTimeSeats.stream()
@@ -349,7 +326,6 @@ public class OrderService {
                                 .seatTypeId(seat.getSeatType().getSeatTypeId())
                                 .seatTypeName(seat.getSeatType().getSeatTypeName())
                                 .showTimeSeatStatus(showTimeSeat != null ? showTimeSeat.getStatus() : null)
-                                .ticketStatus(ticket.getStatus())
                                 .unitPrice(ticket.getUnitPrice())
                                 .build();
                     })
@@ -371,26 +347,13 @@ public class OrderService {
                                 .seatTypeId(seat.getSeatType().getSeatTypeId())
                                 .seatTypeName(seat.getSeatType().getSeatTypeName())
                                 .showTimeSeatStatus(showTimeSeat.getStatus())
-                                .ticketStatus(null)
                                 .unitPrice(null)
                                 .build();
                     })
                     .toList();
         }
 
-        return seatSnapshots.stream()
-                .map(snapshot -> OrderSeatDetailResponse.builder()
-                        .seatId(snapshot.getSeatId())
-                        .seatRow(snapshot.getSeatRow())
-                        .seatColumn(snapshot.getSeatColumn())
-                        .seatLabel(snapshot.getSeatLabel())
-                        .seatTypeId(snapshot.getSeatTypeId())
-                        .seatTypeName(snapshot.getSeatTypeName())
-                        .showTimeSeatStatus(null)
-                        .ticketStatus(null)
-                        .unitPrice(snapshot.getUnitPrice())
-                        .build())
-                .toList();
+        return List.of();
     }
 
     private OrderShowTimeDetailResponse toOrderShowTimeDetail(ShowTime showTime) {
