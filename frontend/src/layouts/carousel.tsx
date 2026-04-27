@@ -8,7 +8,7 @@ import { provinceService } from "../services/province.service";
 import { showTimeService } from "../services/showtimeService";
 import type { Province } from "../types/province";
 import type { FullShowtimeMovieResponse, ShowTimeResponse } from "../types/showtime";
-import { formatTime } from "../utils/utils";
+import { formatTime, resolveMovieLandscapeImage } from "../utils/utils";
 
 type OpenDropdown = "" | "province" | "movie" | "cinema" | "date" | "time";
 
@@ -21,6 +21,13 @@ type MovieOption = {
 type CinemaOption = {
     cinemaId: number;
     cinemaName: string;
+};
+
+type HeroSlide = {
+    movieId: number;
+    slug: string;
+    movieName: string;
+    imageLandscape: string | null;
 };
 
 const getDateValue = (value: string) => {
@@ -95,6 +102,8 @@ const HeroSlider = () => {
     const [cinemaOptions, setCinemaOptions] = useState<CinemaOption[]>([]);
     const [dateOptions, setDateOptions] = useState<string[]>([]);
     const [showtimeOptions, setShowtimeOptions] = useState<ShowTimeResponse[]>([]);
+    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+    const [isHeroLoading, setIsHeroLoading] = useState(true);
 
     const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null);
     const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
@@ -178,6 +187,60 @@ const HeroSlider = () => {
         "/images/banner/cam-on-nguoi-da-thuc-cung-toi.jpg",
         "/images/banner/chuyen-kinh-di.jpg",
     ];
+
+    useEffect(() => {
+        let isUnmounted = false;
+
+        const fetchHeroSlides = async () => {
+            setIsHeroLoading(true);
+            try {
+                const response = await showTimeService.getGroupedShowTimesByFilters({
+                    status: "SELLING",
+                    page: 1,
+                    size: 10,
+                    sortBy: "showtime",
+                    direction: "ASC",
+                });
+
+                if (isUnmounted) return;
+                if (response.code !== "SUCCESS") {
+                    setHeroSlides([]);
+                    return;
+                }
+
+                const items = response.result?.items ?? [];
+                const mappedSlides = items.map((item) => {
+                    const normalizedSlug =
+                        typeof item.movie.slug === "string" && item.movie.slug.trim().length > 0
+                            ? item.movie.slug.trim()
+                            : String(item.movie.movieId);
+
+                    return {
+                        movieId: item.movie.movieId,
+                        slug: normalizedSlug,
+                        movieName: item.movie.movieName,
+                        imageLandscape: item.movie.imageLandscape,
+                    };
+                });
+
+                setHeroSlides(mappedSlides);
+            } catch {
+                if (!isUnmounted) {
+                    setHeroSlides([]);
+                }
+            } finally {
+                if (!isUnmounted) {
+                    setIsHeroLoading(false);
+                }
+            }
+        };
+
+        void fetchHeroSlides();
+
+        return () => {
+            isUnmounted = true;
+        };
+    }, []);
 
     useEffect(() => {
         let isUnmounted = false;
@@ -470,11 +533,30 @@ const HeroSlider = () => {
     return (
         <div className="relative h-auto overflow-hidden pb-10">
             <Slider {...settings}>
-                {slides.map((img, index) => (
-                    <div key={index} className="xl:px-6 lg:px-0">
-                        <img src={img} className="w-full object-cover" />
+                {heroSlides.length > 0
+                    ? heroSlides.map((slide) => (
+                          <div key={slide.movieId} className="xl:px-6 lg:px-0">
+                              <img
+                                  src={resolveMovieLandscapeImage(slide.imageLandscape)}
+                                  alt={slide.movieName}
+                                  className="w-full h-[260px] sm:h-[320px] md:h-[420px] xl:h-[480px] object-cover"
+                                  onClick={() => navigate(`/xuat-chieu/${slide.slug}`)}
+                              />
+                          </div>
+                      ))
+                    : slides.map((img, index) => (
+                          <div key={index} className="xl:px-6 lg:px-0">
+                              <img
+                                  src={img}
+                                  className="w-full h-[260px] sm:h-[320px] md:h-[420px] xl:h-[480px] object-cover"
+                              />
+                          </div>
+                      ))}
+                {isHeroLoading && (
+                    <div className="xl:px-6 lg:px-0">
+                        <div className="w-full h-[260px] sm:h-[320px] md:h-[420px] xl:h-[480px] bg-gray-100" />
                     </div>
-                ))}
+                )}
             </Slider>
 
             {/* QUICK BUY */}
