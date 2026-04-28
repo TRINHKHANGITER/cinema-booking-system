@@ -5,6 +5,10 @@ export type LoginRequest = {
     password: string;
 };
 
+export type GoogleLoginRequest = {
+    idToken: string;
+};
+
 export type LoginResponse = {
     accessToken: string;
     refreshToken: string;

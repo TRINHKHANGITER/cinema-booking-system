@@ -143,6 +143,9 @@ public enum ErrorCode {
 
 
 
+    ID_TOKEN_INVALID("ID_TOKEN_INVALID", HttpStatus.BAD_REQUEST, "ID token không hợp lệ"),
+    EMAIL_SENDING_FAILED("EMAIL_SENDING_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, "Gửi email thất bại"),
+
     ;
 
 

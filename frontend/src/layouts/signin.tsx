@@ -1,47 +1,74 @@
 import React, { useState } from "react";
-import Eye from "../components/icon/eye";
-import { z } from "zod"; // validate dữ liệu
-import { useForm } from "react-hook-form"; // quản lí trạng thái và sự kiện của form
-import { zodResolver } from "@hookform/resolvers/zod"; //giúp kết nối zod với hookform
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import Close from "../components/icon/close";
+import Eye from "../components/icon/eye";
 import EyeFlash from "../components/icon/eyeFlash";
 import { useAuthStore } from "../stores/slices/authSlice";
-import { toast } from "sonner";
 
 interface SigninProps {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
 const signInSchema = z.object({
-    email: z.email("Email không hợp lệ"),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 kí tự"),
+    email: z.string().email("Email không hợp lệ"),
+    password: z.string().min(6, "Mật khẩu phai co it nhat 6 ky tu"),
 });
+
 type SignInFormValues = z.infer<typeof signInSchema>;
 
 const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
     const [showPassword, setShowPassword] = useState(false);
-    const { signIn } = useAuthStore();
+    const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+    const { signIn, signInWithGoogle } = useAuthStore();
+
     const {
         register,
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
     } = useForm<SignInFormValues>({
-        resolver: zodResolver(signInSchema), // để kết nối useForm với zod đã định nghĩa
+        resolver: zodResolver(signInSchema),
     });
 
     const onSubmit = async (data: SignInFormValues) => {
         const { email, password } = data;
+
         try {
             const response = await signIn(email, password);
-            toast.success(response.message || "Đăng nhập thành công");
+            toast.success(response.message || "Đăng nhập thanh cong");
             reset();
             setOpen(false);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Đăng nhập thất bại";
+            const message = error instanceof Error ? error.message : "Đăng nhập that bai";
             toast.error(message);
         }
     };
+
+    const onGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        if (!credentialResponse.credential) {
+            toast.error("Không lấy được Google ID token");
+            return;
+        }
+
+        try {
+            setIsGoogleSubmitting(true);
+            const response = await signInWithGoogle(credentialResponse.credential);
+            toast.success(response.message || "Đăng nhập Google thanh cong");
+            reset();
+            setOpen(false);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Đăng nhập Google that bai";
+            toast.error(message);
+        } finally {
+            setIsGoogleSubmitting(false);
+        }
+    };
+
     return (
         <div
             className={`fixed inset-0 z-999 grid h-screen w-screen place-items-center bg-black/30 transition-opacity duration-300
@@ -49,7 +76,7 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
         >
             <div className="relative max-w-100 min-w-50 rounded-sm px-6 py-10 m-0 bg-white shadow-sm">
                 <div className="sm:w-[350px]">
-                    <div className=" text-center mb-4 ">
+                    <div className="text-center mb-4">
                         <img
                             src="/images/icon-login.svg"
                             alt="icon-login"
@@ -58,14 +85,12 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
                             height="120"
                         />
                         <h5 className="text-lg font-bold not-italic py-2 capitalize">
-                            Đăng nhập tài khoản
+                            Đăng nhập tai khoan
                         </h5>
                     </div>
 
-                    {/* form */}
                     <div className="login-form">
                         <form action="" onSubmit={handleSubmit(onSubmit)}>
-                            {/* email */}
                             <label className="text-xs block font-bold not-italic text-[#777777]">
                                 Email
                             </label>
@@ -73,15 +98,14 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
                             <input
                                 type="text"
                                 placeholder="Nhập Email"
-                                className="w-full mb-1 h-9 px-2 text-sm bg-white border border-gray-200 rounded 
-  transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
+                                className="w-full mb-1 h-9 px-2 text-sm bg-white border border-gray-200 rounded transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
                                 {...register("email")}
                             />
 
                             {errors.email && (
                                 <p className="text-red-400 text-sm">{errors.email.message}</p>
                             )}
-                            {/* password */}
+
                             <label className="text-xs block font-bold not-italic text-[#777777]">
                                 Mật khẩu
                             </label>
@@ -102,36 +126,59 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
                                     {showPassword ? <Eye /> : <EyeFlash />}
                                 </button>
                             </span>
+
                             {errors.password && (
                                 <p className="text-red-400 text-sm">{errors.password.message}</p>
                             )}
-                            {/* submit */}
+
                             <button
                                 type="submit"
-                                className="rounded-md hover:bg-[#e38601] transition-all duration-30 min-w-[135px] w-full focus:outline-none focus:ring-[#e38601] text-sm text-center inline-flex items-center dark:hover:bg-[#e38601] dark:focus:ring-[#e38601] justify-center text-white bg-[#F58020] w-full h-full px-5 py-2.5 uppercase mt-5 false"
-                                disabled={isSubmitting}
+                                className="rounded-md hover:bg-[#e38601] transition-all duration-30 min-w-[135px] w-full focus:outline-none focus:ring-[#e38601] text-sm text-center inline-flex items-center dark:hover:bg-[#e38601] dark:focus:ring-[#e38601] justify-center text-white bg-[#F58020] h-full px-5 py-2.5 uppercase mt-5"
+                                disabled={isSubmitting || isGoogleSubmitting}
                             >
-                                <span className="block">Đăng nhập</span>{" "}
+                                <span className="block">Đăng nhập</span>
                             </button>
-                            {/*  */}
-                            <div className="text-start mt-[14px] mb-4 ">
-                                <a className="inline cursor-pointer text-[14px] text-[#212529] font-light hover:text-[#f26b38]  transition-all duration-300">
+
+                            <div className="my-4 flex items-center gap-3 text-xs text-gray-400">
+                                <span className="h-px flex-1 bg-gray-200" />
+                                <span>Hoặc</span>
+                                <span className="h-px flex-1 bg-gray-200" />
+                            </div>
+
+                            <div
+                                className={
+                                    isGoogleSubmitting ? "pointer-events-none opacity-70" : ""
+                                }
+                            >
+                                <GoogleLogin
+                                    onSuccess={onGoogleSuccess}
+                                    onError={() => {
+                                        toast.error("Đăng nhập Google that bai");
+                                    }}
+                                    text="signin_with"
+                                    width="350"
+                                />
+                            </div>
+
+                            <div className="text-start mt-[14px] mb-4">
+                                <a className="inline cursor-pointer text-[14px] text-[#212529] font-light hover:text-[#f26b38] transition-all duration-300">
                                     Quên mật khẩu?
                                 </a>
                             </div>
                         </form>
                     </div>
+
                     <div className="log__footer text-[14px] pt-6 border-t-gray-300 border-t-3 text-center mt-3">
                         <span>Bạn chưa có tài khoản?</span>
                         <button
                             type="button"
-                            className=" cursor-pointer rounded-md hover:bg-[#e38601] transition-all duration-30 min-w-[135px] w-full focus:outline-none focus:ring-[#e38601] text-sm text-center inline-flex items-center dark:hover:bg-[#e38601] dark:focus:ring-[#e38601] justify-center border border-orange-20 text-[#f58020] hover:text-white w-auto px-6 py-[6px] font-light"
+                            className="cursor-pointer rounded-md hover:bg-[#e38601] transition-all duration-30 min-w-[135px] w-full focus:outline-none focus:ring-[#e38601] text-sm text-center inline-flex items-center dark:hover:bg-[#e38601] dark:focus:ring-[#e38601] justify-center border border-orange-20 text-[#f58020] hover:text-white w-auto px-6 py-[6px] font-light"
                         >
                             <span className="block">Đăng ký</span>
                         </button>
                     </div>
                 </div>
-                {/* button close */}
+
                 <button
                     className="closeButton"
                     onClick={() => {
@@ -149,3 +196,4 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
 };
 
 export default Signin;
+

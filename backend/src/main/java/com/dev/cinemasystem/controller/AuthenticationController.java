@@ -2,6 +2,7 @@ package com.dev.cinemasystem.controller;
 
 
 
+import com.dev.cinemasystem.dto.authDTO.GoogleLoginRequest;
 import com.dev.cinemasystem.service.AuthenticationService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.authDTO.LoginRequest;
@@ -28,6 +29,15 @@ public class AuthenticationController {
     ApiResponse<LoginResponse> authenticate(@RequestBody @Valid LoginRequest request){
         var result =  authenticationService.authenticate(request);
         return ApiResponse.<LoginResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/google")
+    ApiResponse<LoginResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
+        var result = authenticationService.loginGoogle(request);
+        return ApiResponse.<LoginResponse>builder()
+                .message("Google login successfully")
                 .result(result)
                 .build();
     }

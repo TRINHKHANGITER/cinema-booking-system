@@ -2,7 +2,11 @@ package com.dev.cinemasystem.service;
 
 
 
+import com.dev.cinemasystem.dto.authDTO.GoogleLoginRequest;
+import com.dev.cinemasystem.dto.authDTO.GoogleUserInfo;
 import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.Role;
+import com.dev.cinemasystem.enums.UserStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.UserMapper;
@@ -15,6 +19,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -44,6 +49,8 @@ public class AuthenticationService {
 
     UserMapper userMapper;
     UserRepository userRepository;
+
+    GoogleTokenService googleTokenService;
 
 
 
@@ -83,6 +90,10 @@ public class AuthenticationService {
     public LoginResponse authenticate(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
@@ -134,6 +145,58 @@ public class AuthenticationService {
             log.error("cannot create token");
             throw new RuntimeException(e);
         }
+    }
+
+
+    @Transactional
+    public LoginResponse loginGoogle(GoogleLoginRequest request) {
+        GoogleUserInfo googleUser = googleTokenService.verify(request.getIdToken());
+
+        User user = userRepository.findByGoogleProviderId(googleUser.getProviderId())
+                .orElseGet(() -> userRepository.findByEmail(googleUser.getEmail())
+                        .map(existingUser -> {
+                            existingUser.setGoogleProviderId(googleUser.getProviderId());
+
+                            if (existingUser.getFullName() == null || existingUser.getFullName().isBlank()) {
+                                existingUser.setFullName(googleUser.getFullName());
+                            }
+
+                            return userRepository.save(existingUser);
+                        })
+                        .orElseGet(() -> {
+                            User newUser = User.builder()
+                                    .fullName(
+                                            googleUser.getFullName() != null && !googleUser.getFullName().isBlank()
+                                                    ? googleUser.getFullName()
+                                                    : googleUser.getEmail()
+                                    )
+                                    .email(googleUser.getEmail())
+                                    .password(null)
+                                    .phoneNumber(null)
+                                    .role(Role.USER)
+                                    .status(UserStatus.ACTIVE)
+                                    .googleProviderId(googleUser.getProviderId())
+                                    .build();
+
+                            return userRepository.save(newUser);
+                        })
+                );
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String accessToken = generateToken(user, 24 * 7);
+        String refreshToken = generateToken(user, 24 * 30);
+
+        UserResponse userResponse = userMapper.toUserResponseFromUser(user);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .authenticated(true)
+                .user(userResponse)
+                .build();
     }
 
 

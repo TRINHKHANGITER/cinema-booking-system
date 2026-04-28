@@ -28,7 +28,7 @@ public class User {
     @Column(nullable = false)
     String fullName;
 
-    @Column(nullable = false, unique = true, length = 15)
+    @Column(unique = true, length = 15)
     String phoneNumber;
 
     LocalDate dateOfBirth;
@@ -38,7 +38,7 @@ public class User {
     GioiTinh sex;
 
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     String password;
 
     @Column(nullable = false, unique = true)
@@ -47,6 +47,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     Role role;
+
+    @Column(unique = true)
+    String googleProviderId;
+
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
