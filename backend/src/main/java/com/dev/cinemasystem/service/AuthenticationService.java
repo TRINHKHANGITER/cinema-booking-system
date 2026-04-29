@@ -2,17 +2,16 @@ package com.dev.cinemasystem.service;
 
 
 
-import com.dev.cinemasystem.dto.authDTO.GoogleLoginRequest;
-import com.dev.cinemasystem.dto.authDTO.GoogleUserInfo;
+import com.dev.cinemasystem.dto.authDTO.*;
+import com.dev.cinemasystem.entity.PasswordResetOtp;
 import com.dev.cinemasystem.entity.User;
 import com.dev.cinemasystem.enums.Role;
 import com.dev.cinemasystem.enums.UserStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.UserMapper;
+import com.dev.cinemasystem.repository.PasswordResetOtpRepository;
 import com.dev.cinemasystem.repository.UserRepository;
-import com.dev.cinemasystem.dto.authDTO.LoginRequest;
-import com.dev.cinemasystem.dto.authDTO.LoginResponse;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -31,8 +30,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
@@ -51,6 +52,10 @@ public class AuthenticationService {
     UserRepository userRepository;
 
     GoogleTokenService googleTokenService;
+
+    EmailService emailService;
+    PasswordResetOtpRepository passwordResetOtpRepository;
+    PasswordEncoder passwordEncoder;
 
 
 
@@ -94,8 +99,6 @@ public class AuthenticationService {
         if (user.getPassword() == null || user.getPassword().isBlank()) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if(!authenticated){
@@ -197,6 +200,70 @@ public class AuthenticationService {
                 .authenticated(true)
                 .user(userResponse)
                 .build();
+    }
+
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+
+        var userOpt = userRepository.findByEmail(email);
+
+        // Không báo lỗi nếu email không tồn tại để tránh người khác dò email.
+        if (userOpt.isEmpty()) {
+            return;
+        }
+
+        String otp = generateOtp();
+
+        PasswordResetOtp resetOtp = PasswordResetOtp.builder()
+                .email(email)
+                .otpHash(passwordEncoder.encode(otp))
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .used(false)
+                .build();
+
+        passwordResetOtpRepository.save(resetOtp);
+
+        emailService.sendForgotPasswordOtp(email, otp);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        PasswordResetOtp resetOtp = passwordResetOtpRepository
+                .findTopByEmailAndUsedFalseOrderByCreatedAtDesc(email)
+                .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
+
+        if (Boolean.TRUE.equals(resetOtp.getUsed())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (resetOtp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        boolean otpValid = passwordEncoder.matches(request.getOtp(), resetOtp.getOtpHash());
+
+        if (!otpValid) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        resetOtp.setUsed(true);
+        passwordResetOtpRepository.save(resetOtp);
+    }
+
+    private String generateOtp() {
+        SecureRandom random = new SecureRandom();
+        int otp = 100000 + random.nextInt(900000);
+        return String.valueOf(otp);
     }
 
 
