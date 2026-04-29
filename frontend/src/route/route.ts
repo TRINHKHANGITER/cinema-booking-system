@@ -6,6 +6,7 @@ import VnpayReturn from "../pages/client/VnpayReturn";
 import ShowtimesPageRoute from "./ShowtimesPageRoute";
 import QuickBookingPage from "../pages/client/QuickBooking";
 import OrderHistoryPage from "../pages/client/OrderHistory";
+import Login from "../pages/client/Login";
 
 const routePath = {
     login: "/login",
@@ -23,6 +24,15 @@ const routePath = {
 };
 
 const cusPublicRoutes = [
+    {
+        path: routePath.login,
+        label: "Đăng nhập",
+        isContent: true,
+        type: "COMMON",
+        component: Login,
+        isPrivate: false,
+    },
+
     {
         path: routePath.home,
         label: "Trang chu",

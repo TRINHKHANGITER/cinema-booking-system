@@ -192,6 +192,12 @@ export const { signOut, restoreAuthFromStorage } = authSlice.actions;
 type AuthStoreCompat = AuthState & {
     signIn: (email: string, password: string) => Promise<ApiResponse<LoginResponse>>;
     signInWithGoogle: (idToken: string) => Promise<ApiResponse<LoginResponse>>;
+    requestPasswordResetOtp: (email: string) => Promise<ApiResponse<null>>;
+    resetPasswordByOtp: (
+        email: string,
+        otp: string,
+        newPassword: string
+    ) => Promise<ApiResponse<null>>;
     signOut: () => Promise<void>;
     signUp: (
         fullName: string,
@@ -240,6 +246,36 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
             const errorMessage =
                 action.payload?.message ?? action.error?.message ?? "Đăng nhập với Google thất bại";
             throw new Error(errorMessage);
+        },
+        requestPasswordResetOtp: async (email: string) => {
+            try {
+                const response = await authService.forgotPassword({ email });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        resetPasswordByOtp: async (email: string, otp: string, newPassword: string) => {
+            try {
+                const response = await authService.resetPassword({ email, otp, newPassword });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
         },
         signOut: async () => {
             dispatch(signOut());
