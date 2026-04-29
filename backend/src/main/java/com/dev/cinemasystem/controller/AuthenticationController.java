@@ -45,7 +45,7 @@ public class AuthenticationController {
         authenticationService.forgotPassword(request);
 
         return ApiResponse.<Void>builder()
-                .message("Nếu email tồn tại, mã OTP đã được gửi")
+                .message("Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.")
                 .build();
     }
 

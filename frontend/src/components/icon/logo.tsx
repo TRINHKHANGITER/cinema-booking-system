@@ -1,5 +1,3 @@
-import logo from '../../../public/images/logoImage.png';
-
 type LogoIconProps = {
     className?: string;
 };
@@ -7,7 +5,7 @@ type LogoIconProps = {
 function LogoIcon({ className }: LogoIconProps) {
     return ( 
         <img
-            src={logo}
+            src="/images/logoImage.png"
             alt="Galaxy Cinema logo"
             className={className ?? "h-24 w-24 object-contain"}
         />

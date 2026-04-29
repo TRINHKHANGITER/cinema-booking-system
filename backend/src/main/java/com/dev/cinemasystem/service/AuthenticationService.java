@@ -48,6 +48,10 @@ public class AuthenticationService {
     @Value("${jwt.signerKey}")
     protected  String SIGNER_KEY ;
 
+    @NonFinal
+    @Value("${app.auth.reset-password-otp-expire-minutes:5}")
+    int resetPasswordOtpExpireMinutes;
+
     UserMapper userMapper;
     UserRepository userRepository;
 
@@ -219,13 +223,13 @@ public class AuthenticationService {
         PasswordResetOtp resetOtp = PasswordResetOtp.builder()
                 .email(email)
                 .otpHash(passwordEncoder.encode(otp))
-                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .expiresAt(LocalDateTime.now().plusMinutes(resetPasswordOtpExpireMinutes))
                 .used(false)
                 .build();
 
         passwordResetOtpRepository.save(resetOtp);
 
-        emailService.sendForgotPasswordOtp(email, otp);
+        emailService.sendForgotPasswordOtp(email, otp, resetPasswordOtpExpireMinutes);
     }
 
     @Transactional
