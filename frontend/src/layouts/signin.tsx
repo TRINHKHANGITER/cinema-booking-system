@@ -118,7 +118,7 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
 
         try {
             await requestPasswordResetOtp(normalizedEmail);
-            toast.success("Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.");
+            toast.success("Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.");
             resetResetForm({
                 email: normalizedEmail,
                 otp: "",

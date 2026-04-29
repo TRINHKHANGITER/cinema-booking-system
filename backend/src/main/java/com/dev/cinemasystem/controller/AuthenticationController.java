@@ -58,4 +58,22 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/resend-verify-email")
+    ApiResponse<Void> resendVerifyEmail(@RequestBody @Valid ResendVerifyEmailRequest request) {
+        authenticationService.resendVerifyEmailOtp(request);
+
+        return ApiResponse.<Void>builder()
+                .message("Mã OTP xác thực đã được gửi tới email của bạn.")
+                .build();
+    }
+
+    @PostMapping("/verify-email")
+    ApiResponse<Void> verifyEmail(@RequestBody @Valid VerifyEmailRequest request) {
+        authenticationService.verifyEmail(request);
+
+        return ApiResponse.<Void>builder()
+                .message("Xác thực email thành công")
+                .build();
+    }
+
 }

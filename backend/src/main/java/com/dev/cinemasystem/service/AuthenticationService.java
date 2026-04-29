@@ -3,14 +3,15 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.dto.authDTO.*;
-import com.dev.cinemasystem.entity.PasswordResetOtp;
+import com.dev.cinemasystem.entity.OtpToken;
 import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.OtpPurpose;
 import com.dev.cinemasystem.enums.Role;
 import com.dev.cinemasystem.enums.UserStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.UserMapper;
-import com.dev.cinemasystem.repository.PasswordResetOtpRepository;
+import com.dev.cinemasystem.repository.OtpTokenRepository;
 import com.dev.cinemasystem.repository.UserRepository;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.nimbusds.jose.*;
@@ -25,7 +26,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -52,15 +52,18 @@ public class AuthenticationService {
     @Value("${app.auth.reset-password-otp-expire-minutes:5}")
     int resetPasswordOtpExpireMinutes;
 
+    @NonFinal
+    @Value("${app.auth.verify-email-otp-expire-minutes:5}")
+    int verifyEmailOtpExpireMinutes;
+
     UserMapper userMapper;
     UserRepository userRepository;
 
     GoogleTokenService googleTokenService;
 
     EmailService emailService;
-    PasswordResetOtpRepository passwordResetOtpRepository;
+    OtpTokenRepository otpTokenRepository;
     PasswordEncoder passwordEncoder;
-
 
 
     public boolean introspect (String token)
@@ -207,6 +210,8 @@ public class AuthenticationService {
     }
 
 
+
+
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         String email = request.getEmail().trim().toLowerCase();
@@ -218,18 +223,7 @@ public class AuthenticationService {
             return;
         }
 
-        String otp = generateOtp();
-
-        PasswordResetOtp resetOtp = PasswordResetOtp.builder()
-                .email(email)
-                .otpHash(passwordEncoder.encode(otp))
-                .expiresAt(LocalDateTime.now().plusMinutes(resetPasswordOtpExpireMinutes))
-                .used(false)
-                .build();
-
-        passwordResetOtpRepository.save(resetOtp);
-
-        emailService.sendForgotPasswordOtp(email, otp, resetPasswordOtpExpireMinutes);
+        createOtpToken(email, OtpPurpose.RESET_PASSWORD);
     }
 
     @Transactional
@@ -239,35 +233,101 @@ public class AuthenticationService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        PasswordResetOtp resetOtp = passwordResetOtpRepository
-                .findTopByEmailAndUsedFalseOrderByCreatedAtDesc(email)
-                .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
-
-        if (Boolean.TRUE.equals(resetOtp.getUsed())) {
-            throw new AppException(ErrorCode.TOKEN_INVALID);
-        }
-
-        if (resetOtp.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.TOKEN_INVALID);
-        }
-
-        boolean otpValid = passwordEncoder.matches(request.getOtp(), resetOtp.getOtpHash());
-
-        if (!otpValid) {
-            throw new AppException(ErrorCode.TOKEN_INVALID);
-        }
+        OtpToken otpToken = getOtpTokenOrThrow(email, OtpPurpose.RESET_PASSWORD);
+        validateOtpOrThrow(otpToken, request.getOtp().trim());
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        resetOtp.setUsed(true);
-        passwordResetOtpRepository.save(resetOtp);
+        otpToken.setUsed(true);
+        otpTokenRepository.save(otpToken);
     }
+
+    @Transactional
+    public void resendVerifyEmailOtp(ResendVerifyEmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+
+        var userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return;
+        }
+
+        User user = userOpt.get();
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            return;
+        }
+
+        createOtpToken(email, OtpPurpose.VERIFY_EMAIL);
+    }
+
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        OtpToken otpToken = getOtpTokenOrThrow(email, OtpPurpose.VERIFY_EMAIL);
+        validateOtpOrThrow(otpToken, request.getOtp().trim());
+
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        otpToken.setUsed(true);
+        otpTokenRepository.save(otpToken);
+    }
+
 
     private String generateOtp() {
         SecureRandom random = new SecureRandom();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
+    }
+
+    private OtpToken createOtpToken(String email, OtpPurpose purpose) {
+        String rawOtp = generateOtp();
+        int otpExpireMinutes = getOtpExpireMinutes(purpose);
+
+        OtpToken otpToken = OtpToken.builder()
+                .email(email)
+                .otpHash(passwordEncoder.encode(rawOtp))
+                .purpose(purpose)
+                .expiresAt(LocalDateTime.now().plusMinutes(otpExpireMinutes))
+                .used(false)
+                .build();
+
+        otpTokenRepository.save(otpToken);
+
+        if (purpose == OtpPurpose.VERIFY_EMAIL) {
+            emailService.sendVerifyEmailOtp(email, rawOtp, otpExpireMinutes);
+        } else if (purpose == OtpPurpose.RESET_PASSWORD) {
+            emailService.sendForgotPasswordOtp(email, rawOtp, otpExpireMinutes);
+        }
+
+        return otpToken;
+    }
+
+    private OtpToken getOtpTokenOrThrow(String email, OtpPurpose purpose) {
+        return otpTokenRepository
+                .findTopByEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(email, purpose)
+                .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
+    }
+
+    private void validateOtpOrThrow(OtpToken otpToken, String rawOtp) {
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (!passwordEncoder.matches(rawOtp, otpToken.getOtpHash())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+    }
+
+    private int getOtpExpireMinutes(OtpPurpose purpose) {
+        if (purpose == OtpPurpose.VERIFY_EMAIL) {
+            return verifyEmailOtpExpireMinutes;
+        }
+        return resetPasswordOtpExpireMinutes;
     }
 
 

@@ -3,6 +3,7 @@ package com.dev.cinemasystem.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -114,5 +115,27 @@ public class EmailService {
                   </body>
                 </html>
                 """.formatted(otp, otpExpireMinutes);
+    }
+
+    public void sendVerifyEmailOtp(String to, String otp, int otpExpireMinutes) {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(to);
+        message.setSubject("Mã OTP xác thực tài khoản - Cinema Booking");
+        message.setText("""
+                Xin chào,
+
+                Cảm ơn bạn đã đăng ký tài khoản Cinema Booking.
+
+                Mã OTP xác thực email của bạn là: %s
+
+                Mã OTP này có hiệu lực trong %d phút.
+                Vui lòng không chia sẻ mã này cho bất kỳ ai.
+
+                Trân trọng,
+                Cinema Booking System
+                """.formatted(otp, otpExpireMinutes));
+
+        javaMailSender.send(message);
     }
 }
