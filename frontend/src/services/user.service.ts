@@ -85,5 +85,21 @@ export const userService = {
         const res = await api.post<ApiResponse<LoginResponse>>("/user/change-email/confirm", request);
         return res.data;
     },
+
+    adminRequestChangeUserEmail: async (userId: number, request: ChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<null>>(
+            `/user/admin/${userId}/change-email/request`,
+            request
+        );
+        return res.data;
+    },
+
+    adminConfirmChangeUserEmail: async (userId: number, request: ConfirmChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<UserResponse>>(
+            `/user/admin/${userId}/change-email/confirm`,
+            request
+        );
+        return res.data;
+    },
 };
 

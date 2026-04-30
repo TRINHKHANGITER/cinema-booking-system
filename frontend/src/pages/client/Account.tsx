@@ -58,6 +58,14 @@ const AccountPage = () => {
         otp: "",
     });
 
+    const resetEmailChangeForm = () => {
+        setEmailForm({
+            newEmail: "",
+            otp: "",
+        });
+        setEmailOtpSent(false);
+    };
+
     useEffect(() => {
         if (!user) return;
         const storedAddress = addressStorageKey ? localStorage.getItem(addressStorageKey) ?? "" : "";
@@ -217,7 +225,11 @@ const AccountPage = () => {
                 throw new Error(response.message || "Không thể gửi OTP đổi email.");
             }
 
-            setEmailForm((prev) => ({ ...prev, newEmail }));
+            setEmailForm((prev) => ({
+                ...prev,
+                newEmail,
+                otp: "",
+            }));
             setEmailOtpSent(true);
             toast.success(response.message || "Mã OTP đã được gửi đến email mới.");
         } catch (error) {
@@ -254,11 +266,7 @@ const AccountPage = () => {
             }
 
             await replaceSession(response.result);
-            setEmailForm({
-                newEmail: response.result.user.email,
-                otp: "",
-            });
-            setEmailOtpSent(false);
+            resetEmailChangeForm();
             setIsChangingEmail(false);
             toast.success(response.message || "Đổi email thành công.");
         } catch (error) {
@@ -539,7 +547,15 @@ const AccountPage = () => {
                         </div>
                         <button
                             type="button"
-                            onClick={() => setIsChangingEmail((prev) => !prev)}
+                            onClick={() =>
+                                setIsChangingEmail((prev) => {
+                                    const next = !prev;
+                                    if (!next) {
+                                        resetEmailChangeForm();
+                                    }
+                                    return next;
+                                })
+                            }
                             className="rounded-lg border border-[#034ea2] px-4 py-2 text-sm font-semibold text-[#034ea2] transition hover:bg-[#034ea2] hover:text-white"
                         >
                             {isChangingEmail ? "Ẩn form đổi email" : "Mở form đổi email"}
@@ -548,6 +564,12 @@ const AccountPage = () => {
 
                     {isChangingEmail && (
                         <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            {emailOtpSent && (
+                                <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                    Mã OTP đã được gửi. Vui lòng nhập OTP để xác nhận đổi email.
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <label className="block text-sm">
                                     <span className="mb-1 block font-medium text-slate-600">
@@ -556,6 +578,7 @@ const AccountPage = () => {
                                     <input
                                         type="email"
                                         value={emailForm.newEmail}
+                                        readOnly={emailOtpSent}
                                         onChange={(event) =>
                                             setEmailForm((prev) => ({
                                                 ...prev,
@@ -565,47 +588,66 @@ const AccountPage = () => {
                                         className="h-10 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-[#034ea2] focus:ring-2 focus:ring-[#034ea2]/20"
                                     />
                                 </label>
-                                <label className="block text-sm">
-                                    <span className="mb-1 block font-medium text-slate-600">Mã OTP</span>
-                                    <input
-                                        type="text"
-                                        maxLength={6}
-                                        value={emailForm.otp}
-                                        onChange={(event) =>
-                                            setEmailForm((prev) => ({
-                                                ...prev,
-                                                otp: event.target.value,
-                                            }))
-                                        }
-                                        className="h-10 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-[#034ea2] focus:ring-2 focus:ring-[#034ea2]/20"
-                                    />
-                                </label>
+                                {emailOtpSent && (
+                                    <label className="block text-sm">
+                                        <span className="mb-1 block font-medium text-slate-600">Mã OTP</span>
+                                        <input
+                                            type="text"
+                                            maxLength={6}
+                                            value={emailForm.otp}
+                                            onChange={(event) =>
+                                                setEmailForm((prev) => ({
+                                                    ...prev,
+                                                    otp: event.target.value,
+                                                }))
+                                            }
+                                            className="h-10 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-[#034ea2] focus:ring-2 focus:ring-[#034ea2]/20"
+                                        />
+                                    </label>
+                                )}
                             </div>
 
                             <div className="mt-4 flex flex-wrap gap-3">
+                                {emailOtpSent && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEmailOtpSent(false);
+                                            setEmailForm((prev) => ({
+                                                ...prev,
+                                                otp: "",
+                                            }));
+                                        }}
+                                        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+                                    >
+                                        Nhập email khác
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={requestEmailOtp}
                                     disabled={isRequestingEmailOtp}
                                     className="rounded-lg border border-[#f58020] px-4 py-2 text-sm font-semibold text-[#f58020] transition hover:bg-[#fff3e8] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {isRequestingEmailOtp ? "Đang gửi OTP..." : "Gửi OTP đổi email"}
+                                    {isRequestingEmailOtp
+                                        ? emailOtpSent
+                                            ? "Đang gửi lại OTP..."
+                                            : "Đang gửi OTP..."
+                                        : emailOtpSent
+                                          ? "Gửi lại OTP"
+                                          : "Gửi OTP đến email mới"}
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={confirmEmailChange}
-                                    disabled={isConfirmingEmail}
-                                    className="rounded-lg bg-[#f58020] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#de6f13] disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    {isConfirmingEmail ? "Đang xác thực..." : "Xác nhận đổi email"}
-                                </button>
+                                {emailOtpSent && (
+                                    <button
+                                        type="button"
+                                        onClick={confirmEmailChange}
+                                        disabled={isConfirmingEmail}
+                                        className="rounded-lg bg-[#f58020] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#de6f13] disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {isConfirmingEmail ? "Đang xác thực..." : "Xác nhận đổi email"}
+                                    </button>
+                                )}
                             </div>
-
-                            {emailOtpSent && (
-                                <p className="mt-3 text-sm text-emerald-700">
-                                    OTP đã được gửi đến email mới. Vui lòng nhập OTP để hoàn tất đổi email.
-                                </p>
-                            )}
                         </div>
                     )}
                 </section>
