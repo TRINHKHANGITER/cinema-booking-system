@@ -30,7 +30,11 @@ backend/target/
 **package-lock.json
 **/node_modules/
 **/.env
+
 **/note
+
+**/note.md
+
 **/note_chatbot.md
 **/promt.md
 **/get_content

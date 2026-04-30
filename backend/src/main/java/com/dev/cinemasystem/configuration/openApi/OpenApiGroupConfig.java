@@ -133,5 +133,12 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/checkout/vnpay/**")
                 .build();
     }
+     @Bean
+    public GroupedOpenApi geminiVnpayGroup() {
+        return GroupedOpenApi.builder()
+                .group("gemini")
+                .pathsToMatch("/gemini/**")
+                .build();
+    }
 }
 
