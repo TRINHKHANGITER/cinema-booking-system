@@ -25,7 +25,7 @@ public class ShowTimeSeatController {
     @GetMapping("/{showTimeId}")
     public ApiResponse<List<ShowTimeSeatResponse>> getSeatMap(@PathVariable Integer showTimeId) {
         return ApiResponse.<List<ShowTimeSeatResponse>>builder()
-                .message("Showtime seat map retrieved successfully")
+                .message("Lấy sơ đồ ghế suất chiếu thành công")
                 .result(bookingService.getSeatMap(showTimeId))
                 .build();
     }
@@ -33,7 +33,7 @@ public class ShowTimeSeatController {
     @PostMapping("/hold")
     public ApiResponse<HoldSeatResponse> holdSeats(@RequestBody @Valid HoldSeatRequest request) {
         return ApiResponse.<HoldSeatResponse>builder()
-                .message("Seats held successfully")
+                .message("Giữ ghế thành công")
                 .result(bookingService.holdSeats(request))
                 .build();
     }
@@ -41,7 +41,7 @@ public class ShowTimeSeatController {
     @PostMapping("/release")
     public ApiResponse<HoldSeatResponse> releaseSeats(@RequestBody @Valid ReleaseSeatRequest request) {
         return ApiResponse.<HoldSeatResponse>builder()
-                .message("Seats released successfully")
+                .message("Giải phóng ghế thành công")
                 .result(bookingService.releaseSeats(request))
                 .build();
     }

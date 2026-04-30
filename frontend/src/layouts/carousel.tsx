@@ -577,7 +577,7 @@ const HeroSlider = () => {
 
                     <div className="text-sm truncate">
                         {selectedProvince?.provinceName ||
-                            (isProvinceLoading ? "Dang tai khu vuc..." : "Chon khu vuc")}
+                            (isProvinceLoading ? "Đang tải khu vực..." : "Chọn khu vực")}
                     </div>
 
                     <div className="ml-auto pr-2">
@@ -601,7 +601,7 @@ const HeroSlider = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-3 py-2 text-sm text-gray-400">Khong co khu vuc</div>
+                                <div className="px-3 py-2 text-sm text-gray-400">Không có khu vực</div>
                             )}
                         </div>
                     )}
@@ -623,7 +623,7 @@ const HeroSlider = () => {
 
                     <div className="text-sm truncate">
                         {selectedMovie?.movieName ||
-                            (isMovieLoading ? "Dang tai phim..." : "Chon phim")}
+                            (isMovieLoading ? "Đang tải phim..." : "Chọn phim")}
                     </div>
 
                     <div className="ml-auto pr-2">
@@ -647,7 +647,7 @@ const HeroSlider = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-3 py-2 text-sm text-gray-400">Khong co phim</div>
+                                <div className="px-3 py-2 text-sm text-gray-400">Không có phim</div>
                             )}
                         </div>
                     )}
@@ -669,7 +669,7 @@ const HeroSlider = () => {
 
                     <div className="text-sm truncate">
                         {selectedCinema?.cinemaName ||
-                            (isCinemaLoading ? "Dang tai rap..." : "Chon rap")}
+                            (isCinemaLoading ? "Đang tải rạp..." : "Chọn rạp")}
                     </div>
 
                     <Arrow />
@@ -691,7 +691,7 @@ const HeroSlider = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-3 py-2 text-sm text-gray-400">Khong co rap</div>
+                                <div className="px-3 py-2 text-sm text-gray-400">Không có rạp</div>
                             )}
                         </div>
                     )}
@@ -715,8 +715,8 @@ const HeroSlider = () => {
                         {selectedDate
                             ? formatDateLabel(selectedDate)
                             : isDateLoading
-                            ? "Dang tai ngay..."
-                            : "Chon ngay"}
+                            ? "Đang tải ngày..."
+                            : "Chọn ngày"}
                     </div>
 
                     <Arrow />
@@ -739,7 +739,7 @@ const HeroSlider = () => {
                                 ))
                             ) : (
                                 <div className="px-3 py-2 text-sm text-gray-400">
-                                    Khong co ngay chieu
+                                    Không có ngày chiếu
                                 </div>
                             )}
                         </div>
@@ -764,8 +764,8 @@ const HeroSlider = () => {
                         {selectedShowtime
                             ? formatTime(selectedShowtime.startTime)
                             : isShowtimeLoading
-                            ? "Dang tai gio..."
-                            : "Chon gio"}
+                            ? "Đang tải giờ..."
+                            : "Chọn giờ"}
                     </div>
 
                     <Arrow />
@@ -788,7 +788,7 @@ const HeroSlider = () => {
                                 ))
                             ) : (
                                 <div className="px-3 py-2 text-sm text-gray-400">
-                                    Khong co suat chieu
+                                    Không có suất chiếu
                                 </div>
                             )}
                         </div>
@@ -806,7 +806,7 @@ const HeroSlider = () => {
                                 : "bg-orange-300 cursor-not-allowed"
                         }`}
                     >
-                        Mua ve nhanh
+                        Mua vé nhanh
                     </button>
                 </div>
             </div>

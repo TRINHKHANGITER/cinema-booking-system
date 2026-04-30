@@ -43,7 +43,7 @@ public class OrderController {
 //    public ApiResponse<String> cancelOrder(@PathVariable Integer orderId) {
 //        orderService.cancelOrder(orderId);
 //        return ApiResponse.<String>builder()
-//                .message("Order canceled successfully!")
+//                .message("Hủy đơn hàng thành công!")
 //                .build();
 //    }
 
@@ -79,7 +79,7 @@ public class OrderController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<OrderResponse>>builder()
-                .message("Orders filtered successfully")
+                .message("Lọc đơn hàng thành công")
                 .result(orderService.filterOrders(customerName, email, phone, showTimeId, status, page, size))
                 .build();
     }
@@ -87,7 +87,7 @@ public class OrderController {
     @GetMapping("/statuses")
     public ApiResponse<ItemListDto<String>> getAllOrderStatuses() {
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Order statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái đơn hàng thành công")
                 .result(ItemListDto.<String>builder().items(orderService.getAllOrderStatuses()).build())
                 .build();
     }
@@ -98,7 +98,7 @@ public class OrderController {
             @RequestBody @Valid OrderStatusUpdateRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Order status updated successfully")
+                .message("Cập nhật trạng thái đơn hàng thành công")
                 .result(orderService.updateStatusOrder(orderId, request.getStatus()))
                 .build();
     }

@@ -31,7 +31,7 @@ public class SeatController {
             @RequestParam(required = false) SeatStatus status
     ) {
         return ApiResponse.<List<SeatResponse>>builder()
-                .message("Seats retrieved successfully")
+                .message("Lấy danh sách ghế thành công")
                 .result(seatService.getSeatsByRoom(roomId, status))
                 .build();
     }
@@ -40,7 +40,7 @@ public class SeatController {
     public ApiResponse<ItemListDto<String>> getAllSeatStatuses() {
         List<String> statuses = seatService.getAllSeatStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Seat statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái ghế thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -48,7 +48,7 @@ public class SeatController {
     @GetMapping("/{seatId}")
     public ApiResponse<SeatResponse> getSeatById(@PathVariable Integer seatId    ) {
         return ApiResponse.<SeatResponse>builder()
-                .message("Seat retrieved successfully")
+                .message("Lấy thông tin ghế thành công")
                 .result(seatService.getSeatById(seatId))
                 .build();
     }
@@ -56,7 +56,7 @@ public class SeatController {
     @PostMapping
     public ApiResponse<SeatResponse> createSeat(@RequestBody @Valid SeatCreationResquest request) {
         return ApiResponse.<SeatResponse>builder()
-                .message("Seat created successfully")
+                .message("Tạo ghế thành công")
                 .result(seatService.createSeat(request))
                 .build();
     }
@@ -71,7 +71,7 @@ public class SeatController {
 
     ) {
         return ApiResponse.<PagingDto<SeatResponse>>builder()
-                .message("Seats retrieved successfully")
+                .message("Lấy danh sách ghế thành công")
                 .result(seatService.getAllseats(cinemaId, seatTypeId, status,page, size))
                 .build();
     }
@@ -79,7 +79,7 @@ public class SeatController {
     @PatchMapping("/{seatId}")
     public ApiResponse<SeatResponse> updateSeat(@PathVariable Integer seatId, @RequestBody @Valid SeatCreationResquest request) {
         return ApiResponse.<SeatResponse>builder()
-                .message("Seat updated successfully")
+                .message("Cập nhật ghế thành công")
                 .result(seatService.updateSeat(seatId, request))
                 .build();
     }
@@ -91,9 +91,8 @@ public class SeatController {
     public ApiResponse<Boolean> deleteSeat(@PathVariable Integer seatId) {
         return ApiResponse.<Boolean>builder()
                 .result(seatService.deleteSeat(seatId))
-                .message("Seat deleted successfully")
+                .message("Xóa ghế thành công")
                 .build();
     }
 
 }
-

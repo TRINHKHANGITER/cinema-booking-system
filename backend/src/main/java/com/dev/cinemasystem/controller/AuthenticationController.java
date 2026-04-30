@@ -35,7 +35,7 @@ public class AuthenticationController {
     ApiResponse<LoginResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
         var result = authenticationService.loginGoogle(request);
         return ApiResponse.<LoginResponse>builder()
-                .message("Google login successfully")
+                .message("Đăng nhập Google thành công")
                 .result(result)
                 .build();
     }

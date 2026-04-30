@@ -37,7 +37,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.home,
-        label: "Trang chu",
+        label: "Trang chủ",
         isContent: false,
         type: "CUSTOMER",
         component: Home,
@@ -46,7 +46,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.search,
-        label: "Search",
+        label: "Tìm kiếm",
         isContent: false,
         type: "CUSTOMER",
         component: SearchPage,
@@ -55,7 +55,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.phim_dang_chieu,
-        label: "Phim dang chieu",
+        label: "Phim đang chiếu",
         isContent: false,
         type: "CUSTOMER",
         component: IsShowing,
@@ -64,7 +64,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.xuat_chieu,
-        label: "Xuat chieu",
+        label: "Xuất chiếu",
         isContent: false,
         type: "CUSTOMER",
         component: ShowtimesPageRoute,
@@ -73,7 +73,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.xuat_chieu_province,
-        label: "Xuat chieu",
+        label: "Xuất chiếu",
         isContent: false,
         type: "CUSTOMER",
         component: ShowtimesPageRoute,
@@ -82,7 +82,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.xuat_chieu_day,
-        label: "Xuat chieu",
+        label: "Xuất chiếu",
         isContent: false,
         type: "CUSTOMER",
         component: ShowtimesPageRoute,
@@ -91,7 +91,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.xuat_chieu_province_day,
-        label: "Xuat chieu",
+        label: "Xuất chiếu",
         isContent: false,
         type: "CUSTOMER",
         component: ShowtimesPageRoute,
@@ -100,7 +100,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.dat_ve,
-        label: "Dat ve",
+        label: "Đặt vé",
         isContent: false,
         type: "CUSTOMER",
         component: Booking,
@@ -109,7 +109,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.lich_su_dat_ve,
-        label: "Lich su dat ve",
+        label: "Lịch sử đặt vé",
         isContent: false,
         type: "CUSTOMER",
         component: OrderHistoryPage,
@@ -118,7 +118,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.tai_khoan,
-        label: "Tai khoan",
+        label: "Tài khoản",
         isContent: false,
         type: "CUSTOMER",
         component: AccountPage,
@@ -127,7 +127,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.dat_ve_quick,
-        label: "Dat ve quick",
+        label: "Đặt vé nhanh",
         isContent: false,
         type: "CUSTOMER",
         component: QuickBookingPage,
@@ -136,7 +136,7 @@ const cusPublicRoutes = [
 
     {
         path: routePath.checkout_vnpay_return,
-        label: "Checkout vnpay return",
+        label: "Kết quả thanh toán VNPAY",
         isContent: false,
         type: "CUSTOMER",
         component: VnpayReturn,

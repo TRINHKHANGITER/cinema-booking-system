@@ -38,7 +38,7 @@ public class ProvinceController {
             @RequestParam(required = false) ProvinceStatus status
     ) {
         return ApiResponse.<List<ProvinceResponse>>builder()
-                .message("Provinces retrieved successfully")
+                .message("Lấy danh sách tỉnh/thành thành công")
                 .result(provinceService.getProvinces(status))
                 .build();
     }
@@ -48,7 +48,7 @@ public class ProvinceController {
             @RequestParam(required = false) ProvinceStatus status
     ) {
         return ApiResponse.<ItemListDto<ProvinceResponse>>builder()
-                .message("Provinces retrieved successfully")
+                .message("Lấy danh sách tỉnh/thành thành công")
                 .result(ItemListDto.<ProvinceResponse>builder()
                         .items(provinceService.getProvinces(status))
                         .build())
@@ -58,7 +58,7 @@ public class ProvinceController {
     @GetMapping("/{provinceId}")
     public ApiResponse<ProvinceResponse> getProvinceById(@PathVariable Integer provinceId) {
         return ApiResponse.<ProvinceResponse>builder()
-                .message("Province retrieved successfully")
+                .message("Lấy thông tin tỉnh/thành thành công")
                 .result(provinceService.getProvinceById(provinceId))
                 .build();
     }
@@ -66,7 +66,7 @@ public class ProvinceController {
     @PostMapping
     public ApiResponse<ProvinceResponse> createProvince(@RequestBody @Valid ProvinceCreationRequest request) {
         return ApiResponse.<ProvinceResponse>builder()
-                .message("Province created successfully")
+                .message("Tạo tỉnh/thành thành công")
                 .result(provinceService.createProvince(request))
                 .build();
     }
@@ -78,7 +78,7 @@ public class ProvinceController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<ProvinceResponse>>builder()
-                .message("Provinces retrieved successfully")
+                .message("Lấy danh sách tỉnh/thành thành công")
                 .result(provinceService.getAllProvinces(status, page, size))
                 .build();
     }
@@ -91,7 +91,7 @@ public class ProvinceController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<ProvinceResponse>>builder()
-                .message("Provinces filtered successfully")
+                .message("Lọc tỉnh/thành thành công")
                 .result(provinceService.filterProvinces(name, status, page, size))
                 .build();
     }
@@ -100,7 +100,7 @@ public class ProvinceController {
     public ApiResponse<ItemListDto<String>> getAllProvinceStatuses() {
         List<String> statuses = provinceService.getAllProvinceStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Province statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái tỉnh/thành thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -111,7 +111,7 @@ public class ProvinceController {
             @RequestBody @Valid ProvinceUpdateRequest request
     ) {
         return ApiResponse.<ProvinceResponse>builder()
-                .message("Province updated successfully")
+                .message("Cập nhật tỉnh/thành thành công")
                 .result(provinceService.updateProvince(provinceId, request))
                 .build();
     }
@@ -120,7 +120,7 @@ public class ProvinceController {
     public ApiResponse<Boolean> deleteProvince(@PathVariable Integer provinceId) {
         return ApiResponse.<Boolean>builder()
                 .result(provinceService.deleteProvince(provinceId))
-                .message("Province deleted successfully")
+                .message("Xóa tỉnh/thành thành công")
                 .build();
     }
 }

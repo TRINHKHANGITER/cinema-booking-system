@@ -42,7 +42,7 @@ public class UserController {
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("User created successfully")
+                .message("Tạo người dùng thành công")
                 .result(userService.createUser(request))
                 .build();
     }
@@ -78,7 +78,7 @@ public class UserController {
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable Integer userId) {
         return ApiResponse.<UserResponse>builder()
-                .message("User retrieved successfully")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserById(userId))
                 .build();
     }
@@ -86,7 +86,7 @@ public class UserController {
     @GetMapping("/email/{email}")
     ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
         return ApiResponse.<UserResponse>builder()
-                .message("User retrieved successfully")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserByEmail(email))
                 .build();
     }
@@ -97,7 +97,7 @@ public class UserController {
             @RequestBody @Valid UserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("User updated successfully")
+                .message("Cập nhật người dùng thành công")
                 .result(userService.updateUserById(userId, request))
                 .build();
     }
@@ -108,7 +108,7 @@ public class UserController {
             @RequestBody @Valid AdminUserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin updated user successfully")
+                .message("Admin cập nhật người dùng thành công")
                 .result(userService.updateUserByAdmin(userId, request))
                 .build();
     }
@@ -117,7 +117,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserById(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("User deleted successfully")
+                .message("Xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -126,7 +126,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserByAdmin(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("Admin deleted user successfully")
+                .message("Admin xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -138,7 +138,7 @@ public class UserController {
             @RequestParam(required = false) String status
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Users retrieved successfully")
+                .message("Lấy danh sách người dùng thành công")
                 .result(userService.getAllUsers(pageNumber, pageSize, status))
                 .build();
     }
@@ -152,7 +152,7 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Users filtered successfully")
+                .message("Lọc người dùng thành công")
                 .result(userService.filterUsers(name, role, status, page, size))
                 .build();
     }
@@ -161,7 +161,7 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllRoles() {
         List<String> roles = userService.getAllRoles();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Roles retrieved successfully")
+                .message("Lấy danh sách vai trò thành công")
                 .result(ItemListDto.<String>builder().items(roles).build())
                 .build();
     }
@@ -170,7 +170,7 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllUserStatuses() {
         List<String> statuses = userService.getAllUserStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("User statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái người dùng thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -213,4 +213,3 @@ public class UserController {
                 .build();
     }
 }
-

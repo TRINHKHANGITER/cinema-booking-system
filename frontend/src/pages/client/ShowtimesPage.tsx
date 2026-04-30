@@ -406,12 +406,12 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
         const groupedByCinema = new Map<string, GroupedCinemaShowtimes>();
 
         showtimes.forEach((showtime) => {
-            const cinemaName = showtime.room?.cinema?.cinemaName ?? "Rap chua cap nhat";
+            const cinemaName = showtime.room?.cinema?.cinemaName ?? "Rạp chưa cập nhật";
             const provinceName =
                 showtime.room?.cinema?.province?.provinceName ??
                 showtime.room?.cinema?.provinceName ??
-                "Khu vuc chua cap nhat";
-            const roomTypeName = showtime.room?.roomType?.roomTypeName ?? "Suat chieu";
+                "Khu vực chưa cập nhật";
+            const roomTypeName = showtime.room?.roomType?.roomTypeName ?? "Suất chiếu";
             const groupKey = `${provinceName}__${cinemaName}`;
 
             if (!groupedByCinema.has(groupKey)) {
@@ -507,7 +507,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
     const handleOpenTrailer = () => {
         const trailerUrl = selectedMovie?.trailerUrl?.trim();
         if (!trailerUrl) {
-            toast.error("Phim nay chua co trailer");
+            toast.error("Phim này chưa có trailer");
             return;
         }
 
@@ -643,7 +643,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
 
                             <div className="movie__filter grid grid-cols-1 sm:grid-cols-2 gap-4 items-end mb-4">
                                 <div>
-                                    <label className="text-sm font-semibold text-[#034ea2]">Khu vuc</label>
+                                    <label className="text-sm font-semibold text-[#034ea2]">Khu vực</label>
                                     <select
                                         value={
                                             selectedProvinceId === "all"
@@ -655,7 +655,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                                         }}
                                         className="w-full mt-2 h-10 border border-gray-300 rounded px-3 outline-none focus:border-[#034ea2]"
                                     >
-                                        <option value="">Tat ca khu vuc</option>
+                                        <option value="">Tất cả khu vực</option>
                                         {provinces.map((item) => (
                                             <option key={item.provinceId} value={item.provinceId}>
                                                 {item.provinceName}
@@ -665,7 +665,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                                 </div>
 
                                 <div>
-                                    <label className="text-sm font-semibold text-[#034ea2]">Ngay chieu</label>
+                                    <label className="text-sm font-semibold text-[#034ea2]">Ngày chiếu</label>
                                     <input
                                         type="date"
                                         value={selectedDay}
@@ -682,10 +682,10 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
 
                             <div className="showtime__list">
                                 {isShowtimeLoading ? (
-                                    <p className="px-3 py-4 text-sm text-gray-500">Dang tai suat chieu...</p>
+                                    <p className="px-3 py-4 text-sm text-gray-500">Đang tải suất chiếu...</p>
                                 ) : groupedShowtimes.length === 0 ? (
                                     <p className="px-3 py-4 text-sm text-gray-500">
-                                        Chua co suat chieu phu hop bo loc.
+                                        Chưa có suất chiếu phù hợp bộ lọc.
                                     </p>
                                 ) : (
                                     groupedShowtimes.map((cinemaGroup, cinemaIndex) => (
@@ -758,7 +758,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                         <div className="mb-4">
                             <span className="border-l-4 border-solid border-blue-10 mr-2" />
                             <h1 className="text-xl inline-block uppercase font-semibold">
-                                Phim dang chieu
+                                Phim đang chiếu
                             </h1>
                         </div>
                         <div className="movie__content">

@@ -43,7 +43,7 @@ public class RoomTypeController {
     ) {
         Integer resolvedCinemaId = cinemaId != null ? cinemaId : cinema;
         return ApiResponse.<ItemListDto<RoomTypeResponse>>builder()
-                .message("Room types retrieved successfully")
+                .message("Lấy danh sách loại phòng thành công")
                 .result(ItemListDto.<RoomTypeResponse>builder()
                         .items(roomTypeService.getRoomTypesForRoomDropdown(provinceId, resolvedCinemaId, status))
                         .build())
@@ -54,7 +54,7 @@ public class RoomTypeController {
     @GetMapping("/{roomTypeId}")
     public ApiResponse<RoomTypeResponse> getRoomTypeById(@PathVariable Integer roomTypeId) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Room type retrieved successfully")
+                .message("Lấy thông tin loại phòng thành công")
                 .result(roomTypeService.getRoomTypeById(roomTypeId))
                 .build();
     }
@@ -62,7 +62,7 @@ public class RoomTypeController {
     @PostMapping
     public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeCreationRequest request) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Room type created successfully")
+                .message("Tạo loại phòng thành công")
                 .result(roomTypeService.createRoomType(request))
                 .build();
     }
@@ -74,7 +74,7 @@ public class RoomTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<RoomTypeResponse>>builder()
-                .message("Room types retrieved successfully")
+                .message("Lấy danh sách loại phòng thành công")
                 .result(roomTypeService.getAllRoomTypes(status, page, size))
                 .build();
     }
@@ -87,7 +87,7 @@ public class RoomTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<RoomTypeResponse>>builder()
-                .message("Room types filtered successfully")
+                .message("Lọc loại phòng thành công")
                 .result(roomTypeService.filterRoomTypes(name, status, page, size))
                 .build();
     }
@@ -96,7 +96,7 @@ public class RoomTypeController {
     public ApiResponse<ItemListDto<String>> getAllRoomTypeStatuses() {
         List<String> statuses = roomTypeService.getAllRoomTypeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Room type statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái loại phòng thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -107,7 +107,7 @@ public class RoomTypeController {
             @RequestBody @Valid RoomTypeUpdateRequest request
     ) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Room type updated successfully")
+                .message("Cập nhật loại phòng thành công")
                 .result(roomTypeService.updateRoomType(roomTypeId, request))
                 .build();
     }
@@ -116,8 +116,7 @@ public class RoomTypeController {
     public ApiResponse<Boolean> deleteRoomType(@PathVariable Integer roomTypeId) {
         return ApiResponse.<Boolean>builder()
                 .result(roomTypeService.deleteRoomType(roomTypeId))
-                .message("Room type deleted successfully")
+                .message("Xóa loại phòng thành công")
                 .build();
     }
 }
-

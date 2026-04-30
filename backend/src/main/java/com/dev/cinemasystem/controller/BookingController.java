@@ -24,7 +24,7 @@ public class BookingController {
             @RequestBody @Valid UpdateOrderCombosRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Order combos updated successfully")
+                .message("Cập nhật combo của đơn hàng thành công")
                 .result(bookingService.updateOrderCombos(orderId, request))
                 .build();
     }
@@ -32,7 +32,7 @@ public class BookingController {
     @PostMapping("/order/{orderId}/cancel")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable Integer orderId) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Order cancelled successfully")
+                .message("Hủy đơn hàng thành công")
                 .result(bookingService.cancelOrder(orderId))
                 .build();
     }

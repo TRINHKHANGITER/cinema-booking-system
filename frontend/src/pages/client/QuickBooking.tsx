@@ -40,11 +40,11 @@ type GroupedShowTimesByCinema = {
 };
 
 const STEPS: BookingStep[] = [
-    { label: "Chon phim / Rap / Suat" },
-    { label: "Chon ghe" },
-    { label: "Chon thuc an" },
-    { label: "Thanh toan" },
-    { label: "Xac nhan" },
+    { label: "Chọn phim / Rạp / Suất" },
+    { label: "Chọn ghế" },
+    { label: "Chọn thức ăn" },
+    { label: "Thanh toán" },
+    { label: "Xác nhận" },
 ];
 
 const DAYS_PER_PAGE = 4;
@@ -459,8 +459,8 @@ export default function QuickBookingPage() {
 
         filteredShowTimes.forEach((showtime) => {
             const cinemaId = showtime.room?.cinema?.cinemaId ?? -1;
-            const cinemaName = showtime.room?.cinema?.cinemaName ?? "Rap chua cap nhat";
-            const roomTypeName = showtime.room?.roomType?.roomTypeName ?? "Suat chieu";
+            const cinemaName = showtime.room?.cinema?.cinemaName ?? "Rạp chưa cập nhật";
+            const roomTypeName = showtime.room?.roomType?.roomTypeName ?? "Suất chiếu";
             const key = `${cinemaId}-${cinemaName}`;
 
             if (!groups.has(key)) {
@@ -530,12 +530,12 @@ export default function QuickBookingPage() {
 
     const handleContinue = () => {
         if (!selectedMovie) {
-            toast.error("Vui long chon phim");
+            toast.error("Vui lòng chọn phim");
             return;
         }
 
         if (!selectedShowTime) {
-            toast.error("Vui long chon suat chieu");
+            toast.error("Vui lòng chọn suất chiếu");
             return;
         }
 
@@ -599,8 +599,8 @@ export default function QuickBookingPage() {
                         <SectionHeader
                             title={
                                 selectedProvince
-                                    ? `Chon vi tri - ${selectedProvince.provinceName}`
-                                    : "Chon vi tri"
+                                    ? `Chọn vị trí - ${selectedProvince.provinceName}`
+                                    : "Chọn vị trí"
                             }
                             open={openLocation}
                             onClick={() => setOpenLocation((value) => !value)}
@@ -610,11 +610,11 @@ export default function QuickBookingPage() {
                             <div className="bg-white px-5 pb-5 shadow-md">
                                 {isProvinceLoading ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Dang tai khu vuc...
+                                        Đang tải khu vực...
                                     </div>
                                 ) : provinces.length === 0 ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Khong co khu vuc dang hoat dong.
+                                        Không có khu vực đang hoạt động.
                                     </div>
                                 ) : (
                                     <div className="flex flex-wrap gap-2">
@@ -651,8 +651,8 @@ export default function QuickBookingPage() {
                         <SectionHeader
                             title={
                                 selectedMovie
-                                    ? `Chon phim - ${selectedMovie.movieName}`
-                                    : "Chon phim"
+                                    ? `Chọn phim - ${selectedMovie.movieName}`
+                                    : "Chọn phim"
                             }
                             open={openMovie}
                             onClick={() => setOpenMovie((value) => !value)}
@@ -662,11 +662,11 @@ export default function QuickBookingPage() {
                             <div className="bg-white px-5 pb-6 shadow-md">
                                 {isMovieLoading ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Dang tai danh sach phim...
+                                        Đang tải danh sách phim...
                                     </div>
                                 ) : movies.length === 0 ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Chua co phim theo khu vuc da chon.
+                                        Chưa có phim theo khu vực đã chọn.
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-4 pt-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -720,7 +720,7 @@ export default function QuickBookingPage() {
 
                     <div className="overflow-hidden rounded-sm">
                         <SectionHeader
-                            title="Chon suat"
+                            title="Chọn suất"
                             open={openShowTime}
                             onClick={() => setOpenShowTime((value) => !value)}
                         />
@@ -729,15 +729,15 @@ export default function QuickBookingPage() {
                             <div className="bg-white px-5 pb-6 shadow-md">
                                 {!selectedMovie ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Vui long chon phim de xem suat chieu.
+                                        Vui lòng chọn phim để xem suất chiếu.
                                     </div>
                                 ) : isShowTimeLoading ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Dang tai suat chieu...
+                                        Đang tải suất chiếu...
                                     </div>
                                 ) : days.length === 0 ? (
                                     <div className="py-4 text-sm text-slate-500">
-                                        Chua co suat chieu dang mo ban.
+                                        Chưa có suất chiếu đang mở bán.
                                     </div>
                                 ) : (
                                     <>
@@ -815,7 +815,7 @@ export default function QuickBookingPage() {
                                                 }}
                                                 className="h-11 w-full border border-slate-300 bg-white px-3 text-base outline-none"
                                             >
-                                                <option value="ALL">Tat ca cac rap</option>
+                                                <option value="ALL">Tất cả các rạp</option>
                                                 {cinemas.map((cinema) => (
                                                     <option
                                                         key={cinema.cinemaId}
@@ -830,7 +830,7 @@ export default function QuickBookingPage() {
                                         <div className="space-y-5">
                                             {showTimesByCinema.length === 0 && (
                                                 <div className="rounded border border-dashed p-5 text-center text-slate-500">
-                                                    Khong co suat chieu cho bo loc hien tai.
+                                                    Không có suất chiếu cho bộ lọc hiện tại.
                                                 </div>
                                             )}
 
@@ -920,7 +920,7 @@ export default function QuickBookingPage() {
                                         <div className="mt-4 text-sm text-slate-700">
                                             <span>
                                                 {selectedShowTime?.room?.roomType?.roomTypeName ??
-                                                    "Dang cap nhat"}
+                                                    "Đang cập nhật"}
                                             </span>
                                             {(selectedMovie.minimumAge ?? 0) > 0 && (
                                                 <>
@@ -947,17 +947,17 @@ export default function QuickBookingPage() {
                                     <p>
                                         <strong>
                                             {selectedShowTime.room?.cinema?.cinemaName ??
-                                                "Rap chua cap nhat"}
+                                                "Rạp chưa cập nhật"}
                                         </strong>
                                         <span> - </span>
                                         <span>
                                             {selectedShowTime.room?.roomName ??
-                                                "Phong chieu chua cap nhat"}
+                                                "Phòng chiếu chưa cập nhật"}
                                         </span>
                                     </p>
 
                                     <p className="mt-2">
-                                        <span>Suat: </span>
+                                        <span>Suất: </span>
                                         <strong>{formatTime(selectedShowTime.startTime)}</strong>
                                         <span> - </span>
                                         <span>{formatDateVi(selectedShowTime.releaseDate)}</span>

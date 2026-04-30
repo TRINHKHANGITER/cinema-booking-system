@@ -169,18 +169,18 @@ const SearchPage = () => {
 
     const filterMessage = useMemo(() => {
         if (!appliedFilters.day && appliedFilters.provinceId) {
-            return `Dang ap dung: khu vuc da chon, ngay >= ${today}`;
+            return `Đang áp dụng: khu vực đã chọn, ngày >= ${today}`;
         }
 
         if (appliedFilters.day && !appliedFilters.provinceId) {
-            return `Dang ap dung: ngay ${appliedFilters.day}, tat ca khu vuc`;
+            return `Đang áp dụng: ngày ${appliedFilters.day}, tất cả khu vực`;
         }
 
         if (appliedFilters.day && appliedFilters.provinceId) {
-            return "Dang ap dung: khu vuc + ngay cu the";
+            return "Đang áp dụng: khu vực + ngày cụ thể";
         }
 
-        return `Dang ap dung: tat ca khu vuc, ngay >= ${today}`;
+        return `Đang áp dụng: tất cả khu vực, ngày >= ${today}`;
     }, [appliedFilters, today]);
 
     const visiblePageButtons = useMemo(() => {
@@ -224,10 +224,10 @@ const SearchPage = () => {
                         <div className="hidden md:block">
                             <span className="border-l-4 border-solid border-[#034ea2] mr-2"></span>
                             <h1 className="mr-10 text-xl font-bold not-italic uppercase inline">
-                                Tim Suat Chieu
+                                Tìm Suất Chiếu
                             </h1>
                         </div>
-                        <h1 className="md:hidden text-base font-bold uppercase">Tim Suat Chieu</h1>
+                        <h1 className="md:hidden text-base font-bold uppercase">Tìm Suất Chiếu</h1>
                     </div>
 
                     <form
@@ -250,14 +250,14 @@ const SearchPage = () => {
 
                             <div className="md:col-span-3">
                                 <label className="block text-sm font-semibold text-[#333333] mb-1">
-                                    Khu vuc
+                                    Khu vực
                                 </label>
                                 <select
                                     value={provinceId}
                                     onChange={(event) => setProvinceId(event.target.value)}
                                     className="w-full h-10 border border-[#D0D0D0] rounded px-3 outline-none focus:border-[#034EA2]"
                                 >
-                                    <option value="">Tat ca</option>
+                                    <option value="">Tất cả</option>
                                     {provinces.map((province) => (
                                         <option key={province.provinceId} value={province.provinceId}>
                                             {province.provinceName}
@@ -268,7 +268,7 @@ const SearchPage = () => {
 
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-[#333333] mb-1">
-                                    Ngay chieu
+                                    Ngày chiếu
                                 </label>
                                 <input
                                     type="date"
@@ -287,7 +287,7 @@ const SearchPage = () => {
                                     type="submit"
                                     className="h-10 w-full text-white bg-[#f26b38] hover:bg-[#fb9440] rounded transition-all duration-300"
                                 >
-                                    Tim
+                                    Tìm
                                 </button>
                             </div>
                         </div>
@@ -318,9 +318,9 @@ const SearchPage = () => {
 
                     <div className="space-y-4">
                         {isLoading ? (
-                            <p className="text-sm text-gray-500">Dang tai ket qua...</p>
+                            <p className="text-sm text-gray-500">Đang tải kết quả...</p>
                         ) : sortedResults.length === 0 ? (
-                            <p className="text-sm text-gray-500">Khong co suat chieu phu hop.</p>
+                            <p className="text-sm text-gray-500">Không có suất chiếu phù hợp.</p>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-6 mb-10">
                                 {sortedResults.map((item) => {
@@ -331,7 +331,7 @@ const SearchPage = () => {
                                             <CardShowtime movie={item.movie} />
                                             {earliestShowTime && (
                                                 <p className="mt-2 text-xs text-gray-500">
-                                                    Suat gan nhat: {normalizeDate(earliestShowTime.releaseDate)} |{" "}
+                                                    Suất gần nhất: {normalizeDate(earliestShowTime.releaseDate)} |{" "}
                                                     {formatTime(earliestShowTime.startTime)}
                                                 </p>
                                             )}

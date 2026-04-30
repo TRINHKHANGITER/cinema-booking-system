@@ -41,7 +41,7 @@ public class ComboController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<ComboResponse>>builder()
-                .message("Combos filtered successfully")
+                .message("Lọc combo thành công")
                 .result(comboService.filterCombos(name, status, page, size))
                 .build();
     }
@@ -50,7 +50,7 @@ public class ComboController {
     public ApiResponse<ItemListDto<String>> getAllComboStatuses() {
         List<String> statuses = comboService.getAllComboStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Combo statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái combo thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -58,7 +58,7 @@ public class ComboController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ComboResponse> createCombo(@Valid @ModelAttribute ComboCreationRequest request) {
         return ApiResponse.<ComboResponse>builder()
-                .message("Combo created successfully")
+                .message("Tạo combo thành công")
                 .result(comboService.createCombo(request))
                 .build();
     }
@@ -66,7 +66,7 @@ public class ComboController {
     @GetMapping("/{comboId}")
     public ApiResponse<ComboResponse> getComboById(@PathVariable Integer comboId) {
         return ApiResponse.<ComboResponse>builder()
-                .message("Combo retrieved successfully")
+                .message("Lấy thông tin combo thành công")
                 .result(comboService.getComboById(comboId))
                 .build();
     }
@@ -77,7 +77,7 @@ public class ComboController {
             @Valid @ModelAttribute ComboUpdateRequest request
     ) {
         return ApiResponse.<ComboResponse>builder()
-                .message("Combo updated successfully")
+                .message("Cập nhật combo thành công")
                 .result(comboService.updateCombo(comboId, request))
                 .build();
     }
@@ -85,7 +85,7 @@ public class ComboController {
     @DeleteMapping("/{comboId}")
     public ApiResponse<Boolean> deleteCombo(@PathVariable Integer comboId) {
         return ApiResponse.<Boolean>builder()
-                .message("Combo deleted successfully")
+                .message("Xóa combo thành công")
                 .result(comboService.deleteCombo(comboId))
                 .build();
     }

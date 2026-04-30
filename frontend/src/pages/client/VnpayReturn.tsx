@@ -100,7 +100,7 @@ export default function VnpayReturn() {
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="rounded-2xl bg-white px-8 py-6 shadow-lg border border-gray-200">
                     <p className="text-lg font-medium text-gray-700 animate-pulse">
-                        Dang tai thong tin don hang...
+                        Đang tải thông tin đơn hàng...
                     </p>
                 </div>
             </div>
@@ -114,9 +114,9 @@ export default function VnpayReturn() {
             <div className="mx-auto max-w-4xl">
                 <div className="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200">
                     <div className="bg-slate-900 px-8 py-6 text-white">
-                        <h1 className="text-2xl font-bold">Ket qua thanh toan VNPAY</h1>
+                        <h1 className="text-2xl font-bold">Kết quả thanh toán VNPAY</h1>
                         <p className="mt-2 text-sm text-slate-300">
-                            Thong tin chi tiet don hang sau khi thanh toan
+                            Thông tin chi tiết đơn hàng sau khi thanh toán
                         </p>
                     </div>
 
@@ -129,8 +129,8 @@ export default function VnpayReturn() {
                             }`}
                         >
                             {isPaid
-                                ? "Don hang da duoc thanh toan thanh cong."
-                                : "Giao dich that bai hoac da het han."}
+                                ? "Đơn hàng đã được thanh toán thành công."
+                                : "Giao dịch thất bại hoặc đã hết hạn."}
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-gray-200">
@@ -158,7 +158,7 @@ export default function VnpayReturn() {
                                 to="/"
                                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                             >
-                                Ve trang chu
+                                Về trang chủ
                             </Link>
 
                             <Link
@@ -173,7 +173,7 @@ export default function VnpayReturn() {
                                     to="/admin/orders"
                                     className="inline-flex items-center justify-center rounded-xl border border-[var(--glx-orange)] bg-white px-5 py-3 text-sm font-semibold text-[var(--glx-orange)] transition hover:bg-[var(--glx-orange)] hover:text-white"
                                 >
-                                    Ve quan ly don hang
+                                    Về quản lý đơn hàng
                                 </Link>
                             )}
                         </div>
