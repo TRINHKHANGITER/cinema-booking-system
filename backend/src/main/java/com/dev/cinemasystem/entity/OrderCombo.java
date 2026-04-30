@@ -1,6 +1,4 @@
 package com.dev.cinemasystem.entity;
-
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -33,9 +31,4 @@ public class OrderCombo {
 
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal unitPrice;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    OrderComboStatus status = OrderComboStatus.ACTIVE;
 }

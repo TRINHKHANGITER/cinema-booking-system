@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import ChoiceFood from "../../components/ui/ChoiceFood";
 import Pay from "../../components/ui/Pay";
 import ChoiceSeat from "../../components/ui/ChoiceSeat";
@@ -19,6 +19,7 @@ import { bookingService } from "../../services/booking.service";
 import { orderService } from "../../services/order.service";
 import { toast } from "sonner";
 import axios from "axios";
+import type { OrderDetail } from "../../types/order";
 
 const STEPS = ["Chọn phim / Rạp / Suất", "Chọn ghế", "Chọn thức ăn", "Thanh toán", "Xác nhận"];
 
@@ -31,33 +32,80 @@ const formatCountdown = (totalSeconds: number) => {
     return [hours, minutes, seconds].map((unit) => String(unit).padStart(2, "0")).join(":");
 };
 
+type BookingLocationState = {
+    showTimeId?: number | string;
+    showtimeId?: number | string;
+    resumeOrderId?: number | string;
+    resumeOrderExpiredAt?: string;
+    resumeFromHistory?: boolean;
+    orderDetail?: OrderDetail;
+};
+
+const toSelectedCombosFromOrderDetail = (orderDetail: OrderDetail | null): SelectedCombo[] => {
+    if (!orderDetail) return [];
+
+    return orderDetail.combos
+        .filter((combo) => combo.quantity > 0)
+        .map((combo) => ({
+            comboId: combo.comboId,
+            comboName: combo.comboName,
+            image: combo.comboImage,
+            description: null,
+            price: Number(combo.unitPrice),
+            status: "AVAILABLE",
+            quantity: combo.quantity,
+        }));
+};
+
 const Booking = () => {
     const dispatch = useAppDispatch();
     const { state } = useLocation();
+    const { showtimeId } = useParams<{ showtimeId: string }>();
+    const locationState = useMemo<BookingLocationState | null>(() => {
+        if (!state || typeof state !== "object") return null;
+        return state as BookingLocationState;
+    }, [state]);
 
     const user = useAppSelector((store) => store.auth.user);
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
+    const selectedMovie = showDetail?.movie;
 
     const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
     const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
     const [orderId, setOrderId] = useState<number | null>(null);
     const [orderExpiredAt, setOrderExpiredAt] = useState<string | null>(null);
     const [holdRemainingSeconds, setHoldRemainingSeconds] = useState<number | null>(null);
+    const [resumeOrderDetail, setResumeOrderDetail] = useState<OrderDetail | null>(null);
     const [step, setStep] = useState<1 | 2 | 3>(1);
 
-    const showTimeId = useMemo(() => {
-        if (!state || typeof state !== "object") return null;
-
-        const maybeState = state as {
-            showTimeId?: number | string;
-            showtimeId?: number | string;
-        };
-
-        const raw = maybeState.showTimeId ?? maybeState.showtimeId;
-        if (typeof raw === "number") return raw;
-        if (typeof raw === "string" && /^[0-9]+$/.test(raw)) return Number(raw);
+    const parseNumberValue = (value?: number | string | null) => {
+        if (typeof value === "number") return value;
+        if (typeof value === "string" && /^[0-9]+$/.test(value)) return Number(value);
         return null;
-    }, [state]);
+    };
+
+    const resumeOrderIdFromState = useMemo(
+        () => parseNumberValue(locationState?.resumeOrderId),
+        [locationState?.resumeOrderId]
+    );
+
+    const resumeOrderExpiredAtFromState = useMemo(
+        () => locationState?.resumeOrderExpiredAt ?? null,
+        [locationState?.resumeOrderExpiredAt]
+    );
+
+    const resumeFromHistory = useMemo(
+        () => Boolean(locationState?.resumeFromHistory || resumeOrderIdFromState),
+        [locationState?.resumeFromHistory, resumeOrderIdFromState]
+    );
+
+    const showTimeId = useMemo(() => {
+        if (showtimeId && /^[0-9]+$/.test(showtimeId)) {
+            return Number(showtimeId);
+        }
+
+        return parseNumberValue(locationState?.showTimeId ?? locationState?.showtimeId);
+    }, [showtimeId, locationState]);
 
     const orderStorageKey = useMemo(
         () => (showTimeId ? `BOOKING_ORDER_${showTimeId}` : null),
@@ -76,6 +124,7 @@ const Booking = () => {
         setOrderId(null);
         setOrderExpiredAt(null);
         setHoldRemainingSeconds(null);
+        setResumeOrderDetail(null);
         setStep(1);
         clearOrderSession();
     }, [clearOrderSession]);
@@ -94,7 +143,8 @@ const Booking = () => {
         }
 
         setSelectedSeats([]);
-        setSelectedCombos([]);
+        setSelectedCombos(toSelectedCombosFromOrderDetail(locationState?.orderDetail ?? null));
+        setResumeOrderDetail(locationState?.orderDetail ?? null);
         setStep(1);
 
         const clearPersistedOrder = () => {
@@ -106,6 +156,18 @@ const Booking = () => {
                 setOrderId(null);
                 setOrderExpiredAt(null);
                 setHoldRemainingSeconds(null);
+                if (!resumeFromHistory) {
+                    setResumeOrderDetail(null);
+                }
+            }
+        };
+
+        const persistOrderSession = (nextOrderId: number, nextExpiredAt: string | null) => {
+            if (orderStorageKey && nextExpiredAt) {
+                sessionStorage.setItem(
+                    orderStorageKey,
+                    JSON.stringify({ orderId: nextOrderId, expiredAt: nextExpiredAt })
+                );
             }
         };
 
@@ -113,6 +175,34 @@ const Booking = () => {
             if (!orderStorageKey) {
                 clearPersistedOrder();
                 return;
+            }
+
+            if (resumeOrderIdFromState) {
+                try {
+                    const response = await orderService.getOrderByOrderId(resumeOrderIdFromState);
+                    if (isCancelled) return;
+
+                    const currentOrder = response?.result;
+                    const nextExpiredAt =
+                        currentOrder?.expiredAt ?? resumeOrderExpiredAtFromState ?? null;
+                    const nextOrderId = currentOrder?.orderId ?? resumeOrderIdFromState;
+                    const isPayingOrder = currentOrder?.status === "PAYING";
+                    const nextExpiredAtMs = nextExpiredAt ? new Date(nextExpiredAt).getTime() : NaN;
+                    const hasValidExpiry = !Number.isNaN(nextExpiredAtMs) && nextExpiredAtMs > Date.now();
+
+                    if (!nextOrderId || !isPayingOrder || !hasValidExpiry) {
+                        clearPersistedOrder();
+                        return;
+                    }
+
+                    setOrderId(nextOrderId);
+                    setOrderExpiredAt(nextExpiredAt);
+                    persistOrderSession(nextOrderId, nextExpiredAt);
+                    return;
+                } catch {
+                    clearPersistedOrder();
+                    return;
+                }
             }
 
             const raw = sessionStorage.getItem(orderStorageKey);
@@ -149,10 +239,7 @@ const Booking = () => {
 
                 setOrderId(nextOrderId);
                 setOrderExpiredAt(nextExpiredAt);
-                sessionStorage.setItem(
-                    orderStorageKey,
-                    JSON.stringify({ orderId: nextOrderId, expiredAt: nextExpiredAt })
-                );
+                persistOrderSession(nextOrderId, nextExpiredAt);
             } catch {
                 clearPersistedOrder();
             }
@@ -164,7 +251,44 @@ const Booking = () => {
             isCancelled = true;
             dispatch(clearCurrentShowtime());
         };
-    }, [dispatch, orderStorageKey, showTimeId]);
+    }, [
+        dispatch,
+        locationState?.orderDetail,
+        orderStorageKey,
+        resumeFromHistory,
+        resumeOrderExpiredAtFromState,
+        resumeOrderIdFromState,
+        showTimeId,
+    ]);
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        if (!resumeFromHistory || !orderId) {
+            if (!resumeFromHistory) {
+                setResumeOrderDetail(null);
+            }
+            return;
+        }
+
+        const fetchOrderDetail = async () => {
+            try {
+                const response = await orderService.getOrderDetailByOrderId(orderId);
+                if (isCancelled) return;
+                const nextDetail = response.result ?? null;
+                setResumeOrderDetail(nextDetail);
+                if (nextDetail) {
+                    setSelectedCombos(toSelectedCombosFromOrderDetail(nextDetail));
+                }
+            } catch {}
+        };
+
+        void fetchOrderDetail();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [orderId, resumeFromHistory]);
 
     const selectedShowTime = useMemo(() => {
         if (!showDetail) return null;
@@ -285,7 +409,6 @@ const Booking = () => {
             return null;
         }
     };
-
     const handleNext = async () => {
         if (step === 1) {
             if (selectedSeats.length === 0 || !orderId) return;
@@ -397,8 +520,8 @@ const Booking = () => {
                             <div className="bg-white p-4 grid grid-cols-3 xl:gap-2 items-center">
                                 <div className="row-span-2 md:row-span-1 xl:row-span-2 block md:hidden xl:block">
                                     <img
-                                        src={resolveMoviePortraitImage(showDetail?.imagePortrait)}
-                                        alt={showDetail?.movieName}
+                                        src={resolveMoviePortraitImage(selectedMovie?.imagePortrait)}
+                                        alt={selectedMovie?.movieName}
                                         width={100}
                                         height={150}
                                         className="xl:w-full xl:h-full w-[78px] h-[110px] rounded object-cover"
@@ -408,14 +531,14 @@ const Booking = () => {
 
                                 <div className="flex-1 col-span-2 md:col-span-1 xl:col-span-2">
                                     <h3 className="text-sm xl:text-base font-bold xl:mb-2">
-                                        {showDetail?.movieName}
+                                        {selectedMovie?.movieName}
                                     </h3>
                                     <p className="text-sm inline-block">
                                         {selectedShowTime?.room?.roomType?.roomTypeName}
                                     </p>
-                                    {(showDetail?.minimumAge ?? 0) > 0 && (
+                                    {(selectedMovie?.minimumAge ?? 0) > 0 && (
                                         <span className="inline-flex items-center justify-center w-[38px] h-7 bg-[rgb(245,128,32)] rounded text-sm text-white font-bold ml-2">
-                                            T{showDetail?.minimumAge}
+                                            T{selectedMovie?.minimumAge}
                                         </span>
                                     )}
                                 </div>
@@ -511,7 +634,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="w-1/2 py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
+                                    {step === 3 ? "Thanh toán" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>
@@ -540,7 +663,7 @@ const Booking = () => {
                                     onClick={handleNext}
                                     className="px-4 h-10 bg-[rgb(245,128,32)] text-white text-sm rounded-md disabled:opacity-40"
                                 >
-                                    {step === 3 ? "Xác nhận" : "Tiếp tục"}
+                                    {step === 3 ? "Thanh toán" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>

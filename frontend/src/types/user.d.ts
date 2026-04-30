@@ -1,5 +1,5 @@
 export type Role = "USER" | "STAFF" | "ADMIN";
-export type UserStatus = "ACTIVE" | "LOCKED" | "SUSPENDED" | "DELETED";
+export type UserStatus = "PENDING_VERIFY" | "ACTIVE" | "LOCKED" | "SUSPENDED" | "DELETED";
 export type GioiTinh = "male" | "female" | "other";
 export type Sex = GioiTinh;
 
@@ -30,6 +30,15 @@ export type UserUpdateRequest = {
     phoneNumber?: string;
     dateOfBirth?: string | null;
     sex?: GioiTinh | null;
+};
+
+export type ChangeEmailRequest = {
+    newEmail: string;
+};
+
+export type ConfirmChangeEmailRequest = {
+    newEmail: string;
+    otp: string;
 };
 
 export type AdminUserCreationRequest = {

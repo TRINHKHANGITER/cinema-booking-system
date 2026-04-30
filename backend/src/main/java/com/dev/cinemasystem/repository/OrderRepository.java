@@ -2,6 +2,10 @@ package com.dev.cinemasystem.repository;
 
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.enums.OrderStatus;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -21,4 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     );
 
     List<Order> findAllByStatusAndExpiredAtBefore(OrderStatus status, LocalDateTime expiredAt);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Order o where o.orderId = :orderId")
+    Optional<Order> findByIdForUpdate(@Param("orderId") Integer orderId);
 }

@@ -3,8 +3,13 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.authDTO.LoginResponse;
+import com.dev.cinemasystem.dto.authDTO.ResendVerifyEmailRequest;
+import com.dev.cinemasystem.dto.authDTO.VerifyEmailRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserUpdateRequest;
+import com.dev.cinemasystem.dto.userDto.ChangeEmailRequest;
+import com.dev.cinemasystem.dto.userDto.ConfirmChangeEmailRequest;
 import com.dev.cinemasystem.dto.userDto.UserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
@@ -37,7 +42,7 @@ public class UserController {
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("User created successfully")
+                .message("Tạo người dùng thành công")
                 .result(userService.createUser(request))
                 .build();
     }
@@ -45,15 +50,35 @@ public class UserController {
     @PostMapping("/admin")
     ApiResponse<UserResponse> createUserByAdmin(@RequestBody @Valid AdminUserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin created user successfully")
+                .message("Tạo người dùng thành công, mã OTP đã được gửi để xác thực email")
                 .result(userService.createUserByAdmin(request))
+                .build();
+    }
+
+    @PostMapping("/admin/verify-email/resend")
+    ApiResponse<Void> adminResendCreatedUserVerifyEmailOtp(
+            @RequestBody @Valid ResendVerifyEmailRequest request
+    ) {
+        userService.adminResendCreatedUserVerifyEmailOtp(request);
+        return ApiResponse.<Void>builder()
+                .message("Đã gửi lại mã OTP xác thực email")
+                .build();
+    }
+
+    @PostMapping("/admin/verify-email/confirm")
+    ApiResponse<UserResponse> adminConfirmCreatedUserVerifyEmail(
+            @RequestBody @Valid VerifyEmailRequest request
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .message("Xác thực email người dùng thành công")
+                .result(userService.adminConfirmCreatedUserVerifyEmail(request))
                 .build();
     }
 
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable Integer userId) {
         return ApiResponse.<UserResponse>builder()
-                .message("User retrieved successfully")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserById(userId))
                 .build();
     }
@@ -61,7 +86,7 @@ public class UserController {
     @GetMapping("/email/{email}")
     ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
         return ApiResponse.<UserResponse>builder()
-                .message("User retrieved successfully")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserByEmail(email))
                 .build();
     }
@@ -72,7 +97,7 @@ public class UserController {
             @RequestBody @Valid UserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("User updated successfully")
+                .message("Cập nhật người dùng thành công")
                 .result(userService.updateUserById(userId, request))
                 .build();
     }
@@ -83,7 +108,7 @@ public class UserController {
             @RequestBody @Valid AdminUserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin updated user successfully")
+                .message("Admin cập nhật người dùng thành công")
                 .result(userService.updateUserByAdmin(userId, request))
                 .build();
     }
@@ -92,7 +117,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserById(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("User deleted successfully")
+                .message("Xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -101,7 +126,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserByAdmin(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("Admin deleted user successfully")
+                .message("Admin xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -113,7 +138,7 @@ public class UserController {
             @RequestParam(required = false) String status
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Users retrieved successfully")
+                .message("Lấy danh sách người dùng thành công")
                 .result(userService.getAllUsers(pageNumber, pageSize, status))
                 .build();
     }
@@ -127,7 +152,7 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Users filtered successfully")
+                .message("Lọc người dùng thành công")
                 .result(userService.filterUsers(name, role, status, page, size))
                 .build();
     }
@@ -136,7 +161,7 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllRoles() {
         List<String> roles = userService.getAllRoles();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Roles retrieved successfully")
+                .message("Lấy danh sách vai trò thành công")
                 .result(ItemListDto.<String>builder().items(roles).build())
                 .build();
     }
@@ -145,9 +170,46 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllUserStatuses() {
         List<String> statuses = userService.getAllUserStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("User statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái người dùng thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
-}
 
+    @PostMapping("/change-email/request")
+    ApiResponse<Void> requestChangeOwnEmail(@RequestBody @Valid ChangeEmailRequest request) {
+        userService.requestChangeOwnEmail(request);
+        return ApiResponse.<Void>builder()
+                .message("Mã OTP đã được gửi đến email mới")
+                .build();
+    }
+
+    @PostMapping("/change-email/confirm")
+    ApiResponse<LoginResponse> confirmChangeOwnEmail(@RequestBody @Valid ConfirmChangeEmailRequest request) {
+        return ApiResponse.<LoginResponse>builder()
+                .message("Đổi email thành công")
+                .result(userService.confirmChangeOwnEmail(request))
+                .build();
+    }
+
+    @PostMapping("/admin/{userId}/change-email/request")
+    ApiResponse<Void> adminRequestChangeUserEmail(
+            @PathVariable Integer userId,
+            @RequestBody @Valid ChangeEmailRequest request
+    ) {
+        userService.adminRequestChangeUserEmail(userId, request);
+        return ApiResponse.<Void>builder()
+                .message("Mã OTP đã được gửi đến email mới của khách hàng")
+                .build();
+    }
+
+    @PostMapping("/admin/{userId}/change-email/confirm")
+    ApiResponse<UserResponse> adminConfirmChangeUserEmail(
+            @PathVariable Integer userId,
+            @RequestBody @Valid ConfirmChangeEmailRequest request
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .message("Admin đổi email khách hàng thành công")
+                .result(userService.adminConfirmChangeUserEmail(userId, request))
+                .build();
+    }
+}

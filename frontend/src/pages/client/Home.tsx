@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import ArrowRight from "../../components/icon/arrowRight";
 import Location from "../../components/icon/location";
-import CardHome from "../../components/ui/CardHome";
+import CardShowtime from "../../components/ui/CardShowtime";
 import HeroSlider from "../../layouts/carousel";
 import { showTimeService } from "../../services/showtimeService";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { fetchProvincesThunk } from "../../stores/slices/provinceSlice";
-import type { Movie } from "../../types/product";
-import type { ShowTimeResponse } from "../../types/showtime";
+import type { FullShowtimeMovieResponse } from "../../types/showtime";
 import { Link } from "react-router-dom";
 
 const getTodayAsLocalDate = () => {
@@ -18,27 +17,13 @@ const getTodayAsLocalDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
-const extractMoviesFromShowtimes = (items: ShowTimeResponse[]): Movie[] => {
-    const movieById = new Map<number, Movie>();
-
-    items.forEach((showtime) => {
-        const movie = showtime.movie;
-        if (!movie) return;
-
-        if (!movieById.has(movie.movieId)) {
-            movieById.set(movie.movieId, movie as Movie);
-        }
-    });
-
-    return Array.from(movieById.values());
-};
-
 const Home = () => {
     const dispatch = useAppDispatch();
     const provinces = useAppSelector((state) => state.province.provinces);
     const [activeTab, setActiveTab] = useState(0);
     const [selectedProvinceId, setSelectedProvinceId] = useState<number | undefined>(undefined);
-    const [moviesFromShowtimes, setMoviesFromShowtimes] = useState<Movie[]>([]);
+    const [movieShowtimeGroups, setMovieShowtimeGroups] =
+        useState<FullShowtimeMovieResponse[]>([]);
     const [isLoadingMovies, setIsLoadingMovies] = useState(false);
 
     useEffect(() => {
@@ -64,20 +49,25 @@ const Home = () => {
 
                 const response =
                     activeTab === 1
-                        ? await showTimeService.getUpcomingShowTimesByProvince(releaseDate, filters)
-                        : await showTimeService.getTodayShowTimesByProvince(releaseDate, filters);
+                        ? await showTimeService.getUpcomingGroupedShowTimesByProvince(
+                              releaseDate,
+                              filters
+                          )
+                        : await showTimeService.getTodayGroupedShowTimesByProvince(
+                              releaseDate,
+                              filters
+                          );
 
                 if (!isMounted) return;
                 if (response.code !== "SUCCESS") {
-                    setMoviesFromShowtimes([]);
+                    setMovieShowtimeGroups([]);
                     return;
                 }
 
-                const showtimes = response.result?.items ?? [];
-                setMoviesFromShowtimes(extractMoviesFromShowtimes(showtimes));
+                setMovieShowtimeGroups(response.result?.items ?? []);
             } catch {
                 if (!isMounted) return;
-                setMoviesFromShowtimes([]);
+                setMovieShowtimeGroups([]);
             } finally {
                 if (isMounted) {
                     setIsLoadingMovies(false);
@@ -85,16 +75,21 @@ const Home = () => {
             }
         };
 
-        fetchShowtimesByTab();
+        void fetchShowtimesByTab();
 
         return () => {
             isMounted = false;
         };
     }, [activeTab, selectedProvinceId]);
 
-    const displayedMovies = useMemo(() => moviesFromShowtimes.slice(0, 8), [moviesFromShowtimes]);
+    const displayedMovies = useMemo(
+        () => movieShowtimeGroups.map((item) => item.movie).slice(0, 8),
+        [movieShowtimeGroups]
+    );
     const emptyMessage =
-        activeTab === 1 ? "Chưa có phim sắp chiếu theo suất chiếu." : "Chưa có phim theo suất chiếu hôm nay.";
+        activeTab === 1
+            ? "Chưa có phim sắp chiếu theo suất chiếu."
+            : "Chưa có phim theo suất chiếu hôm nay.";
 
     return (
         <div>
@@ -153,7 +148,7 @@ const Home = () => {
                                                         : "text-black-10 opacity-50"
                                                 }`}
                                             >
-                                                Phim IMAX
+                                                {/* Phim IMAX */}
                                             </a>
                                         </li>
                                     </ul>
@@ -188,7 +183,9 @@ const Home = () => {
                                 {isLoadingMovies ? (
                                     <p className="col-span-full text-sm text-gray-500">Đang tải phim...</p>
                                 ) : displayedMovies.length > 0 ? (
-                                    displayedMovies.map((movie) => <CardHome key={movie.movieId} movie={movie} />)
+                                    displayedMovies.map((movie) => (
+                                        <CardShowtime key={movie.movieId} movie={movie} />
+                                    ))
                                 ) : (
                                     <p className="col-span-full text-sm text-gray-500">{emptyMessage}</p>
                                 )}
@@ -214,4 +211,3 @@ const Home = () => {
 };
 
 export default Home;
-

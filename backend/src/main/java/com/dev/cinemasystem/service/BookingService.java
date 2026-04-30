@@ -8,12 +8,34 @@ import com.dev.cinemasystem.dto.showTimeSeatDTO.HoldSeatRequest;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.HoldSeatResponse;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.ReleaseSeatRequest;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.ShowTimeSeatResponse;
-import com.dev.cinemasystem.entity.*;
-import com.dev.cinemasystem.enums.*;
+import com.dev.cinemasystem.entity.Combo;
+import com.dev.cinemasystem.entity.Order;
+import com.dev.cinemasystem.entity.OrderCombo;
+import com.dev.cinemasystem.entity.Payment;
+import com.dev.cinemasystem.entity.PriceTicket;
+import com.dev.cinemasystem.entity.Seat;
+import com.dev.cinemasystem.entity.ShowTime;
+import com.dev.cinemasystem.entity.ShowTimeSeat;
+import com.dev.cinemasystem.entity.Ticket;
+import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.ComboStatus;
+import com.dev.cinemasystem.enums.OrderStatus;
+import com.dev.cinemasystem.enums.PaymentStatus;
+import com.dev.cinemasystem.enums.PriceTicketStatus;
+import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
+import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
-import com.dev.cinemasystem.repository.*;
+import com.dev.cinemasystem.repository.ComboRepository;
+import com.dev.cinemasystem.repository.OrderComboRepository;
+import com.dev.cinemasystem.repository.OrderRepository;
+import com.dev.cinemasystem.repository.PaymentRepository;
+import com.dev.cinemasystem.repository.PriceTicketRepository;
+import com.dev.cinemasystem.repository.ShowTimeRepository;
+import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
+import com.dev.cinemasystem.repository.TicketRepository;
+import com.dev.cinemasystem.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +46,16 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -74,10 +105,12 @@ public class BookingService {
                 ? order.getExpiredAt()
                 : now.plusMinutes(bookingProperties.getHoldMinutes());
 
-        List<Integer> normalizedSeatIds = request.getSeatIds().stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+        List<Integer> normalizedSeatIds = request.getSeatIds() == null
+                ? List.of()
+                : request.getSeatIds().stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
         if (normalizedSeatIds.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
         }
@@ -94,14 +127,14 @@ public class BookingService {
 
             if (targetSeat.getStatus() == ShowTimeSeatStatus.HELD) {
                 if (targetSeat.getOrder() != null && Objects.equals(targetSeat.getOrder().getOrderId(), order.getOrderId())) {
-                    // Không gia hạn bộ đếm cho những lần chọn tiếp theo.
                     if (targetSeat.getHoldExpiresAt() == null) {
                         targetSeat.setHoldExpiresAt(holdExpiresAt);
                     }
                     continue;
                 }
 
-                if (targetSeat.getHoldExpiresAt() != null && targetSeat.getHoldExpiresAt().isBefore(now)) {
+                boolean isExpiredHold = targetSeat.getHoldExpiresAt() != null && targetSeat.getHoldExpiresAt().isBefore(now);
+                if (isExpiredHold) {
                     targetSeat.setStatus(ShowTimeSeatStatus.AVAILABLE);
                     targetSeat.setOrder(null);
                     targetSeat.setHoldExpiresAt(null);
@@ -121,12 +154,13 @@ public class BookingService {
             order.setExpiredAt(holdExpiresAt);
         }
         order.setStatus(OrderStatus.PAYING);
-        recalculateOrderTotals(order);
 
         List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
                 order.getOrderId(),
                 ShowTimeSeatStatus.HELD
         );
+        syncTicketsWithHeldSeats(order, heldSeats);
+        recalculateOrderTotals(order);
 
         return toHoldSeatResponse(order, heldSeats);
     }
@@ -134,12 +168,19 @@ public class BookingService {
     @Transactional
     public HoldSeatResponse releaseSeats(ReleaseSeatRequest request) {
         Order order = ensurePayingOrder(request.getOrderId());
-        List<Integer> seatIds = request.getSeatIds().stream().filter(Objects::nonNull).distinct().toList();
+        List<Integer> seatIds = request.getSeatIds() == null
+                ? List.of()
+                : request.getSeatIds().stream().filter(Objects::nonNull).distinct().toList();
         if (seatIds.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
         }
 
         List<ShowTimeSeat> targetSeats = showTimeSeatRepository.findAllForUpdate(order.getShowTime().getShowTimeId(), seatIds);
+        if (targetSeats.size() != seatIds.size()) {
+            throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
+        }
+
+        List<ShowTimeSeat> releasedSeats = new ArrayList<>();
         for (ShowTimeSeat seat : targetSeats) {
             if (seat.getStatus() == ShowTimeSeatStatus.HELD
                     && seat.getOrder() != null
@@ -147,16 +188,21 @@ public class BookingService {
                 seat.setStatus(ShowTimeSeatStatus.AVAILABLE);
                 seat.setOrder(null);
                 seat.setHoldExpiresAt(null);
+                releasedSeats.add(seat);
             }
         }
 
-        showTimeSeatRepository.saveAll(targetSeats);
-        recalculateOrderTotals(order);
+        if (!releasedSeats.isEmpty()) {
+            showTimeSeatRepository.saveAll(releasedSeats);
+            deleteTicketsForSeats(order.getOrderId(), releasedSeats);
+        }
 
         List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
                 order.getOrderId(),
                 ShowTimeSeatStatus.HELD
         );
+        syncTicketsWithHeldSeats(order, heldSeats);
+        recalculateOrderTotals(order);
 
         return toHoldSeatResponse(order, heldSeats);
     }
@@ -165,49 +211,57 @@ public class BookingService {
     public OrderResponse updateOrderCombos(Integer orderId, UpdateOrderCombosRequest request) {
         Order order = ensurePayingOrder(orderId);
 
+        Map<Integer, Integer> requestedComboQuantities = new LinkedHashMap<>();
+        if (request != null && request.getCombos() != null) {
+            for (OrderComboItemRequest comboItem : request.getCombos()) {
+                if (comboItem == null || comboItem.getComboId() == null) {
+                    continue;
+                }
+                Integer quantity = comboItem.getQuantity();
+                if (quantity == null || quantity <= 0) {
+                    continue;
+                }
+                requestedComboQuantities.put(comboItem.getComboId(), quantity);
+            }
+        }
+
         List<OrderCombo> existingRows = orderComboRepository.findAllByOrder_OrderId(orderId);
         Map<Integer, OrderCombo> existingByComboId = new HashMap<>();
         for (OrderCombo row : existingRows) {
             existingByComboId.put(row.getCombo().getComboId(), row);
         }
 
-        Set<Integer> requestedComboIds = new HashSet<>();
+        List<OrderCombo> rowsToSave = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> entry : requestedComboQuantities.entrySet()) {
+            Integer comboId = entry.getKey();
+            Integer quantity = entry.getValue();
 
-        for (OrderComboItemRequest comboItem : request.getCombos()) {
-            if (comboItem.getQuantity() == null || comboItem.getQuantity() <= 0) {
-                continue;
-            }
-
-            Combo combo = comboRepository.findById(comboItem.getComboId())
+            Combo combo = comboRepository.findById(comboId)
                     .orElseThrow(() -> new AppException(ErrorCode.COMBO_NOT_FOUND));
             if (combo.getStatus() != ComboStatus.AVAILABLE) {
                 throw new AppException(ErrorCode.COMBO_NOT_FOUND);
             }
 
-            requestedComboIds.add(combo.getComboId());
-            OrderCombo row = existingByComboId.get(combo.getComboId());
+            OrderCombo row = existingByComboId.remove(comboId);
             if (row == null) {
                 row = OrderCombo.builder()
                         .order(order)
                         .combo(combo)
-                        .quantity(comboItem.getQuantity())
+                        .quantity(quantity)
                         .unitPrice(combo.getPrice())
-                        .status(OrderComboStatus.ACTIVE)
                         .build();
             } else {
-                row.setQuantity(comboItem.getQuantity());
+                row.setQuantity(quantity);
                 row.setUnitPrice(combo.getPrice());
-                row.setStatus(OrderComboStatus.ACTIVE);
             }
-            orderComboRepository.save(row);
+            rowsToSave.add(row);
         }
 
-        for (OrderCombo existing : existingRows) {
-            if (!requestedComboIds.contains(existing.getCombo().getComboId())
-                    && existing.getStatus() == OrderComboStatus.ACTIVE) {
-                existing.setStatus(OrderComboStatus.CANCELLED);
-                orderComboRepository.save(existing);
-            }
+        if (!rowsToSave.isEmpty()) {
+            orderComboRepository.saveAll(rowsToSave);
+        }
+        if (!existingByComboId.isEmpty()) {
+            orderComboRepository.deleteAllInBatch(existingByComboId.values());
         }
 
         recalculateOrderTotals(order);
@@ -224,10 +278,12 @@ public class BookingService {
         }
 
         releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
-        cancelOrderCombos(orderId);
+        deleteOrderTickets(orderId);
+        deleteOrderCombos(orderId);
         expirePendingPayments(orderId, PaymentStatus.CANCELLED);
 
         order.setStatus(OrderStatus.CANCELLED);
+        recalculateOrderTotals(order);
         orderRepository.save(order);
 
         return orderMapper.toOrderResponse(order);
@@ -247,11 +303,15 @@ public class BookingService {
         }
 
         List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(orderId, ShowTimeSeatStatus.HELD);
+        syncTicketsWithHeldSeats(order, heldSeats);
+
         for (ShowTimeSeat seat : heldSeats) {
             seat.setStatus(ShowTimeSeatStatus.SOLD);
             seat.setHoldExpiresAt(null);
         }
-        showTimeSeatRepository.saveAll(heldSeats);
+        if (!heldSeats.isEmpty()) {
+            showTimeSeatRepository.saveAll(heldSeats);
+        }
 
         order.setStatus(OrderStatus.PAID);
         recalculateOrderTotals(order);
@@ -266,21 +326,15 @@ public class BookingService {
             return;
         }
 
-        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
-        cancelOrderCombos(orderId);
+        boolean shouldDeleteOrderLines = failedStatus != OrderStatus.EXPIRED;
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD), shouldDeleteOrderLines);
+        if (shouldDeleteOrderLines) {
+            deleteOrderTickets(orderId);
+            deleteOrderCombos(orderId);
+        }
         order.setStatus(failedStatus);
+        recalculateOrderTotals(order);
         orderRepository.save(order);
-    }
-
-    @Transactional
-    public List<ShowTimeSeat> getSoldSeatsByOrder(Integer orderId) {
-        return showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(orderId, ShowTimeSeatStatus.SOLD);
-    }
-
-    @Transactional
-    public Order getOrderEntity(Integer orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 
     @Transactional
@@ -290,6 +344,11 @@ public class BookingService {
 
         List<ShowTimeSeat> expiredHeldSeats = showTimeSeatRepository
                 .findAllByStatusAndHoldExpiresAtBefore(ShowTimeSeatStatus.HELD, now);
+
+        Set<Integer> expiredHeldOrderIds = expiredHeldSeats.stream()
+                .filter(seat -> seat.getOrder() != null)
+                .map(seat -> seat.getOrder().getOrderId())
+                .collect(Collectors.toSet());
 
         for (ShowTimeSeat seat : expiredHeldSeats) {
             seat.setStatus(ShowTimeSeatStatus.AVAILABLE);
@@ -301,12 +360,16 @@ public class BookingService {
             showTimeSeatRepository.saveAll(expiredHeldSeats);
         }
 
+        for (Integer orderId : expiredHeldOrderIds) {
+            orderRepository.findById(orderId).ifPresent(this::recalculateOrderTotals);
+        }
+
         List<Order> expiredOrders = orderRepository.findAllByStatusAndExpiredAtBefore(OrderStatus.PAYING, now);
         for (Order expiredOrder : expiredOrders) {
-            releaseSeats(expiredOrder, EnumSet.of(ShowTimeSeatStatus.HELD));
-            cancelOrderCombos(expiredOrder.getOrderId());
+            releaseSeats(expiredOrder, EnumSet.of(ShowTimeSeatStatus.HELD), false);
             expirePendingPayments(expiredOrder.getOrderId(), PaymentStatus.EXPIRED);
             expiredOrder.setStatus(OrderStatus.EXPIRED);
+            recalculateOrderTotals(expiredOrder);
             orderRepository.save(expiredOrder);
         }
     }
@@ -317,7 +380,9 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD, ShowTimeSeatStatus.SOLD));
-        cancelActiveTickets(orderId);
+        deleteOrderTickets(orderId);
+        deleteOrderCombos(orderId);
+        recalculateOrderTotals(order);
     }
 
     private Order resolveOrderForHold(HoldSeatRequest request, ShowTime showTime) {
@@ -336,7 +401,7 @@ public class BookingService {
             user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-            Optional<Order> existingOrder = orderRepository
+            var existingOrder = orderRepository
                     .findTopByUser_UserIdAndShowTime_ShowTimeIdAndStatusOrderByOrderIdDesc(
                             request.getUserId(),
                             showTime.getShowTimeId(),
@@ -344,7 +409,8 @@ public class BookingService {
                     );
 
             if (existingOrder.isPresent()) {
-                Order order = existingOrder.get();
+                Order order = orderRepository.findByIdForUpdate(existingOrder.get().getOrderId())
+                        .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
                 if (order.getExpiredAt() != null && order.getExpiredAt().isBefore(now)) {
                     markOrderFailed(order.getOrderId(), OrderStatus.EXPIRED);
                 } else {
@@ -367,7 +433,7 @@ public class BookingService {
     }
 
     private Order ensurePayingOrder(Integer orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         if (order.getStatus() != OrderStatus.PAYING) {
@@ -383,25 +449,18 @@ public class BookingService {
     }
 
     private void recalculateOrderTotals(Order order) {
-        int roomTypeId = order.getShowTime().getRoom().getRoomType().getRoomTypeId();
-
-        List<ShowTimeSeat> reservedSeats = showTimeSeatRepository.findAllByOrder_OrderId(order.getOrderId());
-        Map<Integer, BigDecimal> seatTypePrices = new HashMap<>();
-        BigDecimal ticketTotal = BigDecimal.ZERO;
-        for (ShowTimeSeat seat : reservedSeats) {
-            if (seat.getStatus() != ShowTimeSeatStatus.HELD && seat.getStatus() != ShowTimeSeatStatus.SOLD) {
-                continue;
-            }
-            int seatTypeId = seat.getSeat().getSeatType().getSeatTypeId();
-            BigDecimal seatPrice = seatTypePrices.computeIfAbsent(seatTypeId,
-                    key -> resolveSeatPrice(roomTypeId, key));
-            ticketTotal = ticketTotal.add(seatPrice);
-        }
+        List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(order.getOrderId());
+        BigDecimal ticketTotal = tickets.stream()
+                .map(ticket -> ticket.getUnitPrice() == null ? BigDecimal.ZERO : ticket.getUnitPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(order.getOrderId());
         BigDecimal comboTotal = orderCombos.stream()
-                .filter(item -> item.getStatus() == OrderComboStatus.ACTIVE)
-                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> {
+                    BigDecimal unitPrice = item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice();
+                    int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
+                    return unitPrice.multiply(BigDecimal.valueOf(quantity));
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal discountAmount = order.getDiscountAmount() == null ? BigDecimal.ZERO : order.getDiscountAmount();
@@ -419,7 +478,7 @@ public class BookingService {
         orderRepository.save(order);
     }
 
-    private BigDecimal resolveSeatPrice(int roomTypeId, int seatTypeId) {
+    private PriceTicket resolveActivePriceTicket(int roomTypeId, int seatTypeId) {
         PriceTicket priceTicket = priceTicketRepository
                 .findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seatTypeId);
 
@@ -427,7 +486,7 @@ public class BookingService {
             throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
         }
 
-        return priceTicket.getPrice();
+        return priceTicket;
     }
 
     private void releaseExpiredHoldsForShowTime(Integer showTimeId) {
@@ -437,18 +496,33 @@ public class BookingService {
                 ShowTimeSeatStatus.HELD
         ).stream().filter(item -> item.getHoldExpiresAt() != null && item.getHoldExpiresAt().isBefore(now)).toList();
 
+        if (expiredSeats.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> expiredOrderIds = expiredSeats.stream()
+                .filter(seat -> seat.getOrder() != null)
+                .map(seat -> seat.getOrder().getOrderId())
+                .collect(Collectors.toSet());
+
         for (ShowTimeSeat expired : expiredSeats) {
             expired.setStatus(ShowTimeSeatStatus.AVAILABLE);
             expired.setOrder(null);
             expired.setHoldExpiresAt(null);
         }
 
-        if (!expiredSeats.isEmpty()) {
-            showTimeSeatRepository.saveAll(expiredSeats);
+        showTimeSeatRepository.saveAll(expiredSeats);
+
+        for (Integer orderId : expiredOrderIds) {
+            orderRepository.findById(orderId).ifPresent(this::recalculateOrderTotals);
         }
     }
 
     private void releaseSeats(Order order, Set<ShowTimeSeatStatus> targetStatuses) {
+        releaseSeats(order, targetStatuses, true);
+    }
+
+    private void releaseSeats(Order order, Set<ShowTimeSeatStatus> targetStatuses, boolean deleteReleasedSeatTickets) {
         List<ShowTimeSeat> reservedSeats = showTimeSeatRepository.findAllByOrder_OrderId(order.getOrderId());
         if (reservedSeats.isEmpty()) {
             return;
@@ -468,18 +542,109 @@ public class BookingService {
 
         if (!changedSeats.isEmpty()) {
             showTimeSeatRepository.saveAll(changedSeats);
+            if (deleteReleasedSeatTickets) {
+                deleteTicketsForSeats(order.getOrderId(), changedSeats);
+            }
         }
     }
 
-    private void cancelOrderCombos(Integer orderId) {
-        List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(orderId);
-        for (OrderCombo orderCombo : orderCombos) {
-            if (orderCombo.getStatus() == OrderComboStatus.ACTIVE) {
-                orderCombo.setStatus(OrderComboStatus.CANCELLED);
-            }
+    private void deleteOrderCombos(Integer orderId) {
+        orderComboRepository.deleteAllByOrder_OrderId(orderId);
+    }
+
+    private void deleteOrderTickets(Integer orderId) {
+        ticketRepository.deleteAllByOrder_OrderId(orderId);
+    }
+
+    private void deleteTicketsForSeats(Integer orderId, List<ShowTimeSeat> seats) {
+        if (orderId == null || seats == null || seats.isEmpty()) {
+            return;
         }
-        if (!orderCombos.isEmpty()) {
-            orderComboRepository.saveAll(orderCombos);
+
+        Set<Integer> seatIds = seats.stream()
+                .map(ShowTimeSeat::getSeat)
+                .filter(Objects::nonNull)
+                .map(Seat::getSeatId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        if (seatIds.isEmpty()) {
+            return;
+        }
+
+        List<Ticket> existingTickets = ticketRepository.findAllByOrder_OrderId(orderId);
+        List<Ticket> staleTickets = existingTickets.stream()
+                .filter(ticket -> ticket.getSeat() != null
+                        && ticket.getSeat().getSeatId() != null
+                        && seatIds.contains(ticket.getSeat().getSeatId()))
+                .toList();
+
+        if (!staleTickets.isEmpty()) {
+            ticketRepository.deleteAllInBatch(staleTickets);
+        }
+    }
+
+    private void syncTicketsWithHeldSeats(Order order, List<ShowTimeSeat> heldSeats) {
+        List<Ticket> existingTickets = ticketRepository.findAllByOrder_OrderId(order.getOrderId());
+        Map<Integer, Ticket> existingBySeatId = new HashMap<>();
+        for (Ticket ticket : existingTickets) {
+            if (ticket.getSeat() == null || ticket.getSeat().getSeatId() == null) {
+                continue;
+            }
+            existingBySeatId.putIfAbsent(ticket.getSeat().getSeatId(), ticket);
+        }
+
+        Map<Integer, ShowTimeSeat> heldBySeatId = new LinkedHashMap<>();
+        for (ShowTimeSeat heldSeat : heldSeats) {
+            if (heldSeat.getSeat() == null || heldSeat.getSeat().getSeatId() == null) {
+                continue;
+            }
+            heldBySeatId.putIfAbsent(heldSeat.getSeat().getSeatId(), heldSeat);
+        }
+
+        Set<Integer> heldSeatIds = heldBySeatId.keySet();
+        List<Ticket> staleTickets = existingTickets.stream()
+                .filter(ticket -> ticket.getSeat() == null
+                        || ticket.getSeat().getSeatId() == null
+                        || !heldSeatIds.contains(ticket.getSeat().getSeatId()))
+                .toList();
+        if (!staleTickets.isEmpty()) {
+            ticketRepository.deleteAllInBatch(staleTickets);
+        }
+
+        if (heldBySeatId.isEmpty()) {
+            return;
+        }
+
+        int roomTypeId = order.getShowTime().getRoom().getRoomType().getRoomTypeId();
+        List<Ticket> ticketsToSave = new ArrayList<>();
+        for (ShowTimeSeat heldSeat : heldBySeatId.values()) {
+            Seat seat = heldSeat.getSeat();
+            Integer seatId = seat.getSeatId();
+            int seatTypeId = seat.getSeatType().getSeatTypeId();
+            PriceTicket priceTicket = resolveActivePriceTicket(roomTypeId, seatTypeId);
+
+            Ticket ticket = existingBySeatId.getOrDefault(
+                    seatId,
+                    Ticket.builder()
+                            .order(order)
+                            .show(heldSeat.getShowTime())
+                            .seat(seat)
+                            .build()
+            );
+
+            ticket.setOrder(order);
+            ticket.setShow(heldSeat.getShowTime());
+            ticket.setSeat(seat);
+            ticket.setPriceTicket(priceTicket);
+            ticket.setUnitPrice(priceTicket.getPrice());
+            ticket.setQrCode(buildTicketQr(order.getOrderId(), heldSeat.getShowTime().getShowTimeId(), seatId));
+
+            ticketsToSave.add(ticket);
+        }
+
+        if (!ticketsToSave.isEmpty()) {
+            ticketRepository.saveAll(ticketsToSave);
         }
     }
 
@@ -493,24 +658,8 @@ public class BookingService {
         }
     }
 
-    private void cancelActiveTickets(Integer orderId) {
-        List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(orderId);
-        if (tickets.isEmpty()) {
-            return;
-        }
-
-        List<Ticket> changedTickets = new ArrayList<>();
-        for (Ticket ticket : tickets) {
-            if (ticket.getStatus() != TicketStatus.ACTIVE) {
-                continue;
-            }
-            ticket.setStatus(TicketStatus.CANCELLED);
-            changedTickets.add(ticket);
-        }
-
-        if (!changedTickets.isEmpty()) {
-            ticketRepository.saveAll(changedTickets);
-        }
+    private String buildTicketQr(Integer orderId, Integer showTimeId, Integer seatId) {
+        return "QR-" + orderId + "-" + showTimeId + "-" + seatId;
     }
 
     private HoldSeatResponse toHoldSeatResponse(Order order, List<ShowTimeSeat> heldSeats) {

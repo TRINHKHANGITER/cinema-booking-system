@@ -5,10 +5,13 @@ import { z } from "zod";
 import axios from "axios";
 import { toast } from "sonner";
 import Close from "../../components/icon/close";
+import type { VerifyEmailRequest } from "../../types/auth";
 import { userService } from "../../services/user.service";
 import type {
     AdminUserCreationRequest,
     AdminUserUpdateRequest,
+    ChangeEmailRequest,
+    ConfirmChangeEmailRequest,
     Role,
     UserResponse,
     UserStatus,
@@ -17,25 +20,23 @@ import type {
 const PHONE_REGEX = /^\+?[0-9]{10,15}$/;
 
 const defaultRoles: Role[] = ["USER", "STAFF", "ADMIN"];
-const defaultStatuses: UserStatus[] = ["ACTIVE", "LOCKED", "SUSPENDED", "DELETED"];
+const defaultStatuses: UserStatus[] = ["PENDING_VERIFY", "ACTIVE", "LOCKED", "SUSPENDED", "DELETED"];
 
 const createUserSchema = z.object({
     fullName: z.string().trim().min(1, "Họ và tên là bắt buộc"),
-    email: z.email("Email không hợp lệ"),
+    email: z.string().trim().email("Email không hợp lệ"),
     phoneNumber: z
         .string()
         .trim()
         .regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
     role: z.string().trim().min(1, "Vai trò là bắt buộc"),
-    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
     dateOfBirth: z.string().optional(),
     sex: z.string().optional(),
 });
 
 const updateUserSchema = z.object({
     fullName: z.string().trim().min(1, "Họ và tên là bắt buộc"),
-    email: z.email("Email không hợp lệ"),
     phoneNumber: z
         .string()
         .trim()
@@ -47,8 +48,25 @@ const updateUserSchema = z.object({
     sex: z.string().optional(),
 });
 
+const changeEmailSchema = z.object({
+    newEmail: z.string().trim().email("Email mới không hợp lệ"),
+    otp: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Mã OTP phải gồm đúng 6 chữ số"),
+});
+
+const createUserVerifyOtpSchema = z.object({
+    otp: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Mã OTP phải gồm đúng 6 chữ số"),
+});
+
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
+type ChangeEmailFormValues = z.infer<typeof changeEmailSchema>;
+type CreateUserVerifyOtpFormValues = z.infer<typeof createUserVerifyOtpSchema>;
 
 type ModalShellProps = {
     open: boolean;
@@ -63,7 +81,6 @@ const emptyCreateValues: CreateUserFormValues = {
     phoneNumber: "",
     password: "",
     role: "USER",
-    status: "ACTIVE",
     dateOfBirth: "",
     sex: "",
 };
@@ -128,13 +145,27 @@ const UserManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [openCreate, setOpenCreate] = useState(false);
+    const [createUserStep, setCreateUserStep] = useState<"form" | "verifyOtp">("form");
+    const [createdUserEmailPendingVerify, setCreatedUserEmailPendingVerify] = useState("");
+    const [isResendingCreateUserOtp, setIsResendingCreateUserOtp] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
+    const [openChangeEmail, setOpenChangeEmail] = useState(false);
+    const [changeEmailTarget, setChangeEmailTarget] = useState<UserResponse | null>(null);
+    const [isOtpSentForChangeEmail, setIsOtpSentForChangeEmail] = useState(false);
+    const [isRequestingChangeEmailOtp, setIsRequestingChangeEmailOtp] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
     const [editingUser, setEditingUser] = useState<UserResponse | null>(null);
 
     const createForm = useForm<CreateUserFormValues>({
         resolver: zodResolver(createUserSchema),
         defaultValues: emptyCreateValues,
+    });
+
+    const createUserVerifyOtpForm = useForm<CreateUserVerifyOtpFormValues>({
+        resolver: zodResolver(createUserVerifyOtpSchema),
+        defaultValues: {
+            otp: "",
+        },
     });
 
     const editForm = useForm<UpdateUserFormValues>({
@@ -144,6 +175,37 @@ const UserManagement = () => {
             password: "",
         },
     });
+
+    const changeEmailForm = useForm<ChangeEmailFormValues>({
+        resolver: zodResolver(changeEmailSchema),
+        defaultValues: {
+            newEmail: "",
+            otp: "",
+        },
+    });
+    const selectedNewEmailForChange = changeEmailForm.watch("newEmail");
+
+    const resetCreateUserState = () => {
+        setOpenCreate(false);
+        setCreateUserStep("form");
+        setCreatedUserEmailPendingVerify("");
+        setIsResendingCreateUserOtp(false);
+        createForm.reset(emptyCreateValues);
+        createUserVerifyOtpForm.reset({
+            otp: "",
+        });
+    };
+
+    const resetChangeEmailState = () => {
+        setOpenChangeEmail(false);
+        setChangeEmailTarget(null);
+        setIsOtpSentForChangeEmail(false);
+        setIsRequestingChangeEmailOtp(false);
+        changeEmailForm.reset({
+            newEmail: "",
+            otp: "",
+        });
+    };
 
     const fetchMeta = useCallback(async () => {
         try {
@@ -233,7 +295,13 @@ const UserManagement = () => {
     };
 
     const openCreateModal = () => {
+        setCreateUserStep("form");
+        setCreatedUserEmailPendingVerify("");
+        setIsResendingCreateUserOtp(false);
         createForm.reset(emptyCreateValues);
+        createUserVerifyOtpForm.reset({
+            otp: "",
+        });
         setOpenCreate(true);
     };
 
@@ -241,7 +309,6 @@ const UserManagement = () => {
         setEditingUser(user);
         editForm.reset({
             fullName: user.fullName,
-            email: user.email,
             phoneNumber: user.phoneNumber,
             password: "",
             role: user.role,
@@ -252,14 +319,25 @@ const UserManagement = () => {
         setOpenEdit(true);
     };
 
+    const openChangeEmailModal = (user: UserResponse) => {
+        setChangeEmailTarget(user);
+        setIsOtpSentForChangeEmail(false);
+        setIsRequestingChangeEmailOtp(false);
+        changeEmailForm.reset({
+            newEmail: "",
+            otp: "",
+        });
+        setOpenChangeEmail(true);
+    };
+
     const submitCreate = createForm.handleSubmit(async (values) => {
         const payload: AdminUserCreationRequest = {
             fullName: values.fullName.trim(),
-            email: values.email.trim(),
+            email: values.email.trim().toLowerCase(),
             phoneNumber: values.phoneNumber.trim(),
             password: values.password,
             role: values.role as Role,
-            status: values.status as UserStatus,
+            status: "ACTIVE",
             dateOfBirth: normalizeOptionalField(values.dateOfBirth),
             sex: normalizeOptionalField(values.sex) as "male" | "female" | "other" | null,
         };
@@ -271,11 +349,62 @@ const UserManagement = () => {
                 return;
             }
 
-            toast.success("Tạo người dùng thành công");
-            setOpenCreate(false);
+            setCreatedUserEmailPendingVerify(payload.email);
+            setCreateUserStep("verifyOtp");
+            createUserVerifyOtpForm.reset({
+                otp: "",
+            });
+            toast.success(response.message || "Đã tạo người dùng và gửi mã OTP xác thực email");
             void fetchUsers();
         } catch (error) {
             toast.error(parseApiError(error, "Tạo người dùng thất bại"));
+        }
+    });
+
+    const resendCreateUserOtp = async () => {
+        if (!createdUserEmailPendingVerify) return;
+
+        setIsResendingCreateUserOtp(true);
+        try {
+            const response = await userService.adminResendCreatedUserVerifyEmailOtp({
+                email: createdUserEmailPendingVerify,
+            });
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Không thể gửi lại mã OTP");
+                return;
+            }
+
+            toast.success(response.message || "Đã gửi lại mã OTP xác thực email");
+        } catch (error) {
+            toast.error(parseApiError(error, "Không thể gửi lại mã OTP"));
+        } finally {
+            setIsResendingCreateUserOtp(false);
+        }
+    };
+
+    const submitCreateUserVerifyOtp = createUserVerifyOtpForm.handleSubmit(async (values) => {
+        if (!createdUserEmailPendingVerify) {
+            toast.error("Không tìm thấy email cần xác thực");
+            return;
+        }
+
+        const payload: VerifyEmailRequest = {
+            email: createdUserEmailPendingVerify,
+            otp: values.otp.trim(),
+        };
+
+        try {
+            const response = await userService.adminConfirmCreatedUserVerifyEmail(payload);
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Xác thực email thất bại");
+                return;
+            }
+
+            toast.success(response.message || "Xác thực email thành công");
+            resetCreateUserState();
+            void fetchUsers();
+        } catch (error) {
+            toast.error(parseApiError(error, "Xác thực email thất bại"));
         }
     });
 
@@ -284,7 +413,6 @@ const UserManagement = () => {
 
         const payload: AdminUserUpdateRequest = {
             fullName: values.fullName.trim(),
-            email: values.email.trim(),
             phoneNumber: values.phoneNumber.trim(),
             role: values.role as Role,
             status: values.status as UserStatus,
@@ -310,6 +438,67 @@ const UserManagement = () => {
             void fetchUsers();
         } catch (error) {
             toast.error(parseApiError(error, "Cập nhật người dùng thất bại"));
+        }
+    });
+
+    const requestOtpForChangeEmail = async () => {
+        if (!changeEmailTarget) return;
+
+        const isValidEmail = await changeEmailForm.trigger("newEmail");
+        if (!isValidEmail) return;
+
+        const newEmail = changeEmailForm.getValues("newEmail").trim().toLowerCase();
+        const payload: ChangeEmailRequest = { newEmail };
+
+        setIsRequestingChangeEmailOtp(true);
+        try {
+            const response = await userService.adminRequestChangeUserEmail(
+                changeEmailTarget.userId,
+                payload
+            );
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Không thể gửi mã OTP đổi email");
+                return;
+            }
+
+            changeEmailForm.setValue("newEmail", newEmail);
+            changeEmailForm.setValue("otp", "");
+            setIsOtpSentForChangeEmail(true);
+            toast.success(response.message || "Đã gửi mã OTP đến email mới");
+        } catch (error) {
+            toast.error(parseApiError(error, "Không thể gửi mã OTP đổi email"));
+        } finally {
+            setIsRequestingChangeEmailOtp(false);
+        }
+    };
+
+    const submitChangeEmail = changeEmailForm.handleSubmit(async (values) => {
+        if (!changeEmailTarget) return;
+        if (!isOtpSentForChangeEmail) {
+            toast.error("Vui lòng gửi mã OTP trước khi xác nhận đổi email");
+            return;
+        }
+
+        const payload: ConfirmChangeEmailRequest = {
+            newEmail: values.newEmail.trim().toLowerCase(),
+            otp: values.otp.trim(),
+        };
+
+        try {
+            const response = await userService.adminConfirmChangeUserEmail(
+                changeEmailTarget.userId,
+                payload
+            );
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Đổi email người dùng thất bại");
+                return;
+            }
+
+            toast.success(response.message || "Đổi email người dùng thành công");
+            resetChangeEmailState();
+            void fetchUsers();
+        } catch (error) {
+            toast.error(parseApiError(error, "Đổi email người dùng thất bại"));
         }
     });
 
@@ -340,7 +529,7 @@ const UserManagement = () => {
                         </p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý người dùng</h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Manage user accounts by role, status and contact information.
+                            Quản lý tài khoản người dùng theo vai trò, trạng thái và thông tin liên hệ.
                         </p>
                     </div>
                     <button
@@ -484,6 +673,8 @@ const UserManagement = () => {
                                                 className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
                                                     user.status === "ACTIVE"
                                                         ? "bg-emerald-100 text-emerald-700"
+                                                        : user.status === "PENDING_VERIFY"
+                                                          ? "bg-indigo-100 text-indigo-700"
                                                         : user.status === "LOCKED"
                                                           ? "bg-amber-100 text-amber-700"
                                                           : user.status === "SUSPENDED"
@@ -504,6 +695,11 @@ const UserManagement = () => {
                                                     onClick={() => openEditModal(user)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
                                                 >Sửa</button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openChangeEmailModal(user)}
+                                                    className="rounded-md border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all duration-300 hover:bg-amber-50"
+                                                >Đổi email</button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(user)}
@@ -561,159 +757,213 @@ const UserManagement = () => {
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm người dùng mới">
-                <form className="space-y-3" onSubmit={submitCreate}>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Họ và tên *
-                            </label>
-                            <input
-                                type="text"
-                                {...createForm.register("fullName")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                            {createForm.formState.errors.fullName && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.fullName.message}
-                                </p>
-                            )}
+            <ModalShell open={openCreate} onClose={resetCreateUserState} title="Thêm người dùng mới">
+                {createUserStep === "form" ? (
+                    <form className="space-y-3" onSubmit={submitCreate}>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="sm:col-span-2">
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Họ và tên *
+                                </label>
+                                <input
+                                    type="text"
+                                    {...createForm.register("fullName")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.fullName && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.fullName.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Email *
+                                </label>
+                                <input
+                                    type="email"
+                                    {...createForm.register("email")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.email && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.email.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Số điện thoại *
+                                </label>
+                                <input
+                                    type="text"
+                                    {...createForm.register("phoneNumber")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.phoneNumber && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.phoneNumber.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Mật khẩu *
+                                </label>
+                                <input
+                                    type="password"
+                                    {...createForm.register("password")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.password && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.password.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Vai trò *
+                                </label>
+                                <select
+                                    {...createForm.register("role")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                >
+                                    {roles.map((role) => (
+                                        <option key={`create-${role}`} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
+                                {createForm.formState.errors.role && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.role.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Ngày sinh
+                                </label>
+                                <input
+                                    type="date"
+                                    {...createForm.register("dateOfBirth")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Giới tính
+                                </label>
+                                <select
+                                    {...createForm.register("sex")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                >
+                                    <option value="">Chưa thiết lập</option>
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={resetCreateUserState}
+                                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={createForm.formState.isSubmitting}
+                                className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Tạo người dùng và gửi OTP
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <form className="space-y-3" onSubmit={submitCreateUserVerifyOtp}>
+                        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                            Người dùng đã được tạo ở trạng thái chờ xác thực. Vui lòng nhập OTP đã gửi về email để hoàn tất.
                         </div>
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Email *
+                                Email cần xác thực
                             </label>
                             <input
                                 type="email"
-                                {...createForm.register("email")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                value={createdUserEmailPendingVerify}
+                                readOnly
+                                className="h-10 w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-600 outline-none"
                             />
-                            {createForm.formState.errors.email && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.email.message}
-                                </p>
-                            )}
                         </div>
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Số điện thoại *
+                                Mã OTP *
                             </label>
                             <input
                                 type="text"
-                                {...createForm.register("phoneNumber")}
+                                maxLength={6}
+                                {...createUserVerifyOtpForm.register("otp")}
+                                placeholder="Nhập mã OTP gồm 6 chữ số"
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             />
-                            {createForm.formState.errors.phoneNumber && (
+                            {createUserVerifyOtpForm.formState.errors.otp && (
                                 <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.phoneNumber.message}
+                                    {createUserVerifyOtpForm.formState.errors.otp.message}
                                 </p>
                             )}
                         </div>
 
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Password *
-                            </label>
-                            <input
-                                type="password"
-                                {...createForm.register("password")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                            {createForm.formState.errors.password && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.password.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Vai trò *
-                            </label>
-                            <select
-                                {...createForm.register("role")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                        <div className="flex flex-wrap justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreateUserStep("form");
+                                    createUserVerifyOtpForm.reset({
+                                        otp: "",
+                                    });
+                                }}
+                                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
                             >
-                                {roles.map((role) => (
-                                    <option key={`create-${role}`} value={role}>
-                                        {role}
-                                    </option>
-                                ))}
-                            </select>
-                            {createForm.formState.errors.role && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.role.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Trạng thái *
-                            </label>
-                            <select
-                                {...createForm.register("status")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                Quay lại form
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void resendCreateUserOtp()}
+                                disabled={isResendingCreateUserOtp || createUserVerifyOtpForm.formState.isSubmitting}
+                                className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {statuses.map((status) => (
-                                    <option key={`create-${status}`} value={status}>
-                                        {status}
-                                    </option>
-                                ))}
-                            </select>
-                            {createForm.formState.errors.status && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.status.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Ngày sinh
-                            </label>
-                            <input
-                                type="date"
-                                {...createForm.register("dateOfBirth")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Giới tính</label>
-                            <select
-                                {...createForm.register("sex")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                {isResendingCreateUserOtp ? "Đang gửi lại OTP..." : "Gửi lại OTP"}
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={createUserVerifyOtpForm.formState.isSubmitting}
+                                className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <option value="">Chưa thiết lập</option>
-                                <option value="male">Nam</option>
-                                <option value="female">Nữ</option>
-                                <option value="other">Khác</option>
-                            </select>
+                                Xác thực OTP
+                            </button>
                         </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => setOpenCreate(false)}
-                            className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
-                        <button
-                            type="submit"
-                            disabled={createForm.formState.isSubmitting}
-                            className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Tạo người dùng
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                )}
             </ModalShell>
 
             <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa người dùng">
                 <form className="space-y-3" onSubmit={submitUpdate}>
+                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                        Email không sửa trực tiếp ở màn hình này. Muốn đổi email, vui lòng dùng luồng đổi email bằng OTP.
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="sm:col-span-2">
                             <label className="mb-1 block text-xs font-bold text-slate-500">
@@ -731,20 +981,16 @@ const UserManagement = () => {
                             )}
                         </div>
 
-                        <div>
+                        <div className="sm:col-span-2">
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Email *
+                                Email
                             </label>
                             <input
                                 type="email"
-                                {...editForm.register("email")}
+                                value={editingUser?.email ?? ""}
+                                disabled
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             />
-                            {editForm.formState.errors.email && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {editForm.formState.errors.email.message}
-                                </p>
-                            )}
                         </div>
 
                         <div>
@@ -765,12 +1011,12 @@ const UserManagement = () => {
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                New Password
+                                Mật khẩu mới
                             </label>
                             <input
                                 type="password"
                                 {...editForm.register("password")}
-                                placeholder="Leave empty if unchanged"
+                                placeholder="Để trống nếu không đổi mật khẩu"
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             />
                             {editForm.formState.errors.password && (
@@ -861,6 +1107,118 @@ const UserManagement = () => {
                             Lưu thay đổi
                         </button>
                     </div>
+                </form>
+            </ModalShell>
+
+            <ModalShell
+                open={openChangeEmail}
+                onClose={resetChangeEmailState}
+                title="Đổi email người dùng"
+            >
+                <form className="space-y-3" onSubmit={submitChangeEmail}>
+                    <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                        <p>
+                            Người dùng:{" "}
+                            <strong>{changeEmailTarget?.fullName ?? "Chưa chọn người dùng"}</strong>
+                        </p>
+                        <p>Email hiện tại: {changeEmailTarget?.email ?? "-"}</p>
+                    </div>
+
+                    {!isOtpSentForChangeEmail ? (
+                        <>
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Email mới *
+                                </label>
+                                <input
+                                    type="email"
+                                    {...changeEmailForm.register("newEmail")}
+                                    placeholder="Nhập email mới"
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {changeEmailForm.formState.errors.newEmail && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {changeEmailForm.formState.errors.newEmail.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void requestOtpForChangeEmail()}
+                                    disabled={isRequestingChangeEmailOtp || changeEmailForm.formState.isSubmitting}
+                                    className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isRequestingChangeEmailOtp ? "Đang gửi OTP..." : "Gửi mã OTP"}
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                Mã OTP đã được gửi về email mới. Vui lòng nhập OTP để xác nhận đổi email.
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Email mới
+                                </label>
+                                <input
+                                    type="email"
+                                    value={selectedNewEmailForChange}
+                                    readOnly
+                                    className="h-10 w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-600 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Mã OTP *
+                                </label>
+                                <input
+                                    type="text"
+                                    maxLength={6}
+                                    {...changeEmailForm.register("otp")}
+                                    placeholder="Nhập mã OTP gồm 6 chữ số"
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {changeEmailForm.formState.errors.otp && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {changeEmailForm.formState.errors.otp.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsOtpSentForChangeEmail(false);
+                                        changeEmailForm.setValue("otp", "");
+                                    }}
+                                    className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+                                >
+                                    Nhập email khác
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void requestOtpForChangeEmail()}
+                                    disabled={isRequestingChangeEmailOtp || changeEmailForm.formState.isSubmitting}
+                                    className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isRequestingChangeEmailOtp ? "Đang gửi lại OTP..." : "Gửi lại OTP"}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={changeEmailForm.formState.isSubmitting}
+                                    className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Xác nhận đổi email
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </form>
             </ModalShell>
 

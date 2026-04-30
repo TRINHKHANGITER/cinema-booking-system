@@ -1,25 +1,55 @@
 import Booking from "../pages/client/Booking";
-import IsShowing from "../pages/client/IsShowing";
 import Home from "../pages/client/Home";
-import BookTicket from "../pages/client/BookTicket";
+import IsShowing from "../pages/client/IsShowing";
+import SearchPage from "../pages/client/SearchPage";
 import VnpayReturn from "../pages/client/VnpayReturn";
+import ShowtimesPageRoute from "./ShowtimesPageRoute";
+import QuickBookingPage from "../pages/client/QuickBooking";
+import OrderHistoryPage from "../pages/client/OrderHistory";
+import Login from "../pages/client/Login";
+import AccountPage from "../pages/client/Account";
 
 const routePath = {
     login: "/login",
     home: "/",
+    search: "/search",
     phim_dang_chieu: "/phim-dang-chieu",
     xuat_chieu: "/xuat-chieu/:slug",
-    dat_ve: "/dat-ve/:slug",
+    xuat_chieu_province: "/xuat-chieu/:slug/province/:province",
+    xuat_chieu_day: "/xuat-chieu/:slug/day/:day",
+    xuat_chieu_province_day: "/xuat-chieu/:slug/province/:province/day/:day",
+    dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
+    lich_su_dat_ve: "/lich-su-dat-ve",
+    tai_khoan: "/tai-khoan",
     checkout_vnpay_return: "/checkout/vnpay/return",
+    dat_ve_quick: "/dat-ve-quick",
 };
 
 const cusPublicRoutes = [
+    {
+        path: routePath.login,
+        label: "Đăng nhập",
+        isContent: true,
+        type: "COMMON",
+        component: Login,
+        isPrivate: false,
+    },
+
     {
         path: routePath.home,
         label: "Trang chủ",
         isContent: false,
         type: "CUSTOMER",
         component: Home,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.search,
+        label: "Tìm kiếm",
+        isContent: false,
+        type: "CUSTOMER",
+        component: SearchPage,
         isPrivate: false,
     },
 
@@ -37,7 +67,34 @@ const cusPublicRoutes = [
         label: "Xuất chiếu",
         isContent: false,
         type: "CUSTOMER",
-        component: BookTicket,
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_province,
+        label: "Xuất chiếu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_day,
+        label: "Xuất chiếu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.xuat_chieu_province_day,
+        label: "Xuất chiếu",
+        isContent: false,
+        type: "CUSTOMER",
+        component: ShowtimesPageRoute,
         isPrivate: false,
     },
 
@@ -51,8 +108,35 @@ const cusPublicRoutes = [
     },
 
     {
+        path: routePath.lich_su_dat_ve,
+        label: "Lịch sử đặt vé",
+        isContent: false,
+        type: "CUSTOMER",
+        component: OrderHistoryPage,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.tai_khoan,
+        label: "Tài khoản",
+        isContent: false,
+        type: "CUSTOMER",
+        component: AccountPage,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.dat_ve_quick,
+        label: "Đặt vé nhanh",
+        isContent: false,
+        type: "CUSTOMER",
+        component: QuickBookingPage,
+        isPrivate: false,
+    },
+
+    {
         path: routePath.checkout_vnpay_return,
-        label: "Checkout vnpay return",
+        label: "Kết quả thanh toán VNPAY",
         isContent: false,
         type: "CUSTOMER",
         component: VnpayReturn,

@@ -1,6 +1,5 @@
 package com.dev.cinemasystem.dto.orderDTO;
 
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,5 +22,4 @@ public class OrderComboDetailResponse {
     Integer quantity;
     BigDecimal unitPrice;
     BigDecimal lineTotal;
-    OrderComboStatus status;
 }

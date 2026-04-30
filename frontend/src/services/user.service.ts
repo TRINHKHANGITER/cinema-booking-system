@@ -1,12 +1,17 @@
 import api from "../lib/axios";
+import type { LoginResponse } from "../types/auth";
+import type { ResendVerifyEmailRequest, VerifyEmailRequest } from "../types/auth";
 import type { ApiResponse, ItemListDto, PagingDto } from "../types/api";
 import type {
     AdminUserCreationRequest,
     AdminUserUpdateRequest,
+    ChangeEmailRequest,
+    ConfirmChangeEmailRequest,
     Role,
     UserCreationRequest,
     UserFilterParams,
     UserResponse,
+    UserUpdateRequest,
     UserStatus,
 } from "../types/user";
 
@@ -18,6 +23,11 @@ export const userService = {
 
     createUserByAdmin: async (request: AdminUserCreationRequest) => {
         const res = await api.post<ApiResponse<UserResponse>>("/user/admin", request);
+        return res.data;
+    },
+
+    updateUserById: async (userId: number, request: UserUpdateRequest) => {
+        const res = await api.patch<ApiResponse<UserResponse>>(`/user/${userId}`, request);
         return res.data;
     },
 
@@ -64,6 +74,42 @@ export const userService = {
 
     getAllUserStatuses: async () => {
         const res = await api.get<ApiResponse<ItemListDto<UserStatus>>>("/user/statuses");
+        return res.data;
+    },
+
+    requestChangeOwnEmail: async (request: ChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<null>>("/user/change-email/request", request);
+        return res.data;
+    },
+
+    confirmChangeOwnEmail: async (request: ConfirmChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<LoginResponse>>("/user/change-email/confirm", request);
+        return res.data;
+    },
+
+    adminRequestChangeUserEmail: async (userId: number, request: ChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<null>>(
+            `/user/admin/${userId}/change-email/request`,
+            request
+        );
+        return res.data;
+    },
+
+    adminConfirmChangeUserEmail: async (userId: number, request: ConfirmChangeEmailRequest) => {
+        const res = await api.post<ApiResponse<UserResponse>>(
+            `/user/admin/${userId}/change-email/confirm`,
+            request
+        );
+        return res.data;
+    },
+
+    adminResendCreatedUserVerifyEmailOtp: async (request: ResendVerifyEmailRequest) => {
+        const res = await api.post<ApiResponse<null>>("/user/admin/verify-email/resend", request);
+        return res.data;
+    },
+
+    adminConfirmCreatedUserVerifyEmail: async (request: VerifyEmailRequest) => {
+        const res = await api.post<ApiResponse<UserResponse>>("/user/admin/verify-email/confirm", request);
         return res.data;
     },
 };

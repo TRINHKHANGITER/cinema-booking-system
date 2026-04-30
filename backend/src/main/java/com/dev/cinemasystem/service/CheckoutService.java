@@ -36,7 +36,6 @@ public class CheckoutService {
     PaymentService paymentService;
     VnpayService vnpayService;
     BookingService bookingService;
-    TicketService ticketService;
     VnPayConfig vnPayConfig;
 
     @Transactional
@@ -108,8 +107,6 @@ public class CheckoutService {
                 paymentRepository.save(payment);
 
                 bookingService.markOrderPaid(orderId);
-                Order paidOrder = bookingService.getOrderEntity(orderId);
-                ticketService.createTicketsFromSoldSeats(paidOrder, bookingService.getSoldSeatsByOrder(orderId));
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
                 paymentRepository.save(payment);
@@ -166,8 +163,6 @@ public class CheckoutService {
             paymentRepository.save(payment);
 
             bookingService.markOrderPaid(orderId);
-            Order paidOrder = bookingService.getOrderEntity(orderId);
-            ticketService.createTicketsFromSoldSeats(paidOrder, bookingService.getSoldSeatsByOrder(orderId));
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);

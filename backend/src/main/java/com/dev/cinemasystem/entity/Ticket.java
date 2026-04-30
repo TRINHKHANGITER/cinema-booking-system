@@ -1,6 +1,4 @@
 package com.dev.cinemasystem.entity;
-
-import com.dev.cinemasystem.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,8 +12,8 @@ import java.time.LocalDateTime;
 @Table(
         name = "ticket",
         uniqueConstraints = @UniqueConstraint(
-                name = "uq_ticket_show_seat",
-                columnNames = {"show_id", "seat_id"}
+                name = "uq_ticket_order_show_seat",
+                columnNames = {"order_id", "show_id", "seat_id"}
         )
 )
 @Data
@@ -60,9 +58,4 @@ public class Ticket {
     @UpdateTimestamp
     @Column(nullable = false)
     LocalDateTime updatedAt;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    TicketStatus status = TicketStatus.ACTIVE;
 }

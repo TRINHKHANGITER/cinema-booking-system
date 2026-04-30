@@ -7,7 +7,6 @@ import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketUpdateResquest;
 import com.dev.cinemasystem.entity.PriceTicket;
 import com.dev.cinemasystem.enums.PriceTicketStatus;
-import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PriceTicketMapper;
@@ -180,11 +179,7 @@ public class PriceTicketService {
                     return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
 
-        boolean hasActiveTickets = ticketRepository.existsByPriceTicket_PriceTicketIdAndStatus(
-                priceTicketId,
-                TicketStatus.ACTIVE
-        );
-        if (hasActiveTickets) {
+        if (ticketRepository.existsByPriceTicket_PriceTicketId(priceTicketId)) {
             throw new AppException(ErrorCode.PRICE_TICKET_HAS_ACTIVE_TICKETS);
         }
 

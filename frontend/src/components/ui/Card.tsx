@@ -12,6 +12,7 @@ type CardProps = {
 
 const Card = ({ w = 140, h = 200, movie }: CardProps) => {
   const detailPath = `/xuat-chieu/${movie.slug ?? movie.movieId}`;
+  const detailState = { movieId: movie.movieId, movie };
   const movieName = resolveMovieText(movie.movieName, "Movie");
   const imageLandscape = resolveMovieLandscapeImage(movie.imageLandscape);
   const movieRating = resolveMovieText(
@@ -31,6 +32,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
           <div className="absolute hidden md:block w-full h-full z-10 cursor-pointer bg-[#00000080] transition-all duration-300 ease-in-out opacity-0 hover:opacity-100">
             <Link
               to={detailPath}
+              state={detailState}
               className="card__hover__content flex flex-col justify-center items-center w-full h-full"
             >
               <span className="text-white bg-[#f26b38] w-[120px] h-[40px] hover:bg-[#fb9440] rounded text-sm px-5 py-2.5 text-center inline-flex items-center gap-x-2">
@@ -40,7 +42,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
             </Link>
           </div>
 
-          <Link to={detailPath}>
+          <Link to={detailPath} state={detailState}>
             <img
               alt={movieName}
               width={w}
@@ -71,7 +73,7 @@ const Card = ({ w = 140, h = 200, movie }: CardProps) => {
       </div>
 
       <div className="mt-2" style={{ width: w }}>
-        <Link className="text-sm font-semibold" to={detailPath}>
+        <Link className="text-sm font-semibold" to={detailPath} state={detailState}>
           {movieName}
         </Link>
       </div>

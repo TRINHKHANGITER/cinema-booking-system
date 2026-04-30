@@ -1,0 +1,25 @@
+package com.dev.cinemasystem.dto.userDto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ConfirmChangeEmailRequest {
+
+    @NotBlank(message = "EMAIL_BLANK")
+    @Email(message = "EMAIL_INVALID")
+    String newEmail;
+
+    @NotBlank(message = "INVALID_REQUEST")
+    String otp;
+}

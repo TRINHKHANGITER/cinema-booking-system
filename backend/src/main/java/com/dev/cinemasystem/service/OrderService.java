@@ -18,7 +18,6 @@ import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
@@ -232,7 +231,6 @@ public class OrderService {
                         .quantity(orderCombo.getQuantity())
                         .unitPrice(orderCombo.getUnitPrice())
                         .lineTotal(orderCombo.getUnitPrice().multiply(BigDecimal.valueOf(orderCombo.getQuantity())))
-                        .status(orderCombo.getStatus())
                         .build())
                 .toList();
 
@@ -283,22 +281,7 @@ public class OrderService {
     }
 
     private void cancelOrderCombos(Integer orderId) {
-        List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(orderId);
-        if (orderCombos.isEmpty()) {
-            return;
-        }
-
-        boolean changed = false;
-        for (OrderCombo orderCombo : orderCombos) {
-            if (orderCombo.getStatus() == OrderComboStatus.ACTIVE) {
-                orderCombo.setStatus(OrderComboStatus.CANCELLED);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            orderComboRepository.saveAll(orderCombos);
-        }
+        orderComboRepository.deleteAllByOrder_OrderId(orderId);
     }
 
     private void cancelPendingPayments(Integer orderId) {
@@ -343,32 +326,34 @@ public class OrderService {
                                 .seatTypeId(seat.getSeatType().getSeatTypeId())
                                 .seatTypeName(seat.getSeatType().getSeatTypeName())
                                 .showTimeSeatStatus(showTimeSeat != null ? showTimeSeat.getStatus() : null)
-                                .ticketStatus(ticket.getStatus())
                                 .unitPrice(ticket.getUnitPrice())
                                 .build();
                     })
                     .toList();
         }
 
-        return showTimeSeats.stream()
-                .sorted(Comparator
-                        .comparing((ShowTimeSeat item) -> item.getSeat().getSeatRow())
-                        .thenComparing(item -> item.getSeat().getSeatColumn()))
-                .map(showTimeSeat -> {
-                    Seat seat = showTimeSeat.getSeat();
-                    return OrderSeatDetailResponse.builder()
-                            .seatId(seat.getSeatId())
-                            .seatRow(seat.getSeatRow())
-                            .seatColumn(seat.getSeatColumn())
-                            .seatLabel(seat.getSeatRow() + seat.getSeatColumn())
-                            .seatTypeId(seat.getSeatType().getSeatTypeId())
-                            .seatTypeName(seat.getSeatType().getSeatTypeName())
-                            .showTimeSeatStatus(showTimeSeat.getStatus())
-                            .ticketStatus(null)
-                            .unitPrice(null)
-                            .build();
-                })
-                .toList();
+        if (!showTimeSeats.isEmpty()) {
+            return showTimeSeats.stream()
+                    .sorted(Comparator
+                            .comparing((ShowTimeSeat item) -> item.getSeat().getSeatRow())
+                            .thenComparing(item -> item.getSeat().getSeatColumn()))
+                    .map(showTimeSeat -> {
+                        Seat seat = showTimeSeat.getSeat();
+                        return OrderSeatDetailResponse.builder()
+                                .seatId(seat.getSeatId())
+                                .seatRow(seat.getSeatRow())
+                                .seatColumn(seat.getSeatColumn())
+                                .seatLabel(seat.getSeatRow() + seat.getSeatColumn())
+                                .seatTypeId(seat.getSeatType().getSeatTypeId())
+                                .seatTypeName(seat.getSeatType().getSeatTypeName())
+                                .showTimeSeatStatus(showTimeSeat.getStatus())
+                                .unitPrice(null)
+                                .build();
+                    })
+                    .toList();
+        }
+
+        return List.of();
     }
 
     private OrderShowTimeDetailResponse toOrderShowTimeDetail(ShowTime showTime) {

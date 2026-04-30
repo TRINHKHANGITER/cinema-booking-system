@@ -7,6 +7,7 @@ import { bookingService } from "../../services/booking.service";
 import { checkoutService } from "../../services/checkout.service";
 import { cinemaService } from "../../services/cinema.service";
 import { comboService } from "../../services/combo.service";
+import { movieService } from "../../services/movie.service";
 import { orderService } from "../../services/order.service";
 import { provinceService } from "../../services/province.service";
 import { showTimeService } from "../../services/showtimeService";
@@ -18,6 +19,7 @@ import type { ProvinceResponse } from "../../types/province";
 import type { Seat } from "../../types/seat";
 import type { ShowTimeResponse } from "../../types/showtime";
 import type { UserResponse } from "../../types/user";
+import type { Movie } from "../../types/movie";
 import {
     calculateTotalPrice,
     formatTime,
@@ -139,7 +141,7 @@ const mapOrderDetailToSeats = (detail: OrderDetail): Seat[] => {
 
 const mapOrderDetailToCombos = (detail: OrderDetail): SelectedCombo[] => {
     return detail.combos
-        .filter((combo) => combo.status === "ACTIVE" && combo.quantity > 0)
+        .filter((combo) => combo.quantity > 0)
         .map((combo) => ({
             comboId: combo.comboId,
             comboName: combo.comboName,
@@ -445,7 +447,39 @@ const OrderManagement = () => {
                 return formatTime(showtime.startTime).startsWith(showtimeTime);
             });
 
-            setShowtimeResults(mappedItems);
+            const uniqueMovieIds = Array.from(
+                new Set(
+                    mappedItems
+                        .map((item) => item.movieId)
+                        .filter((movieId): movieId is number => Number.isInteger(movieId))
+                )
+            );
+
+            const movieById = new Map<number, Movie>();
+            if (uniqueMovieIds.length > 0) {
+                const movieResponses = await Promise.all(
+                    uniqueMovieIds.map(async (movieId) => {
+                        try {
+                            return await movieService.getMovieByIdAndStatus(movieId);
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                movieResponses.forEach((movieResponse, index) => {
+                    if (movieResponse?.code === "SUCCESS" && movieResponse.result) {
+                        movieById.set(uniqueMovieIds[index], movieResponse.result);
+                    }
+                });
+            }
+
+            const hydratedShowtimes = mappedItems.map((item) => ({
+                ...item,
+                movie: movieById.get(item.movieId) ?? item.movie,
+            }));
+
+            setShowtimeResults(hydratedShowtimes);
             setShowtimeTotalItems(result.totalItems ?? 0);
             setShowtimeTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {
@@ -805,7 +839,7 @@ const OrderManagement = () => {
                 image: combo.image,
                 description: combo.description,
                 price: combo.price,
-                status: combo.status,
+                status: "AVAILABLE",
                 quantity: nextQuantity,
             },
         ]);
@@ -2288,8 +2322,7 @@ const OrderManagement = () => {
                                                         {seat.seatLabel} - {seat.seatTypeName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Ticket: {seat.ticketStatus ?? "-"} | Seat
-                                                        map: {seat.showTimeSeatStatus ?? "-"}
+                                                        Seat map: {seat.showTimeSeatStatus ?? "-"}
                                                     </div>
                                                 </div>
                                                 <div className="font-semibold text-slate-700">
@@ -2319,7 +2352,7 @@ const OrderManagement = () => {
                                                         {combo.quantity}x {combo.comboName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Trạng thái: {combo.status}
+                                                        Số lượng: {combo.quantity}
                                                     </div>
                                                 </div>
                                                 <div className="font-semibold text-slate-700">
@@ -2430,7 +2463,7 @@ const OrderManagement = () => {
                                 </select>
                                 <p className="text-xs text-slate-500">
                                     Khi chuyển sang CANCELLED hoặc REFUNDED, hệ thống sẽ nhả ghế và
-                                    hủy ticket ACTIVE của đơn.
+                                    xóa ticket/combo đang giữ của đơn.
                                 </p>
                             </>
                         )}

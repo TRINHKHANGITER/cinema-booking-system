@@ -6,7 +6,6 @@ import com.dev.cinemasystem.dto.comboDTO.ComboResponse;
 import com.dev.cinemasystem.dto.comboDTO.ComboUpdateRequest;
 import com.dev.cinemasystem.entity.Combo;
 import com.dev.cinemasystem.enums.ComboStatus;
-import com.dev.cinemasystem.enums.OrderComboStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.ComboMapper;
@@ -171,11 +170,7 @@ public class ComboService {
                     return new AppException(ErrorCode.COMBO_NOT_FOUND);
                 });
 
-        boolean hasActiveOrderCombos = orderComboRepository.existsByCombo_ComboIdAndStatus(
-                comboId,
-                OrderComboStatus.ACTIVE
-        );
-        if (hasActiveOrderCombos) {
+        if (orderComboRepository.existsByCombo_ComboId(comboId)) {
             throw new AppException(ErrorCode.COMBO_HAS_ACTIVE_ORDER_COMBOS);
         }
 

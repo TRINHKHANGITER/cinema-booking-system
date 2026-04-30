@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.dto.orderDTO;
 
 import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
-import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +23,5 @@ public class OrderSeatDetailResponse {
     Integer seatTypeId;
     String seatTypeName;
     ShowTimeSeatStatus showTimeSeatStatus;
-    TicketStatus ticketStatus;
     BigDecimal unitPrice;
 }

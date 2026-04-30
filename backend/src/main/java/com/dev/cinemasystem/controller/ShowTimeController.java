@@ -44,8 +44,43 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
         return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
-                .message("ShowTimes retrieved successfully")
+                .message("Lấy danh sách suất chiếu thành công")
                 .result(showTimeService.getShowTimesByFilters(
+                        provinceId,
+                        cinemaId,
+                        movieTypeId,
+                        releaseDate,
+                        releaseDateCondition,
+                        movieName != null && !movieName.isBlank() ? movieName : name,
+                        movieId,
+                        status,
+                        page,
+                        size,
+                        sortBy,
+                        direction
+                ))
+                .build();
+    }
+
+    @GetMapping("/grouped")
+    public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getGroupedShowTimesByFilters(
+            @RequestParam(required = false) Integer provinceId,
+            @RequestParam(required = false) Integer cinemaId,
+            @RequestParam(required = false) Integer movieTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
+            @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) String movieName,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer movieId,
+            @RequestParam(required = false) ShowTimeStatus status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "showtime") String sortBy,
+            @RequestParam(defaultValue = "ASC") SortDirection direction
+    ) {
+        return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
+                .message("Lấy danh sách suất chiếu theo nhóm thành công")
+                .result(showTimeService.getGroupedShowTimesByFilters(
                         provinceId,
                         cinemaId,
                         movieTypeId,
@@ -66,22 +101,22 @@ public class ShowTimeController {
     public ApiResponse<ItemListDto<String>> getAllShowTimeStatuses() {
         List<String> statuses = showTimeService.getAllShowTimeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("ShowTime statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái suất chiếu thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
 
     
     @GetMapping("/{showTimeId}")
-    public ApiResponse<ShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
-                .message("ShowTime retrieved successfully")
+    public ApiResponse<FullShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
+                .message("Lấy thông tin suất chiếu thành công")
                 .result(showTimeService.getShowTimeById(showTimeId))
                 .build();
     }
 
     @GetMapping("/cinema/{cinemaId}")
-    public ApiResponse<PagingDto<ShowtimeMovieResponse>> getShowTimes(
+    public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getShowTimes(
             @PathVariable Integer cinemaId,
             @RequestParam(defaultValue = "SCHEDULED") ShowTimeStatus status,
             @RequestParam(defaultValue = "0") Integer page,
@@ -89,24 +124,24 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "showtime") String sortBy,
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
-        return ApiResponse.<PagingDto<ShowtimeMovieResponse>>builder()
-                .message("ShowTimes retrieved successfully")
+        return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
+                .message("Lấy danh sách suất chiếu thành công")
                 .result(showTimeService.getShowTimes(cinemaId, status, page, size, sortBy, direction))
                 .build();
     }
 
     @PostMapping
-    public ApiResponse<ShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
-                .message("ShowTime created successfully")
+    public ApiResponse<FullShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
+                .message("Tạo suất chiếu thành công")
                 .result(showTimeService.createShowTime(request))
                 .build();
     }
 
     @PatchMapping("/{showTimeId}")
-    public ApiResponse<ShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
-        return ApiResponse.<ShowtimeMovieResponse>builder()
-                .message("ShowTime updated successfully")
+    public ApiResponse<FullShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
+        return ApiResponse.<FullShowtimeMovieResponse>builder()
+                .message("Cập nhật suất chiếu thành công")
                 .result(showTimeService.updateShowTime(showTimeId, request))
                 .build();
     }
@@ -115,7 +150,7 @@ public class ShowTimeController {
     public ApiResponse<Boolean> deleteShowTime(@PathVariable Integer showTimeId) {
         return ApiResponse.<Boolean>builder()
                 .result(showTimeService.deleteShowTime(showTimeId))
-                .message("ShowTime deleted successfully")
+                .message("Xóa suất chiếu thành công")
                 .build();
     }
 
@@ -124,7 +159,7 @@ public class ShowTimeController {
     @PostMapping("/search")
     public ApiResponse<PagingDto<ShowTimeSearchDto>> searchShowTimes(@RequestBody @Valid ShowTimeSearchRequest request) {
         return ApiResponse.<PagingDto<ShowTimeSearchDto>>builder()
-                .message("ShowTimes retrieved successfully")
+                .message("Lấy danh sách suất chiếu thành công")
                 .result(showTimeService.searchShowTimes(request))
                 .build();
     }

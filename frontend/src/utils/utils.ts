@@ -7,7 +7,7 @@ import type { Showtime } from "../types/showtime";
 const DEFAULT_SEAT_PRICE = 75000;
 const VIP_SEAT_PRICE = 90000;
 const COUPLE_SEAT_PRICE = 160000;
-const DEFAULT_MOVIE_TEXT_FALLBACK = "Dang cap nhat";
+const DEFAULT_MOVIE_TEXT_FALLBACK = "Đang cập nhật";
 const DEFAULT_MOVIE_PORTRAIT_FALLBACK = "/images/movies/posters/tho-oi.jpg";
 const DEFAULT_MOVIE_LANDSCAPE_FALLBACK = "/images/movies/whoever-steals-this-book.jpg";
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, "");
@@ -184,7 +184,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
 
     if (thuong.length) {
         result.push({
-            label: "Gh? thu?ng",
+            label: "Ghế thường",
             seatLabel: thuong.map((s) => `${s.seatRow}${s.seatColumn}`).join(", "),
             price: thuong.reduce((sum, s) => sum + seatUnitPrice(s), 0),
             count: thuong.length,
@@ -193,7 +193,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
 
     if (vip.length) {
         result.push({
-            label: "Gh? VIP",
+            label: "Ghế VIP",
             seatLabel: vip.map((s) => `${s.seatRow}${s.seatColumn}`).join(", "),
             price: vip.reduce((sum, s) => sum + seatUnitPrice(s), 0),
             count: vip.length,
@@ -202,7 +202,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
 
     if (doi.length) {
         result.push({
-            label: "Gh? d�i",
+            label: "Ghế đôi",
             seatLabel: doi
                 .map((s) => {
                     const partnerColumn =
@@ -213,7 +213,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
                             p.seatRow === s.seatRow &&
                             p.seatColumn === partnerColumn
                     );
-                    return `${s.seatRow}${s.seatColumn}�${s.seatRow}${partner?.seatColumn ?? "?"}`;
+                    return `${s.seatRow}${s.seatColumn}-${s.seatRow}${partner?.seatColumn ?? "?"}`;
                 })
                 .join(", "),
             price: doi.reduce((sum, s) => sum + seatUnitPrice(s), 0),

@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { TicketCreationRequest, TicketStatus } from "../types/ticket";
+import type { TicketCreationRequest } from "../types/ticket";
 
 export const ticketService = {
     createTicket: async (data: TicketCreationRequest) => {
@@ -12,12 +12,8 @@ export const ticketService = {
         return res.data;
     },
 
-    getTickets: async (status?: TicketStatus) => {
-        const res = await axios.get(`/ticket`, {
-            params: {
-                status,
-            },
-        });
+    getTickets: async () => {
+        const res = await axios.get(`/ticket`);
         return res.data;
     },
 };

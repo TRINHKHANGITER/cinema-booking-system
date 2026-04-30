@@ -13,7 +13,6 @@ public interface OrderComboMapper {
     @Mapping(target = "order", ignore = true)
     @Mapping(target = "combo", ignore = true)
     @Mapping(target = "unitPrice", ignore = true)
-    @Mapping(target = "status", ignore = true)
     OrderCombo toOrderCombo(OrderComboCreationRequest orderComboCreationRequest);
 
     @Mapping(target = "orderId", source = "order.orderId")

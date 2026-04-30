@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { OrderCombo, OrderComboStatus } from "../../types/orderCombo";
+import type { OrderCombo } from "../../types/orderCombo";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import {
     baseAsyncInitialState,
@@ -22,11 +22,11 @@ const initialState: OrderComboState = {
 
 export const fetchOrderCombosThunk = createAsyncThunk<
     ApiResponse<OrderCombo[]>,
-    OrderComboStatus | undefined,
+    void,
     { rejectValue: ApiErrorPayload }
->("orderCombo/fetchOrderCombos", async (status, { rejectWithValue }) => {
+>("orderCombo/fetchOrderCombos", async (_, { rejectWithValue }) => {
     try {
-        const response = await orderComboService.getOrdersCombo(status);
+        const response = await orderComboService.getOrdersCombo();
         const apiError = rejectIfNotSuccess(response);
 
         if (apiError) return rejectWithValue(apiError);

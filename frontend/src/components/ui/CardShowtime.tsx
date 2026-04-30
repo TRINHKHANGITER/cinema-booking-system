@@ -6,12 +6,13 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { resolveMoviePortraitImage, resolveMovieText } from "../../utils/utils";
 
-interface CardHomeProps {
+interface CardShowtimeProps {
   movie: Movie;
 }
 
-const CardHome = ({ movie }: CardHomeProps) => {
+const CardShowtime = ({ movie }: CardShowtimeProps) => {
   const detailPath = `/xuat-chieu/${movie.slug ?? movie.movieId}`;
+  const detailState = { movieId: movie.movieId };
   const hasTrailer = Boolean(movie.trailerUrl?.trim());
   const movieName = resolveMovieText(movie.movieName, "Movie");
   const portraitImage = resolveMoviePortraitImage(movie.imagePortrait);
@@ -36,7 +37,7 @@ const CardHome = ({ movie }: CardHomeProps) => {
       <div className="">
         <div className="group">
           <div className="relative overflow-hidden group cursor-pointer rounded-[8px]">
-            <Link to={detailPath}>
+            <Link to={detailPath} state={detailState}>
               <img
                 alt={movieName}
                 loading="lazy"
@@ -71,6 +72,7 @@ const CardHome = ({ movie }: CardHomeProps) => {
               <div className="card__hover__content flex flex-col justify-center items-center w-full h-full gap-3">
                 <Link
                   to={detailPath}
+                  state={detailState}
                   className="text-white bg-[#f26b38] w-[120px] h-[40px] hover:bg-[#fb9440] rounded text-sm px-5 py-2.5 text-center inline-flex items-center gap-x-2"
                 >
                   <BuyTicket />
@@ -98,4 +100,4 @@ const CardHome = ({ movie }: CardHomeProps) => {
   );
 };
 
-export default CardHome;
+export default CardShowtime;

@@ -1,65 +1,89 @@
-
 server:
-  port: 8080
-  servlet:
-    context-path: /cinema/api
+    port: 8080
+    servlet:
+        context-path: /cinema/api
 
 spring:
-  datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
-  servlet:
-    multipart:
-      max-file-size: ${MAX_FILE_SIZE:20MB}
-      max-request-size: ${MAX_REQUEST_SIZE:50MB}
+    datasource:
+        url: ${DATABASE_URL}
+        username: ${DATABASE_USERNAME}
+        password: ${DATABASE_PASSWORD}
 
-  jpa:
-    hibernate:
-       ddl-auto: update
-#      ddl-auto: create
-    show-sql: true
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        client-id: ${GOOGLE_CLIENT_ID}
+                        scope:
+                            - email
+                            - profile
+                provider:
+                    google:
+                        authorization-uri: https://accounts.google.com/o/oauth2/auth
+                        token-uri: https://oauth2.googleapis.com/token
+                        user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+                        user-name-attribute: sub
+
+    mail:
+        host: ${MAIL_HOST:}
+        port: ${MAIL_PORT:587}
+        username: ${MAIL_USERNAME:}
+        password: ${MAIL_PASSWORD:}
+        protocol: ${MAIL_PROTOCOL:smtp}
+        default-encoding: UTF-8
+        properties:
+            mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+            mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+    servlet:
+            multipart:
+                max-file-size: ${MAX_FILE_SIZE:20MB}
+                max-request-size: ${MAX_REQUEST_SIZE:50MB}
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+    #      ddl-auto: create
+        show-sql: true
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY}
+    signerKey: ${JWT_SIGNER_KEY}
 
 springdoc:
-  swagger-ui:
-    path: /swagger
-  api-docs:
-    path: /api-docs
-
+    swagger-ui:
+        path: /swagger
+    api-docs:
+        path: /api-docs
 
 storage:
-  image-combo-pattern: /image/combo/**
-  image-combo-dir: data/image/combo
-  image-movie-imageLandscape-pattern: /image/movie/imageLandscape/**
-  image-movie-imageLandscape-dir: data/image/movie/imageLandscape
-  image-movie-imagePortrait-pattern: /image/movie/imagePortrait/**
-  image-movie-imagePortrait-dir: data/image/movie/imagePortrait
-
-
+    image-combo-pattern: /image/combo/**
+    image-combo-dir: data/image/combo
+    image-movie-imageLandscape-pattern: /image/movie/imageLandscape/**
+    image-movie-imageLandscape-dir: data/image/movie/imageLandscape
+    image-movie-imagePortrait-pattern: /image/movie/imagePortrait/**
+    image-movie-imagePortrait-dir: data/image/movie/imagePortrait
 
 gemini:
-  api:
-    key: ${GEMINI_API_KEY}
-    url: ${GEMINI_API_URL}
-
-
+    api:
+        key: ${GEMINI_API_KEY}
+        url: ${GEMINI_API_URL}
 
 app:
-  base-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev
-  booking:
-    hold-minutes: 2
+    base-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev
+    booking:
+        hold-minutes: 2
+    auth:
+        reset-password-otp-expire-minutes: ${RESET_PASSWORD_OTP_EXPIRE_MINUTES:5}
+        verify-email-otp-expire-minutes: ${VERIFY_EMAIL_OTP_EXPIRE_MINUTES:5}
 
 vnpay:
-  tmn-code: ${VNPAY_TMN_CODE}
-  hash-secret: ${VNPAY_HASH_SECRET}
-  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return-url: http://localhost:5173/checkout/vnpay/return
-  ipn-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev/cinema/api/checkout/vnpay/ipn
-  version: 2.1.0
-  command: pay
-  curr-code: VND
-  locale: vn
-  order-type: otherx
+    tmn-code: ${VNPAY_TMN_CODE}
+    hash-secret: ${VNPAY_HASH_SECRET}
+    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    return-url: http://localhost:5173/checkout/vnpay/return
+    ipn-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev/cinema/api/checkout/vnpay/ipn
+    version: 2.1.0
+    command: pay
+    curr-code: VND
+    locale: vn
+    order-type: otherx

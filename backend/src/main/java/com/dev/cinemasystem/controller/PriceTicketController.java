@@ -37,7 +37,7 @@ public class PriceTicketController {
     @GetMapping("/{priceTicketId}")
     public ApiResponse<PriceTicketResponse> getPriceTicketById(@PathVariable Integer priceTicketId) {
         return ApiResponse.<PriceTicketResponse>builder()
-                .message("Price ticket retrieved successfully")
+                .message("Lấy thông tin giá vé thành công")
                 .result(priceTicketService.getPriceTicketById(priceTicketId))
                 .build();
     }
@@ -47,7 +47,7 @@ public class PriceTicketController {
             @RequestBody @Valid PriceTicketCreationResquest request
     ) {
         return ApiResponse.<PriceTicketResponse>builder()
-                .message("Price ticket created successfully")
+                .message("Tạo giá vé thành công")
                 .result(priceTicketService.createPriceTicket(request))
                 .build();
     }
@@ -59,7 +59,7 @@ public class PriceTicketController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<PriceTicketResponse>>builder()
-                .message("Price tickets retrieved successfully")
+                .message("Lấy danh sách giá vé thành công")
                 .result(priceTicketService.getAllPriceTickets(status, page, size))
                 .build();
     }
@@ -73,7 +73,7 @@ public class PriceTicketController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<PriceTicketResponse>>builder()
-                .message("Price tickets filtered successfully")
+                .message("Lọc giá vé thành công")
                 .result(priceTicketService.filterPriceTickets(roomTypeId, seatTypeId, status, page, size))
                 .build();
     }
@@ -82,7 +82,7 @@ public class PriceTicketController {
     public ApiResponse<ItemListDto<String>> getAllPriceTicketStatuses() {
         List<String> statuses = priceTicketService.getAllPriceTicketStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Price ticket statuses retrieved successfully")
+                .message("Lấy danh sách trạng thái giá vé thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -93,7 +93,7 @@ public class PriceTicketController {
             @RequestBody @Valid PriceTicketUpdateResquest request
     ) {
         return ApiResponse.<PriceTicketResponse>builder()
-                .message("Price ticket updated successfully")
+                .message("Cập nhật giá vé thành công")
                 .result(priceTicketService.updatePriceTicket(priceTicketId, request))
                 .build();
     }
@@ -102,7 +102,7 @@ public class PriceTicketController {
     public ApiResponse<Boolean> deletePriceTicket(@PathVariable Integer priceTicketId) {
         return ApiResponse.<Boolean>builder()
                 .result(priceTicketService.deletePriceTicket(priceTicketId))
-                .message("Price ticket deleted successfully")
+                .message("Xóa giá vé thành công")
                 .build();
     }
 }

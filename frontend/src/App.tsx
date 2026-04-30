@@ -1,6 +1,6 @@
 // import { BrowserRouter, Routes, Route } from "react-router-dom";
 // import Home from "./pages/client/Home";
-// import BookTicket from "./pages/client/BookTicket";
+// import ShowtimesPage from "./pages/client/ShowtimesPage";
 // import Booking from "./pages/client/Booking";
 // import IsShowing from "./pages/client/IsShowing";
 // import { Toaster } from "sonner";
@@ -15,7 +15,7 @@
 //         <AuthInitializer>
 //           <Routes>
 //             <Route path="/" element={<Home />} />
-//             <Route path="/xuat-chieu/:slug" element={<BookTicket />} />
+//             <Route path="/xuat-chieu/:slug" element={<ShowtimesPage />} />
 //             {/* <Route element={<ProtectedRoute />}>
 //               <Route path="/dat-ve/:slug" element={<Booking />} />
 //             </Route> */}

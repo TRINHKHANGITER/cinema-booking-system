@@ -4,7 +4,6 @@ import com.dev.cinemasystem.dto.ticket.TicketCreationRequest;
 import com.dev.cinemasystem.dto.ticket.TicketResponse;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.service.TicketService;
-import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,9 +33,9 @@ public class TicketController {
     }
 
     @GetMapping()
-    public ApiResponse<List<TicketResponse>> getTickets(@RequestParam(required = false)TicketStatus status) {
+    public ApiResponse<List<TicketResponse>> getTickets() {
         return  ApiResponse.<List<TicketResponse>>builder()
-                .result(ticketService.getTickets(status))
+                .result(ticketService.getTickets())
                 .build();
     }
 }

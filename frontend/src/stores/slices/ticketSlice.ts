@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Ticket, TicketStatus } from "../../types/ticket";
+import type { Ticket } from "../../types/ticket";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import {
     baseAsyncInitialState,
@@ -22,11 +22,11 @@ const initialState: TicketState = {
 
 export const fetchTicketsThunk = createAsyncThunk<
     ApiResponse<Ticket[]>,
-    TicketStatus | undefined,
+    void,
     { rejectValue: ApiErrorPayload }
->("ticket/fetchTickets", async (status, { rejectWithValue }) => {
+>("ticket/fetchTickets", async (_, { rejectWithValue }) => {
     try {
-        const response = await ticketService.getTickets(status);
+        const response = await ticketService.getTickets();
         const apiError = rejectIfNotSuccess(response);
 
         if (apiError) return rejectWithValue(apiError);

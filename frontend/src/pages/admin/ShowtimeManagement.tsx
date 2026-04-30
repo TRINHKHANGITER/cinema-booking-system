@@ -372,7 +372,40 @@ const ShowtimeManagement = () => {
                 return;
             }
 
-            setShowtimes(result.items ?? []);
+            const items = result.items ?? [];
+            const uniqueMovieIds = Array.from(
+                new Set(
+                    items
+                        .map((item) => item.movieId)
+                        .filter((movieId): movieId is number => Number.isInteger(movieId))
+                )
+            );
+
+            const movieById = new Map<number, Movie>();
+            if (uniqueMovieIds.length > 0) {
+                const movieResponses = await Promise.all(
+                    uniqueMovieIds.map(async (movieId) => {
+                        try {
+                            return await movieService.getMovieByIdAndStatus(movieId);
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                movieResponses.forEach((movieResponse, index) => {
+                    if (movieResponse?.code === "SUCCESS" && movieResponse.result) {
+                        movieById.set(uniqueMovieIds[index], movieResponse.result);
+                    }
+                });
+            }
+
+            const hydratedShowtimes = items.map((item) => ({
+                ...item,
+                movie: movieById.get(item.movieId) ?? item.movie,
+            }));
+
+            setShowtimes(hydratedShowtimes);
             setTotalItems(result.totalItems ?? 0);
             setTotalPages(Math.max(1, result.totalPages ?? 1));
         } catch (error) {

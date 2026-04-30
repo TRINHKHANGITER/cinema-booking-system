@@ -20,6 +20,7 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     Page<User> findByStatus(UserStatus status, Pageable pageable);
 
     Optional<User> findByEmail(String email);
+    Optional<User> findByGoogleProviderId(String googleProviderId);
 
 }
 

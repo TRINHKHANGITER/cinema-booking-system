@@ -10,7 +10,7 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION("UNCATEGORIZED_EXCEPTION", HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi chưa xác định"),
     UNAUTHENTICATED("UNAUTHENTICATED", HttpStatus.UNAUTHORIZED, "Chưa xác thực"),
     UNAUTHORIZED("UNAUTHORIZED", HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập"),
-    TOKEN_INVALID("TOKEN_INVALID", HttpStatus.BAD_REQUEST, "Token không hợp lệ"),
+    TOKEN_INVALID("TOKEN_INVALID", HttpStatus.BAD_REQUEST, "Mã token không hợp lệ"),
 
 
     // user
@@ -18,7 +18,7 @@ public enum ErrorCode {
     FULLNAME_BLANK("FULLNAME_BLANK", HttpStatus.BAD_REQUEST, "Họ và tên là bắt buộc"),
     PHONE_NUMBER_BLANK("PHONE_NUMBER_BLANK", HttpStatus.BAD_REQUEST, "Số điện thoại là bắt buộc"),
     IDENTITY_CODE_BLANK("IDENTITY_CODE_BLANK", HttpStatus.BAD_REQUEST, "Số CCCD/CMND là bắt buộc"),
-    SEX_INVALID("SEX_INVALID", HttpStatus.BAD_REQUEST, "Giới tính phải là male, female hoặc other"),
+    SEX_INVALID("SEX_INVALID", HttpStatus.BAD_REQUEST, "Giới tính phải là nam, nữ hoặc khác"),
     EMAIL_BLANK("EMAIL_BLANK", HttpStatus.BAD_REQUEST, "Email là bắt buộc"),
     PASSWORD_BLANK("PASSWORD_BLANK", HttpStatus.BAD_REQUEST, "Mật khẩu là bắt buộc"),
     PASSWORD_INVALID("PASSWORD_INVALID", HttpStatus.BAD_REQUEST, "Mật khẩu phải có ít nhất 8 ký tự"),
@@ -68,9 +68,9 @@ public enum ErrorCode {
     WARD_NOT_FOUND("WARD_NOT_FOUND", HttpStatus.NOT_FOUND, "Không tìm thấy phường/xã"),
     CINEMA_ALREADY_EXISTS("CINEMA_ALREADY_EXISTS", HttpStatus.BAD_REQUEST, "Rạp tại địa chỉ này đã tồn tại"),
 
-    ROW_BLANK("ROW_BLANK", HttpStatus.BAD_REQUEST, "seatRow là bắt buộc"),
-    ROW_INVALID("ROW_INVALID", HttpStatus.BAD_REQUEST, "seatRow phải lớn hơn hoặc bằng 1"),
-    COLUMN_INVALID("COLUMN_INVALID", HttpStatus.BAD_REQUEST, "seatColumn phải lớn hơn hoặc bằng 1"),
+    ROW_BLANK("ROW_BLANK", HttpStatus.BAD_REQUEST, "Hàng ghế là bắt buộc"),
+    ROW_INVALID("ROW_INVALID", HttpStatus.BAD_REQUEST, "Hàng ghế phải là một ký tự chữ cái in hoa từ A đến Z"),
+    COLUMN_INVALID("COLUMN_INVALID", HttpStatus.BAD_REQUEST, "Cột ghế phải lớn hơn hoặc bằng 1"),
     SEAT_TYPE_ID_INVALID("SEAT_TYPE_ID_INVALID", HttpStatus.BAD_REQUEST, "Mã loại ghế phải lớn hơn hoặc bằng 1"),
     SEAT_TYPE_BLANK("SEAT_TYPE_BLANK", HttpStatus.BAD_REQUEST, "Loại ghế là bắt buộc"),
     ROOM_ID_INVALID("ROOM_ID_INVALID", HttpStatus.BAD_REQUEST, "Mã phòng phải lớn hơn hoặc bằng 1"),
@@ -80,7 +80,7 @@ public enum ErrorCode {
     SEAT_TYPE_NAME_EXISTS("SEAT_TYPE_NAME_EXISTS", HttpStatus.BAD_REQUEST, "Tên loại ghế đã tồn tại"),
     SEAT_TYPE_HAS_ACTIVE_SEATS("SEAT_TYPE_HAS_ACTIVE_SEATS", HttpStatus.BAD_REQUEST, "Không thể xóa loại ghế vì còn ghế đang hoạt động sử dụng"),
     SEAT_NOT_FOUND("SEAT_NOT_FOUND", HttpStatus.NOT_FOUND, "Không tìm thấy ghế"),
-    SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Ghế đã tồn tại trong phòng tại seatRow và seatColumn đã cho"),
+    SEAT_ALREADY_EXISTS_IN_ROOM("SEAT_ALREADY_EXISTS_IN_ROOM", HttpStatus.BAD_REQUEST, "Ghế đã tồn tại trong phòng với hàng ghế và cột ghế đã cho"),
     SEAT_HAS_ACTIVE_TICKETS_OR_HOLDS("SEAT_HAS_ACTIVE_TICKETS_OR_HOLDS", HttpStatus.BAD_REQUEST, "Không thể xóa ghế vì còn vé hoặc giữ chỗ đang hoạt động sử dụng"),
 
 
@@ -99,7 +99,7 @@ public enum ErrorCode {
     MOVIE_STATUS_BLANK("MOVIE_STATUS_BLANK", HttpStatus.BAD_REQUEST, "Trạng thái phim là bắt buộc"),
     RELEASE_DATE_BLANK("RELEASE_DATE_BLANK", HttpStatus.BAD_REQUEST, "Ngày khởi chiếu là bắt buộc"),
     END_DATE_BLANK("END_DATE_BLANK", HttpStatus.BAD_REQUEST, "Ngày kết thúc là bắt buộc"),
-    MOVIE_END_DATE_INVALID("MOVIE_END_DATE_INVALID", HttpStatus.BAD_REQUEST, "endDate phải lớn hơn hoặc bằng releaseDate"),
+    MOVIE_END_DATE_INVALID("MOVIE_END_DATE_INVALID", HttpStatus.BAD_REQUEST, "Ngày kết thúc phải lớn hơn hoặc bằng ngày khởi chiếu"),
     MOVIE_HAS_ACTIVE_SHOWTIMES("MOVIE_HAS_ACTIVE_SHOWTIMES", HttpStatus.BAD_REQUEST, "Không thể xóa phim vì còn suất chiếu đang hoạt động sử dụng"),
 
     TICKET_NOT_FOUND("TICKET_NOT_FOUND", HttpStatus.NOT_FOUND, "Không tìm thấy vé"),
@@ -120,7 +120,7 @@ public enum ErrorCode {
     SHOWTIME_HAS_ACTIVE_TICKETS("SHOWTIME_HAS_ACTIVE_TICKETS", HttpStatus.BAD_REQUEST, "Không thể xóa suất chiếu vì còn vé đang hoạt động sử dụng suất chiếu này"),
     START_TIME_BLANK("START_TIME_BLANK", HttpStatus.BAD_REQUEST, "Thời gian bắt đầu là bắt buộc"),
     END_TIME_BLANK("END_TIME_BLANK", HttpStatus.BAD_REQUEST, "Thời gian kết thúc là bắt buộc"),
-    INVALID_SHOWTIME_RANGE("INVALID_SHOWTIME_RANGE", HttpStatus.BAD_REQUEST, "endTime phải lớn hơn startTime"),
+    INVALID_SHOWTIME_RANGE("INVALID_SHOWTIME_RANGE", HttpStatus.BAD_REQUEST, "Thời gian kết thúc phải lớn hơn thời gian bắt đầu"),
     ROOM_HAS_NO_SEATS("ROOM_HAS_NO_SEATS", HttpStatus.BAD_REQUEST, "Không thể tạo suất chiếu vì phòng chưa có ghế"),
     TIME_INVALID("TIME_INVALID", HttpStatus.BAD_REQUEST, "Thời gian phải có định dạng hh:mm:ss hoặc hh:mm"),
     INVALID_REQUEST("INVALID_REQUEST", HttpStatus.BAD_REQUEST, "Yêu cầu không hợp lệ"),
@@ -142,6 +142,9 @@ public enum ErrorCode {
     EMAIL_OR_USERNAME_NOT_BLANK("EMAIL_OR_USERNAME_NOT_BLANK", HttpStatus.BAD_REQUEST, "Email hoặc tên đăng nhập là bắt buộc"),
 
 
+
+    ID_TOKEN_INVALID("ID_TOKEN_INVALID", HttpStatus.BAD_REQUEST, "Mã ID token không hợp lệ"),
+    EMAIL_SENDING_FAILED("EMAIL_SENDING_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, "Gửi email thất bại"),
 
     ;
 

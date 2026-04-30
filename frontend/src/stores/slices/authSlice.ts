@@ -4,10 +4,9 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../../services/auth.service";
-import { userService } from "../../services/user.service";
 import type { ApiResponse } from "../../types/api";
-import type { LoginRequest, LoginResponse } from "../../types/auth";
-import type { UserCreationRequest, UserResponse } from "../../types/user";
+import type { GoogleLoginRequest, LoginRequest, LoginResponse } from "../../types/auth";
+import type { UserResponse } from "../../types/user";
 import {
     baseAsyncInitialState,
     mapUnknownError,
@@ -43,6 +42,17 @@ const clearStorage = () => {
     localStorage.removeItem(LS_ACCESS);
     localStorage.removeItem(LS_REFRESH);
     localStorage.removeItem(LS_USER);
+};
+
+const persistSession = (session: LoginResponse | null) => {
+    if (!session?.accessToken || !session?.refreshToken || !session.user) {
+        clearStorage();
+        return;
+    }
+
+    localStorage.setItem(LS_ACCESS, session.accessToken);
+    localStorage.setItem(LS_REFRESH, session.refreshToken);
+    localStorage.setItem(LS_USER, JSON.stringify(session.user));
 };
 
 export type AuthState = {
@@ -82,6 +92,25 @@ export const loginThunk = createAsyncThunk<
     }
 });
 
+export const googleLoginThunk = createAsyncThunk<
+    ApiResponse<LoginResponse>,
+    GoogleLoginRequest,
+    { rejectValue: ApiErrorPayload }
+>("auth/googleLogin", async (request, { rejectWithValue }) => {
+    try {
+        const response = await authService.googleLogin(request);
+        const apiError = rejectIfNotSuccess(response);
+
+        if (apiError) {
+            return rejectWithValue(apiError);
+        }
+
+        return response;
+    } catch (error) {
+        return rejectWithValue(mapUnknownError(error));
+    }
+});
+
 const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -101,65 +130,100 @@ const authSlice = createSlice({
             state.user = safeReadUser();
             state.isAuthenticated = Boolean(state.accessToken);
         },
+        replaceSession(state, action: PayloadAction<LoginResponse>) {
+            const session = action.payload;
+            state.accessToken = session.accessToken;
+            state.refreshToken = session.refreshToken;
+            state.user = session.user;
+            state.isAuthenticated = Boolean(session.accessToken);
+            state.code = "SUCCESS";
+            state.message = "Cập nhật phiên đăng nhập thành công";
+            persistSession(session);
+        },
+        setCurrentUser(state, action: PayloadAction<UserResponse>) {
+            state.user = action.payload;
+            state.code = "SUCCESS";
+            state.message = "Cập nhật thông tin người dùng thành công";
+            localStorage.setItem(LS_USER, JSON.stringify(action.payload));
+        },
     },
     extraReducers: (builder) => {
+        const setPending = (state: AuthState) => {
+            state.loading = true;
+            state.code = null;
+            state.message = null;
+        };
+
+        const setSuccess = (state: AuthState, payload: ApiResponse<LoginResponse>) => {
+            state.loading = false;
+            state.code = payload.code;
+            state.message = payload.message ?? null;
+
+            const result = payload.result;
+            state.accessToken = result?.accessToken ?? null;
+            state.refreshToken = result?.refreshToken ?? null;
+            state.user = result?.user ?? null;
+            state.isAuthenticated = Boolean(result?.accessToken);
+            persistSession(result ?? null);
+        };
+
+        const setRejected = (
+            state: AuthState,
+            action: {
+                payload?: ApiErrorPayload;
+                error: { message?: string };
+            }
+        ) => {
+            state.loading = false;
+            state.code = action.payload?.code ?? "UNKNOWN_ERROR";
+            state.message = action.payload?.message ?? action.error.message ?? "Request failed";
+            state.isAuthenticated = false;
+            state.accessToken = null;
+            state.refreshToken = null;
+            state.user = null;
+            clearStorage();
+        };
+
         builder
-            .addCase(loginThunk.pending, (state) => {
-                state.loading = true;
-                state.code = null;
-                state.message = null;
-            })
+            .addCase(loginThunk.pending, setPending)
+            .addCase(googleLoginThunk.pending, setPending)
             .addCase(
                 loginThunk.fulfilled,
                 (state, action: PayloadAction<ApiResponse<LoginResponse>>) => {
-                    state.loading = false;
-                    state.code = action.payload.code;
-                    state.message = action.payload.message ?? null;
-
-                    const result = action.payload.result;
-                    state.accessToken = result?.accessToken ?? null;
-                    state.refreshToken = result?.refreshToken ?? null;
-                    state.user = result?.user ?? null;
-                    state.isAuthenticated = Boolean(result?.accessToken);
-
-                    if (result?.accessToken) {
-                        localStorage.setItem(LS_ACCESS, result.accessToken);
-                    }
-                    if (result?.refreshToken) {
-                        localStorage.setItem(LS_REFRESH, result.refreshToken);
-                    }
-                    if (result?.user) {
-                        localStorage.setItem(LS_USER, JSON.stringify(result.user));
-                    }
+                    setSuccess(state, action.payload);
                 }
             )
-            .addCase(loginThunk.rejected, (state, action) => {
-                state.loading = false;
-                state.code = action.payload?.code ?? "UNKNOWN_ERROR";
-                state.message = action.payload?.message ?? action.error.message ?? "Request failed";
-                state.isAuthenticated = false;
-                state.accessToken = null;
-                state.refreshToken = null;
-                state.user = null;
-                clearStorage();
-            });
+            .addCase(
+                googleLoginThunk.fulfilled,
+                (state, action: PayloadAction<ApiResponse<LoginResponse>>) => {
+                    setSuccess(state, action.payload);
+                }
+            )
+            .addCase(loginThunk.rejected, setRejected)
+            .addCase(googleLoginThunk.rejected, setRejected);
     },
 });
 
-export const { signOut, restoreAuthFromStorage } = authSlice.actions;
+export const { signOut, restoreAuthFromStorage, replaceSession, setCurrentUser } =
+    authSlice.actions;
 
 type AuthStoreCompat = AuthState & {
     signIn: (email: string, password: string) => Promise<ApiResponse<LoginResponse>>;
-    signOut: () => Promise<void>;
-    signUp: (
-        fullName: string,
-        password: string,
+    signInWithGoogle: (idToken: string) => Promise<ApiResponse<LoginResponse>>;
+    requestPasswordResetOtp: (email: string) => Promise<ApiResponse<null>>;
+    resetPasswordByOtp: (
         email: string,
-        phoneNumber: string,
-        dateOfBirth?: string
-    ) => Promise<void>;
+        otp: string,
+        newPassword: string
+    ) => Promise<ApiResponse<null>>;
+    signOut: () => Promise<void>;
+    signUp: (email: string, password: string, phoneNumber?: string) => Promise<ApiResponse<null>>;
+    verifyEmailOtp: (email: string, otp: string) => Promise<ApiResponse<null>>;
+    resendVerifyEmailOtp: (email: string) => Promise<ApiResponse<null>>;
     refresh: () => Promise<void>;
     fetchMe: () => Promise<void>;
+    replaceSession: (session: LoginResponse) => Promise<void>;
+    setUser: (user: UserResponse) => Promise<void>;
 };
 
 export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCompat) => T): T => {
@@ -174,7 +238,7 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
                     email,
                     password,
                 })
-            );  
+            );
 
             if (loginThunk.fulfilled.match(action)) {
                 return action.payload;
@@ -184,33 +248,100 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
                 action.payload?.message ?? action.error?.message ?? "Đăng nhập thất bại";
             throw new Error(errorMessage);
         },
+        signInWithGoogle: async (idToken: string) => {
+            const action = await dispatch(
+                googleLoginThunk({
+                    idToken,
+                })
+            );
+
+            if (googleLoginThunk.fulfilled.match(action)) {
+                return action.payload;
+            }
+
+            const errorMessage =
+                action.payload?.message ?? action.error?.message ?? "Đăng nhập với Google thất bại";
+            throw new Error(errorMessage);
+        },
+        requestPasswordResetOtp: async (email: string) => {
+            try {
+                const response = await authService.forgotPassword({ email });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        resetPasswordByOtp: async (email: string, otp: string, newPassword: string) => {
+            try {
+                const response = await authService.resetPassword({ email, otp, newPassword });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
         signOut: async () => {
             dispatch(signOut());
         },
-        signUp: async (
-            fullName: string,
-            password: string,
-            email: string,
-            phoneNumber: string,
-            dateOfBirth?: string
-        ) => {
-            const payload: UserCreationRequest = {
-                fullName,
-                phoneNumber,
-                email,
-                password,
-                dateOfBirth: dateOfBirth || null,
-                sex: null,
-            };
+        signUp: async (email: string, password: string, phoneNumber?: string) => {
+            try {
+                const payload = phoneNumber?.trim()
+                    ? { email, password, phone: phoneNumber.trim() }
+                    : { email, password };
+                const response = await authService.register(payload);
+                const apiError = rejectIfNotSuccess(response);
 
-            const response = await userService.createUser(payload);
-            if (response.code === "SUCCESS") {
-                await dispatch(
-                    loginThunk({
-                        email,
-                        password,
-                    })
-                );
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        verifyEmailOtp: async (email: string, otp: string) => {
+            try {
+                const response = await authService.verifyEmail({ email, otp });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        resendVerifyEmailOtp: async (email: string) => {
+            try {
+                const response = await authService.resendVerifyEmail({ email });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
             }
         },
         refresh: async () => {
@@ -218,6 +349,12 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
         },
         fetchMe: async () => {
             dispatch(restoreAuthFromStorage());
+        },
+        replaceSession: async (session: LoginResponse) => {
+            dispatch(replaceSession(session));
+        },
+        setUser: async (user: UserResponse) => {
+            dispatch(setCurrentUser(user));
         },
     };
 
@@ -229,4 +366,3 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
 };
 
 export default authSlice.reducer;
-
