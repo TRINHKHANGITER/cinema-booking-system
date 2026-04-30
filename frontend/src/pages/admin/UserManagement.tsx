@@ -5,6 +5,7 @@ import { z } from "zod";
 import axios from "axios";
 import { toast } from "sonner";
 import Close from "../../components/icon/close";
+import type { VerifyEmailRequest } from "../../types/auth";
 import { userService } from "../../services/user.service";
 import type {
     AdminUserCreationRequest,
@@ -19,7 +20,7 @@ import type {
 const PHONE_REGEX = /^\+?[0-9]{10,15}$/;
 
 const defaultRoles: Role[] = ["USER", "STAFF", "ADMIN"];
-const defaultStatuses: UserStatus[] = ["ACTIVE", "LOCKED", "SUSPENDED", "DELETED"];
+const defaultStatuses: UserStatus[] = ["PENDING_VERIFY", "ACTIVE", "LOCKED", "SUSPENDED", "DELETED"];
 
 const createUserSchema = z.object({
     fullName: z.string().trim().min(1, "Họ và tên là bắt buộc"),
@@ -30,7 +31,6 @@ const createUserSchema = z.object({
         .regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
     role: z.string().trim().min(1, "Vai trò là bắt buộc"),
-    status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
     dateOfBirth: z.string().optional(),
     sex: z.string().optional(),
 });
@@ -56,9 +56,17 @@ const changeEmailSchema = z.object({
         .regex(/^\d{6}$/, "Mã OTP phải gồm đúng 6 chữ số"),
 });
 
+const createUserVerifyOtpSchema = z.object({
+    otp: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, "Mã OTP phải gồm đúng 6 chữ số"),
+});
+
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 type ChangeEmailFormValues = z.infer<typeof changeEmailSchema>;
+type CreateUserVerifyOtpFormValues = z.infer<typeof createUserVerifyOtpSchema>;
 
 type ModalShellProps = {
     open: boolean;
@@ -73,7 +81,6 @@ const emptyCreateValues: CreateUserFormValues = {
     phoneNumber: "",
     password: "",
     role: "USER",
-    status: "ACTIVE",
     dateOfBirth: "",
     sex: "",
 };
@@ -138,6 +145,9 @@ const UserManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [openCreate, setOpenCreate] = useState(false);
+    const [createUserStep, setCreateUserStep] = useState<"form" | "verifyOtp">("form");
+    const [createdUserEmailPendingVerify, setCreatedUserEmailPendingVerify] = useState("");
+    const [isResendingCreateUserOtp, setIsResendingCreateUserOtp] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [openChangeEmail, setOpenChangeEmail] = useState(false);
     const [changeEmailTarget, setChangeEmailTarget] = useState<UserResponse | null>(null);
@@ -149,6 +159,13 @@ const UserManagement = () => {
     const createForm = useForm<CreateUserFormValues>({
         resolver: zodResolver(createUserSchema),
         defaultValues: emptyCreateValues,
+    });
+
+    const createUserVerifyOtpForm = useForm<CreateUserVerifyOtpFormValues>({
+        resolver: zodResolver(createUserVerifyOtpSchema),
+        defaultValues: {
+            otp: "",
+        },
     });
 
     const editForm = useForm<UpdateUserFormValues>({
@@ -167,6 +184,17 @@ const UserManagement = () => {
         },
     });
     const selectedNewEmailForChange = changeEmailForm.watch("newEmail");
+
+    const resetCreateUserState = () => {
+        setOpenCreate(false);
+        setCreateUserStep("form");
+        setCreatedUserEmailPendingVerify("");
+        setIsResendingCreateUserOtp(false);
+        createForm.reset(emptyCreateValues);
+        createUserVerifyOtpForm.reset({
+            otp: "",
+        });
+    };
 
     const resetChangeEmailState = () => {
         setOpenChangeEmail(false);
@@ -267,7 +295,13 @@ const UserManagement = () => {
     };
 
     const openCreateModal = () => {
+        setCreateUserStep("form");
+        setCreatedUserEmailPendingVerify("");
+        setIsResendingCreateUserOtp(false);
         createForm.reset(emptyCreateValues);
+        createUserVerifyOtpForm.reset({
+            otp: "",
+        });
         setOpenCreate(true);
     };
 
@@ -303,7 +337,7 @@ const UserManagement = () => {
             phoneNumber: values.phoneNumber.trim(),
             password: values.password,
             role: values.role as Role,
-            status: values.status as UserStatus,
+            status: "ACTIVE",
             dateOfBirth: normalizeOptionalField(values.dateOfBirth),
             sex: normalizeOptionalField(values.sex) as "male" | "female" | "other" | null,
         };
@@ -315,11 +349,62 @@ const UserManagement = () => {
                 return;
             }
 
-            toast.success("Tạo người dùng thành công");
-            setOpenCreate(false);
+            setCreatedUserEmailPendingVerify(payload.email);
+            setCreateUserStep("verifyOtp");
+            createUserVerifyOtpForm.reset({
+                otp: "",
+            });
+            toast.success(response.message || "Đã tạo người dùng và gửi mã OTP xác thực email");
             void fetchUsers();
         } catch (error) {
             toast.error(parseApiError(error, "Tạo người dùng thất bại"));
+        }
+    });
+
+    const resendCreateUserOtp = async () => {
+        if (!createdUserEmailPendingVerify) return;
+
+        setIsResendingCreateUserOtp(true);
+        try {
+            const response = await userService.adminResendCreatedUserVerifyEmailOtp({
+                email: createdUserEmailPendingVerify,
+            });
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Không thể gửi lại mã OTP");
+                return;
+            }
+
+            toast.success(response.message || "Đã gửi lại mã OTP xác thực email");
+        } catch (error) {
+            toast.error(parseApiError(error, "Không thể gửi lại mã OTP"));
+        } finally {
+            setIsResendingCreateUserOtp(false);
+        }
+    };
+
+    const submitCreateUserVerifyOtp = createUserVerifyOtpForm.handleSubmit(async (values) => {
+        if (!createdUserEmailPendingVerify) {
+            toast.error("Không tìm thấy email cần xác thực");
+            return;
+        }
+
+        const payload: VerifyEmailRequest = {
+            email: createdUserEmailPendingVerify,
+            otp: values.otp.trim(),
+        };
+
+        try {
+            const response = await userService.adminConfirmCreatedUserVerifyEmail(payload);
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Xác thực email thất bại");
+                return;
+            }
+
+            toast.success(response.message || "Xác thực email thành công");
+            resetCreateUserState();
+            void fetchUsers();
+        } catch (error) {
+            toast.error(parseApiError(error, "Xác thực email thất bại"));
         }
     });
 
@@ -588,6 +673,8 @@ const UserManagement = () => {
                                                 className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
                                                     user.status === "ACTIVE"
                                                         ? "bg-emerald-100 text-emerald-700"
+                                                        : user.status === "PENDING_VERIFY"
+                                                          ? "bg-indigo-100 text-indigo-700"
                                                         : user.status === "LOCKED"
                                                           ? "bg-amber-100 text-amber-700"
                                                           : user.status === "SUSPENDED"
@@ -670,155 +757,206 @@ const UserManagement = () => {
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm người dùng mới">
-                <form className="space-y-3" onSubmit={submitCreate}>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Họ và tên *
-                            </label>
-                            <input
-                                type="text"
-                                {...createForm.register("fullName")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                            {createForm.formState.errors.fullName && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.fullName.message}
-                                </p>
-                            )}
+            <ModalShell open={openCreate} onClose={resetCreateUserState} title="Thêm người dùng mới">
+                {createUserStep === "form" ? (
+                    <form className="space-y-3" onSubmit={submitCreate}>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="sm:col-span-2">
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Họ và tên *
+                                </label>
+                                <input
+                                    type="text"
+                                    {...createForm.register("fullName")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.fullName && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.fullName.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Email *
+                                </label>
+                                <input
+                                    type="email"
+                                    {...createForm.register("email")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.email && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.email.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Số điện thoại *
+                                </label>
+                                <input
+                                    type="text"
+                                    {...createForm.register("phoneNumber")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.phoneNumber && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.phoneNumber.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Mật khẩu *
+                                </label>
+                                <input
+                                    type="password"
+                                    {...createForm.register("password")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                                {createForm.formState.errors.password && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.password.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Vai trò *
+                                </label>
+                                <select
+                                    {...createForm.register("role")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                >
+                                    {roles.map((role) => (
+                                        <option key={`create-${role}`} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
+                                {createForm.formState.errors.role && (
+                                    <p className="mt-1 text-xs text-rose-500">
+                                        {createForm.formState.errors.role.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Ngày sinh
+                                </label>
+                                <input
+                                    type="date"
+                                    {...createForm.register("dateOfBirth")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-bold text-slate-500">
+                                    Giới tính
+                                </label>
+                                <select
+                                    {...createForm.register("sex")}
+                                    className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                >
+                                    <option value="">Chưa thiết lập</option>
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={resetCreateUserState}
+                                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={createForm.formState.isSubmitting}
+                                className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Tạo người dùng và gửi OTP
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <form className="space-y-3" onSubmit={submitCreateUserVerifyOtp}>
+                        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                            Người dùng đã được tạo ở trạng thái chờ xác thực. Vui lòng nhập OTP đã gửi về email để hoàn tất.
                         </div>
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Email *
+                                Email cần xác thực
                             </label>
                             <input
                                 type="email"
-                                {...createForm.register("email")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                value={createdUserEmailPendingVerify}
+                                readOnly
+                                className="h-10 w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-600 outline-none"
                             />
-                            {createForm.formState.errors.email && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.email.message}
-                                </p>
-                            )}
                         </div>
 
                         <div>
                             <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Số điện thoại *
+                                Mã OTP *
                             </label>
                             <input
                                 type="text"
-                                {...createForm.register("phoneNumber")}
+                                maxLength={6}
+                                {...createUserVerifyOtpForm.register("otp")}
+                                placeholder="Nhập mã OTP gồm 6 chữ số"
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             />
-                            {createForm.formState.errors.phoneNumber && (
+                            {createUserVerifyOtpForm.formState.errors.otp && (
                                 <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.phoneNumber.message}
+                                    {createUserVerifyOtpForm.formState.errors.otp.message}
                                 </p>
                             )}
                         </div>
 
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Mật khẩu *
-                            </label>
-                            <input
-                                type="password"
-                                {...createForm.register("password")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                            {createForm.formState.errors.password && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.password.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Vai trò *
-                            </label>
-                            <select
-                                {...createForm.register("role")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                        <div className="flex flex-wrap justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreateUserStep("form");
+                                    createUserVerifyOtpForm.reset({
+                                        otp: "",
+                                    });
+                                }}
+                                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
                             >
-                                {roles.map((role) => (
-                                    <option key={`create-${role}`} value={role}>
-                                        {role}
-                                    </option>
-                                ))}
-                            </select>
-                            {createForm.formState.errors.role && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.role.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Trạng thái *
-                            </label>
-                            <select
-                                {...createForm.register("status")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                Quay lại form
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void resendCreateUserOtp()}
+                                disabled={isResendingCreateUserOtp || createUserVerifyOtpForm.formState.isSubmitting}
+                                className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {statuses.map((status) => (
-                                    <option key={`create-${status}`} value={status}>
-                                        {status}
-                                    </option>
-                                ))}
-                            </select>
-                            {createForm.formState.errors.status && (
-                                <p className="mt-1 text-xs text-rose-500">
-                                    {createForm.formState.errors.status.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">
-                                Ngày sinh
-                            </label>
-                            <input
-                                type="date"
-                                {...createForm.register("dateOfBirth")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Giới tính</label>
-                            <select
-                                {...createForm.register("sex")}
-                                className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
+                                {isResendingCreateUserOtp ? "Đang gửi lại OTP..." : "Gửi lại OTP"}
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={createUserVerifyOtpForm.formState.isSubmitting}
+                                className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <option value="">Chưa thiết lập</option>
-                                <option value="male">Nam</option>
-                                <option value="female">Nữ</option>
-                                <option value="other">Khác</option>
-                            </select>
+                                Xác thực OTP
+                            </button>
                         </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => setOpenCreate(false)}
-                            className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
-                        <button
-                            type="submit"
-                            disabled={createForm.formState.isSubmitting}
-                            className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Tạo người dùng
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                )}
             </ModalShell>
 
             <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa người dùng">

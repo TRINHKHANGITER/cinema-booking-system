@@ -1,5 +1,6 @@
 import api from "../lib/axios";
 import type { LoginResponse } from "../types/auth";
+import type { ResendVerifyEmailRequest, VerifyEmailRequest } from "../types/auth";
 import type { ApiResponse, ItemListDto, PagingDto } from "../types/api";
 import type {
     AdminUserCreationRequest,
@@ -99,6 +100,16 @@ export const userService = {
             `/user/admin/${userId}/change-email/confirm`,
             request
         );
+        return res.data;
+    },
+
+    adminResendCreatedUserVerifyEmailOtp: async (request: ResendVerifyEmailRequest) => {
+        const res = await api.post<ApiResponse<null>>("/user/admin/verify-email/resend", request);
+        return res.data;
+    },
+
+    adminConfirmCreatedUserVerifyEmail: async (request: VerifyEmailRequest) => {
+        const res = await api.post<ApiResponse<UserResponse>>("/user/admin/verify-email/confirm", request);
         return res.data;
     },
 };

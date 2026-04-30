@@ -1,6 +1,8 @@
 package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.authDTO.ResendVerifyEmailRequest;
+import com.dev.cinemasystem.dto.authDTO.VerifyEmailRequest;
 import com.dev.cinemasystem.dto.authDTO.LoginResponse;
 import com.dev.cinemasystem.dto.userDto.AdminUserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserUpdateRequest;
@@ -76,20 +78,86 @@ public class UserService {
     public UserResponse createUserByAdmin(AdminUserCreationRequest request) {
         ensureEmailAndPhoneAvailable(request.getEmail(), request.getPhoneNumber(), null);
 
+        String normalizedEmail = normalizeEmail(request.getEmail());
+        String normalizedPhone = request.getPhoneNumber() == null ? null : request.getPhoneNumber().trim();
+
+        // Validate input status format from request for compatibility, but force pending verify flow.
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            parseUserStatus(request.getStatus());
+        }
+
         User user = User.builder()
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(parseRole(request.getRole()))
-                .email(request.getEmail())
+                .email(normalizedEmail)
                 .fullName(request.getFullName())
-                .phoneNumber(request.getPhoneNumber())
+                .phoneNumber(normalizedPhone)
                 .dateOfBirth(request.getDateOfBirth())
                 .sex(parseSexNullable(request.getSex()))
-                .status(parseUserStatus(request.getStatus()))
+                .status(UserStatus.PENDING_VERIFY)
                 .build();
 
         User savedUser = userRepository.save(user);
-        log.info("Admin created user with email: {}", savedUser.getEmail());
+        authenticationService.resendVerifyEmailOtp(
+                ResendVerifyEmailRequest.builder()
+                        .email(savedUser.getEmail())
+                        .build()
+        );
+
+        log.info("Admin created pending user with email: {}", savedUser.getEmail());
         return userMapper.toUserResponseFromUser(savedUser);
+    }
+
+    @Transactional
+    public void adminResendCreatedUserVerifyEmailOtp(ResendVerifyEmailRequest request) {
+        getCurrentAdmin();
+        String email = normalizeEmail(request.getEmail());
+
+        User targetUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (targetUser.getStatus() == UserStatus.DELETED) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        if (targetUser.getStatus() != UserStatus.PENDING_VERIFY) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        authenticationService.resendVerifyEmailOtp(
+                ResendVerifyEmailRequest.builder()
+                        .email(email)
+                        .build()
+        );
+    }
+
+    @Transactional
+    public UserResponse adminConfirmCreatedUserVerifyEmail(VerifyEmailRequest request) {
+        getCurrentAdmin();
+        String email = normalizeEmail(request.getEmail());
+
+        User targetUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (targetUser.getStatus() == UserStatus.DELETED) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        if (targetUser.getStatus() != UserStatus.PENDING_VERIFY) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        authenticationService.verifyEmail(
+                VerifyEmailRequest.builder()
+                        .email(email)
+                        .otp(request.getOtp())
+                        .build()
+        );
+
+        User verifiedUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return userMapper.toUserResponseFromUser(verifiedUser);
     }
 
     public UserResponse getUserById(Integer userId) {

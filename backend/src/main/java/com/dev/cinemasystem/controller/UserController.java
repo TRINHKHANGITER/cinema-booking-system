@@ -4,6 +4,8 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.authDTO.LoginResponse;
+import com.dev.cinemasystem.dto.authDTO.ResendVerifyEmailRequest;
+import com.dev.cinemasystem.dto.authDTO.VerifyEmailRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserUpdateRequest;
 import com.dev.cinemasystem.dto.userDto.ChangeEmailRequest;
@@ -48,8 +50,28 @@ public class UserController {
     @PostMapping("/admin")
     ApiResponse<UserResponse> createUserByAdmin(@RequestBody @Valid AdminUserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin created user successfully")
+                .message("Tạo người dùng thành công, mã OTP đã được gửi để xác thực email")
                 .result(userService.createUserByAdmin(request))
+                .build();
+    }
+
+    @PostMapping("/admin/verify-email/resend")
+    ApiResponse<Void> adminResendCreatedUserVerifyEmailOtp(
+            @RequestBody @Valid ResendVerifyEmailRequest request
+    ) {
+        userService.adminResendCreatedUserVerifyEmailOtp(request);
+        return ApiResponse.<Void>builder()
+                .message("Đã gửi lại mã OTP xác thực email")
+                .build();
+    }
+
+    @PostMapping("/admin/verify-email/confirm")
+    ApiResponse<UserResponse> adminConfirmCreatedUserVerifyEmail(
+            @RequestBody @Valid VerifyEmailRequest request
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .message("Xác thực email người dùng thành công")
+                .result(userService.adminConfirmCreatedUserVerifyEmail(request))
                 .build();
     }
 
