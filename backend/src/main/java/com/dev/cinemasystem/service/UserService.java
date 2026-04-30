@@ -26,7 +26,9 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +51,10 @@ import java.time.LocalDateTime;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService {
+    @NonFinal
+    @Value("${app.auth.change-email-otp-expire-minutes:5}")
+    int changeEmailOtpExpireMinutes;
+
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
@@ -496,12 +502,12 @@ public class UserService {
                 .email(newEmail)
                 .otpHash(passwordEncoder.encode(otp))
                 .purpose(OtpPurpose.CHANGE_EMAIL)
-                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .expiresAt(LocalDateTime.now().plusMinutes(changeEmailOtpExpireMinutes))
                 .used(false)
                 .build();
 
         otpTokenRepository.save(otpToken);
-        emailService.sendChangeEmailOtp(newEmail, otp);
+        emailService.sendChangeEmailOtp(newEmail, otp, changeEmailOtpExpireMinutes);
     }
 
     private String normalizeEmail(String email) {
