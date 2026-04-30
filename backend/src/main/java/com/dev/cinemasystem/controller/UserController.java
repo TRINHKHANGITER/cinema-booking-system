@@ -3,8 +3,11 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.authDTO.LoginResponse;
 import com.dev.cinemasystem.dto.userDto.AdminUserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserUpdateRequest;
+import com.dev.cinemasystem.dto.userDto.ChangeEmailRequest;
+import com.dev.cinemasystem.dto.userDto.ConfirmChangeEmailRequest;
 import com.dev.cinemasystem.dto.userDto.UserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
@@ -147,6 +150,44 @@ public class UserController {
         return ApiResponse.<ItemListDto<String>>builder()
                 .message("User statuses retrieved successfully")
                 .result(ItemListDto.<String>builder().items(statuses).build())
+                .build();
+    }
+
+    @PostMapping("/change-email/request")
+    ApiResponse<Void> requestChangeOwnEmail(@RequestBody @Valid ChangeEmailRequest request) {
+        userService.requestChangeOwnEmail(request);
+        return ApiResponse.<Void>builder()
+                .message("Mã OTP đã được gửi đến email mới")
+                .build();
+    }
+
+    @PostMapping("/change-email/confirm")
+    ApiResponse<LoginResponse> confirmChangeOwnEmail(@RequestBody @Valid ConfirmChangeEmailRequest request) {
+        return ApiResponse.<LoginResponse>builder()
+                .message("Đổi email thành công")
+                .result(userService.confirmChangeOwnEmail(request))
+                .build();
+    }
+
+    @PostMapping("/admin/{userId}/change-email/request")
+    ApiResponse<Void> adminRequestChangeUserEmail(
+            @PathVariable Integer userId,
+            @RequestBody @Valid ChangeEmailRequest request
+    ) {
+        userService.adminRequestChangeUserEmail(userId, request);
+        return ApiResponse.<Void>builder()
+                .message("Mã OTP đã được gửi đến email mới của khách hàng")
+                .build();
+    }
+
+    @PostMapping("/admin/{userId}/change-email/confirm")
+    ApiResponse<UserResponse> adminConfirmChangeUserEmail(
+            @PathVariable Integer userId,
+            @RequestBody @Valid ConfirmChangeEmailRequest request
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .message("Admin đổi email khách hàng thành công")
+                .result(userService.adminConfirmChangeUserEmail(userId, request))
                 .build();
     }
 }

@@ -14,4 +14,10 @@ public interface OtpTokenRepository extends JpaRepository<OtpToken, Integer> {
             String email,
             OtpPurpose purpose
     );
+
+    Optional<OtpToken> findTopByUser_UserIdAndEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(
+            Integer userId,
+            String email,
+            OtpPurpose purpose
+    );
 }

@@ -31,7 +31,6 @@ public class SecurityConfig {
             "/auth/**",
             "/login/**",
 
-            "/user/**",
             "/province/**",
             "/cinema/**",
             "/room/**",
@@ -69,6 +68,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/user/roles", "/user/statuses").permitAll()
+                        .requestMatchers("/user/change-email/**").authenticated()
+                        .requestMatchers("/user/admin/**", "/user/admin").authenticated()
 
                         // fix chắc chắn cho swagger (Spring Boot 3)
                         .requestMatchers(HttpMethod.GET,

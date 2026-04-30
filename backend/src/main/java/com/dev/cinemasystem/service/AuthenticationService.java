@@ -119,17 +119,8 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var accessToken = generateToken(user, 24*7);
-        var refreshToken = generateToken(user, 24*30);
-        UserResponse userResponse = userMapper.toUserResponseFromUser(user);
-
         log.info("user {} authenticated successfully", user.getEmail());
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .user(userResponse)
-                .authenticated(true)
-                .build();
+        return buildLoginResponse(user);
 
     }
 
@@ -155,8 +146,8 @@ public class AuthenticationService {
                 .status(UserStatus.PENDING_VERIFY)
                 .build();
 
-        userRepository.save(user);
-        createOtpToken(email, OtpPurpose.VERIFY_EMAIL);
+        User savedUser = userRepository.save(user);
+        createOtpToken(savedUser, email, OtpPurpose.VERIFY_EMAIL);
     }
 
 
@@ -228,17 +219,7 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        String accessToken = generateToken(user, 24 * 7);
-        String refreshToken = generateToken(user, 24 * 30);
-
-        UserResponse userResponse = userMapper.toUserResponseFromUser(user);
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .authenticated(true)
-                .user(userResponse)
-                .build();
+        return buildLoginResponse(user);
     }
 
 
@@ -255,7 +236,7 @@ public class AuthenticationService {
             return;
         }
 
-        createOtpToken(email, OtpPurpose.RESET_PASSWORD);
+        createOtpToken(userOpt.get(), email, OtpPurpose.RESET_PASSWORD);
     }
 
     @Transactional
@@ -289,7 +270,7 @@ public class AuthenticationService {
             return;
         }
 
-        createOtpToken(email, OtpPurpose.VERIFY_EMAIL);
+        createOtpToken(user, email, OtpPurpose.VERIFY_EMAIL);
     }
 
     @Transactional
@@ -316,11 +297,29 @@ public class AuthenticationService {
         return String.valueOf(otp);
     }
 
+    public LoginResponse buildLoginResponse(User user) {
+        String accessToken = generateToken(user, 24 * 7);
+        String refreshToken = generateToken(user, 24 * 30);
+        UserResponse userResponse = userMapper.toUserResponseFromUser(user);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .authenticated(true)
+                .user(userResponse)
+                .build();
+    }
+
     private OtpToken createOtpToken(String email, OtpPurpose purpose) {
+        return createOtpToken(null, email, purpose);
+    }
+
+    private OtpToken createOtpToken(User user, String email, OtpPurpose purpose) {
         String rawOtp = generateOtp();
         int otpExpireMinutes = getOtpExpireMinutes(purpose);
 
         OtpToken otpToken = OtpToken.builder()
+                .user(user)
                 .email(email)
                 .otpHash(passwordEncoder.encode(rawOtp))
                 .purpose(purpose)

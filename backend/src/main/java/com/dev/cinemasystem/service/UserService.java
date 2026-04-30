@@ -1,18 +1,24 @@
 package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.authDTO.LoginResponse;
 import com.dev.cinemasystem.dto.userDto.AdminUserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.AdminUserUpdateRequest;
+import com.dev.cinemasystem.dto.userDto.ChangeEmailRequest;
+import com.dev.cinemasystem.dto.userDto.ConfirmChangeEmailRequest;
 import com.dev.cinemasystem.dto.userDto.UserCreationRequest;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.dto.userDto.UserUpdateRequest;
+import com.dev.cinemasystem.entity.OtpToken;
 import com.dev.cinemasystem.entity.User;
 import com.dev.cinemasystem.enums.GioiTinh;
+import com.dev.cinemasystem.enums.OtpPurpose;
 import com.dev.cinemasystem.enums.Role;
 import com.dev.cinemasystem.enums.UserStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.UserMapper;
+import com.dev.cinemasystem.repository.OtpTokenRepository;
 import com.dev.cinemasystem.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
@@ -23,13 +29,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +50,9 @@ public class UserService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    OtpTokenRepository otpTokenRepository;
+    EmailService emailService;
+    AuthenticationService authenticationService;
 
     public UserResponse createUser(UserCreationRequest request) {
         ensureEmailAndPhoneAvailable(request.getEmail(), request.getPhoneNumber(), null);
@@ -126,12 +140,7 @@ public class UserService {
         }
 
         if (request.getEmail() != null) {
-            String nextEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
-            if (!nextEmail.equalsIgnoreCase(user.getEmail())
-                    && userRepository.existsByEmailAndUserIdNot(nextEmail, userId)) {
-                throw new AppException(ErrorCode.EMAIL_EXISTS);
-            }
-            user.setEmail(nextEmail);
+            throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
         if (request.getPhoneNumber() != null) {
@@ -250,6 +259,185 @@ public class UserService {
         return Arrays.stream(UserStatus.values())
                 .map(Enum::name)
                 .toList();
+    }
+
+    @Transactional
+    public void requestChangeOwnEmail(ChangeEmailRequest request) {
+        User currentUser = getCurrentUser();
+
+        if (currentUser.getStatus() != UserStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String newEmail = normalizeEmail(request.getNewEmail());
+        if (newEmail == null || newEmail.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (currentUser.getEmail().equalsIgnoreCase(newEmail)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        createChangeEmailOtp(currentUser, newEmail);
+    }
+
+    @Transactional
+    public LoginResponse confirmChangeOwnEmail(ConfirmChangeEmailRequest request) {
+        User currentUser = getCurrentUser();
+        String newEmail = normalizeEmail(request.getNewEmail());
+
+        OtpToken otpToken = otpTokenRepository
+                .findTopByUser_UserIdAndEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(
+                        currentUser.getUserId(),
+                        newEmail,
+                        OtpPurpose.CHANGE_EMAIL
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
+
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (!passwordEncoder.matches(request.getOtp().trim(), otpToken.getOtpHash())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        currentUser.setEmail(newEmail);
+        User savedUser = userRepository.save(currentUser);
+
+        otpToken.setUsed(true);
+        otpTokenRepository.save(otpToken);
+
+        return authenticationService.buildLoginResponse(savedUser);
+    }
+
+    @Transactional
+    public void adminRequestChangeUserEmail(Integer userId, ChangeEmailRequest request) {
+        getCurrentAdmin();
+
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (targetUser.getStatus() == UserStatus.DELETED) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        String newEmail = normalizeEmail(request.getNewEmail());
+        if (newEmail == null || newEmail.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (targetUser.getEmail().equalsIgnoreCase(newEmail)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        createChangeEmailOtp(targetUser, newEmail);
+    }
+
+    @Transactional
+    public UserResponse adminConfirmChangeUserEmail(Integer userId, ConfirmChangeEmailRequest request) {
+        getCurrentAdmin();
+
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (targetUser.getStatus() == UserStatus.DELETED) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        String newEmail = normalizeEmail(request.getNewEmail());
+
+        OtpToken otpToken = otpTokenRepository
+                .findTopByUser_UserIdAndEmailAndPurposeAndUsedFalseOrderByCreatedAtDesc(
+                        targetUser.getUserId(),
+                        newEmail,
+                        OtpPurpose.CHANGE_EMAIL
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.TOKEN_INVALID));
+
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (!passwordEncoder.matches(request.getOtp().trim(), otpToken.getOtpHash())) {
+            throw new AppException(ErrorCode.TOKEN_INVALID);
+        }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        targetUser.setEmail(newEmail);
+        User savedUser = userRepository.save(targetUser);
+
+        otpToken.setUsed(true);
+        otpTokenRepository.save(otpToken);
+
+        return userMapper.toUserResponseFromUser(savedUser);
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String email = normalizeEmail(authentication.getName());
+        if (email == null || email.isBlank() || "anonymoususer".equals(email)) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private User getCurrentAdmin() {
+        User currentUser = getCurrentUser();
+
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return currentUser;
+    }
+
+    private String generateOtp() {
+        SecureRandom random = new SecureRandom();
+        int otp = 100000 + random.nextInt(900000);
+        return String.valueOf(otp);
+    }
+
+    private void createChangeEmailOtp(User user, String newEmail) {
+        String otp = generateOtp();
+
+        OtpToken otpToken = OtpToken.builder()
+                .user(user)
+                .email(newEmail)
+                .otpHash(passwordEncoder.encode(otp))
+                .purpose(OtpPurpose.CHANGE_EMAIL)
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .used(false)
+                .build();
+
+        otpTokenRepository.save(otpToken);
+        emailService.sendChangeEmailOtp(newEmail, otp);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     private User getUserOrThrow(Integer userId) {

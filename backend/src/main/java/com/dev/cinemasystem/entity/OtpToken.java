@@ -21,6 +21,10 @@ public class OtpToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    User user;
+
     @Column(nullable = false)
     String email;
 

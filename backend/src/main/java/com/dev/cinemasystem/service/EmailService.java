@@ -1,8 +1,9 @@
-﻿package com.dev.cinemasystem.service;
+package com.dev.cinemasystem.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -217,5 +218,31 @@ public class EmailService {
                   </body>
                 </html>
                 """.formatted(otp, otpExpireMinutes);
+    }
+
+    public void sendChangeEmailOtp(String to, String otp) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+
+            message.setTo(to);
+            message.setSubject("Mã OTP đổi email - Cinema Booking");
+            message.setText("""
+                    Xin chào,
+
+                    Bạn đang yêu cầu đổi email cho tài khoản Cinema Booking.
+
+                    Mã OTP của bạn là: %s
+
+                    Mã OTP này có hiệu lực trong 5 phút.
+                    Nếu bạn không yêu cầu, vui lòng bỏ qua email này.
+
+                    Trân trọng,
+                    Cinema Booking System
+                    """.formatted(otp));
+
+            javaMailSender.send(message);
+        } catch (Exception exception) {
+            throw new RuntimeException("Không thể gửi email OTP đổi email", exception);
+        }
     }
 }
