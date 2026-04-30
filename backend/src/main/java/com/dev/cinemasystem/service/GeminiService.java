@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class GeminiService {
@@ -61,8 +63,14 @@ public class GeminiService {
         try {
             response = restTemplate.postForEntity(requestUrl, requestEntity, String.class);
         } catch (RestClientException exception) {
+            log.error("Gemini ask call failed", exception);
             throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
         }
+
+        log.info("=== GEMINI ASK STATUS ===");
+        log.info("{}", response.getStatusCode().value());
+        log.info("=== GEMINI ASK RESPONSE BODY ===");
+        log.info("{}", response.getBody());
 
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
