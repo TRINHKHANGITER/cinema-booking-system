@@ -445,6 +445,7 @@ scale-100 blur-0 grayscale-0)'
                                         <ul className="flex flex-col">
                                             <li>
                                                 <a
+                                                    onClick={() => navigate(routePath.tai_khoan)}
                                                     className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"
                                                 >
                                                     <svg

@@ -32,6 +32,15 @@ export type UserUpdateRequest = {
     sex?: GioiTinh | null;
 };
 
+export type ChangeEmailRequest = {
+    newEmail: string;
+};
+
+export type ConfirmChangeEmailRequest = {
+    newEmail: string;
+    otp: string;
+};
+
 export type AdminUserCreationRequest = {
     fullName: string;
     phoneNumber: string;

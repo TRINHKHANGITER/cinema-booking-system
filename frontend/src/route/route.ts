@@ -7,6 +7,7 @@ import ShowtimesPageRoute from "./ShowtimesPageRoute";
 import QuickBookingPage from "../pages/client/QuickBooking";
 import OrderHistoryPage from "../pages/client/OrderHistory";
 import Login from "../pages/client/Login";
+import AccountPage from "../pages/client/Account";
 
 const routePath = {
     login: "/login",
@@ -19,6 +20,7 @@ const routePath = {
     xuat_chieu_province_day: "/xuat-chieu/:slug/province/:province/day/:day",
     dat_ve: "/dat-ve/:slug/showtime/:showtimeId",
     lich_su_dat_ve: "/lich-su-dat-ve",
+    tai_khoan: "/tai-khoan",
     checkout_vnpay_return: "/checkout/vnpay/return",
     dat_ve_quick: "/dat-ve-quick",
 };
@@ -111,6 +113,15 @@ const cusPublicRoutes = [
         isContent: false,
         type: "CUSTOMER",
         component: OrderHistoryPage,
+        isPrivate: false,
+    },
+
+    {
+        path: routePath.tai_khoan,
+        label: "Tai khoan",
+        isContent: false,
+        type: "CUSTOMER",
+        component: AccountPage,
         isPrivate: false,
     },
 

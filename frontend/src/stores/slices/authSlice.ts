@@ -44,6 +44,17 @@ const clearStorage = () => {
     localStorage.removeItem(LS_USER);
 };
 
+const persistSession = (session: LoginResponse | null) => {
+    if (!session?.accessToken || !session?.refreshToken || !session.user) {
+        clearStorage();
+        return;
+    }
+
+    localStorage.setItem(LS_ACCESS, session.accessToken);
+    localStorage.setItem(LS_REFRESH, session.refreshToken);
+    localStorage.setItem(LS_USER, JSON.stringify(session.user));
+};
+
 export type AuthState = {
     loading: boolean;
     code: string | null;
@@ -119,6 +130,22 @@ const authSlice = createSlice({
             state.user = safeReadUser();
             state.isAuthenticated = Boolean(state.accessToken);
         },
+        replaceSession(state, action: PayloadAction<LoginResponse>) {
+            const session = action.payload;
+            state.accessToken = session.accessToken;
+            state.refreshToken = session.refreshToken;
+            state.user = session.user;
+            state.isAuthenticated = Boolean(session.accessToken);
+            state.code = "SUCCESS";
+            state.message = "Cập nhật phiên đăng nhập thành công";
+            persistSession(session);
+        },
+        setCurrentUser(state, action: PayloadAction<UserResponse>) {
+            state.user = action.payload;
+            state.code = "SUCCESS";
+            state.message = "Cập nhật thông tin người dùng thành công";
+            localStorage.setItem(LS_USER, JSON.stringify(action.payload));
+        },
     },
     extraReducers: (builder) => {
         const setPending = (state: AuthState) => {
@@ -137,16 +164,7 @@ const authSlice = createSlice({
             state.refreshToken = result?.refreshToken ?? null;
             state.user = result?.user ?? null;
             state.isAuthenticated = Boolean(result?.accessToken);
-
-            if (result?.accessToken) {
-                localStorage.setItem(LS_ACCESS, result.accessToken);
-            }
-            if (result?.refreshToken) {
-                localStorage.setItem(LS_REFRESH, result.refreshToken);
-            }
-            if (result?.user) {
-                localStorage.setItem(LS_USER, JSON.stringify(result.user));
-            }
+            persistSession(result ?? null);
         };
 
         const setRejected = (
@@ -186,7 +204,8 @@ const authSlice = createSlice({
     },
 });
 
-export const { signOut, restoreAuthFromStorage } = authSlice.actions;
+export const { signOut, restoreAuthFromStorage, replaceSession, setCurrentUser } =
+    authSlice.actions;
 
 type AuthStoreCompat = AuthState & {
     signIn: (email: string, password: string) => Promise<ApiResponse<LoginResponse>>;
@@ -203,6 +222,8 @@ type AuthStoreCompat = AuthState & {
     resendVerifyEmailOtp: (email: string) => Promise<ApiResponse<null>>;
     refresh: () => Promise<void>;
     fetchMe: () => Promise<void>;
+    replaceSession: (session: LoginResponse) => Promise<void>;
+    setUser: (user: UserResponse) => Promise<void>;
 };
 
 export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCompat) => T): T => {
@@ -328,6 +349,12 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
         },
         fetchMe: async () => {
             dispatch(restoreAuthFromStorage());
+        },
+        replaceSession: async (session: LoginResponse) => {
+            dispatch(replaceSession(session));
+        },
+        setUser: async (user: UserResponse) => {
+            dispatch(setCurrentUser(user));
         },
     };
 
