@@ -23,6 +23,7 @@ backend/target/
 .vscode/
 
 .env
+**/.env.release
 
 # **/resources/application.yml
 
