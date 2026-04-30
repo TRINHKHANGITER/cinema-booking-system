@@ -34,5 +34,7 @@ backend/target/
 
 **/.M2
 **/dist/
+**/note/
+**/get_content/
 
 # backend/src/main/resources/
