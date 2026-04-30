@@ -40,6 +40,15 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/register")
+    ApiResponse<Void> register(@RequestBody @Valid RegisterRequest request) {
+        authenticationService.register(request);
+
+        return ApiResponse.<Void>builder()
+                .message("Đăng ký thành công. Vui lòng kiểm tra email để nhận mã OTP xác thực.")
+                .build();
+    }
+
     @PostMapping("/forgot-password")
     ApiResponse<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
         authenticationService.forgotPassword(request);

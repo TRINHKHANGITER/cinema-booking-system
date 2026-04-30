@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -100,12 +101,17 @@ public class AuthenticationService {
 
 
     public LoginResponse authenticate(LoginRequest request){
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
         if (user.getPassword() == null || user.getPassword().isBlank()) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if(!authenticated){
@@ -125,6 +131,32 @@ public class AuthenticationService {
                 .authenticated(true)
                 .build();
 
+    }
+
+    @Transactional
+    public void register(RegisterRequest request) {
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        if (userRepository.existsByEmail(email)) {
+            throw new AppException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        String normalizedPhone = normalizePhone(request.getPhone());
+        if (normalizedPhone != null && userRepository.existsByPhoneNumber(normalizedPhone)) {
+            throw new AppException(ErrorCode.PHONE_NUMBER_EXISTS);
+        }
+
+        User user = User.builder()
+                .fullName(buildDefaultFullName(email))
+                .phoneNumber(normalizedPhone)
+                .email(email)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.USER)
+                .status(UserStatus.PENDING_VERIFY)
+                .build();
+
+        userRepository.save(user);
+        createOtpToken(email, OtpPurpose.VERIFY_EMAIL);
     }
 
 
@@ -328,6 +360,27 @@ public class AuthenticationService {
             return verifyEmailOtpExpireMinutes;
         }
         return resetPasswordOtpExpireMinutes;
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            return null;
+        }
+
+        String normalizedPhone = phone.trim();
+        if (normalizedPhone.isBlank()) {
+            return null;
+        }
+
+        return normalizedPhone;
+    }
+
+    private String buildDefaultFullName(String email) {
+        int atIndex = email.indexOf("@");
+        if (atIndex > 0) {
+            return email.substring(0, atIndex);
+        }
+        return email;
     }
 
 

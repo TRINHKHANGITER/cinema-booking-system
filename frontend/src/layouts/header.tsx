@@ -517,7 +517,14 @@ scale-100 blur-0 grayscale-0)'
                                 >
                                     Đăng nhập
                                 </button>
-                                <Signin open={openSignIn} setOpen={setOpenSignIn} />
+                                <Signin
+                                    open={openSignIn}
+                                    setOpen={setOpenSignIn}
+                                    onOpenRegister={() => {
+                                        setOpenSignIn(false);
+                                        setOpenRegister(true);
+                                    }}
+                                />
                                 <div className="hover">
                                     <div className="px-3 py-7 text-left md:cursor-pointer group relative  transition-all duration-300 flex">
                                         <a href="#" className="cursor-pointer logo__header grow-0">

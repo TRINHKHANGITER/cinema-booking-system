@@ -13,6 +13,7 @@ import { useAuthStore } from "../stores/slices/authSlice";
 interface SigninProps {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    onOpenRegister?: () => void;
 }
 
 type AuthStep = "signin" | "forgotPassword" | "resetPassword";
@@ -45,7 +46,7 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
+const Signin: React.FC<SigninProps> = ({ open, setOpen, onOpenRegister }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState<AuthStep>("signin");
     const [showPassword, setShowPassword] = useState(false);
@@ -182,6 +183,11 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
             setForgotValue("email", currentEmail);
         }
         setStep("forgotPassword");
+    };
+
+    const goToRegister = () => {
+        closeModal();
+        onOpenRegister?.();
     };
 
     const titleMap: Record<AuthStep, string> = {
@@ -422,6 +428,7 @@ const Signin: React.FC<SigninProps> = ({ open, setOpen }) => {
                         <span>Bạn chưa có tài khoản?</span>
                         <button
                             type="button"
+                            onClick={goToRegister}
                             className="cursor-pointer rounded-md hover:bg-[#e38601] transition-all duration-30 min-w-[135px] w-full focus:outline-none focus:ring-[#e38601] text-sm text-center inline-flex items-center dark:hover:bg-[#e38601] dark:focus:ring-[#e38601] justify-center border border-orange-20 text-[#f58020] hover:text-white w-auto px-6 py-[6px] font-light"
                         >
                             <span className="block">Đăng ký</span>

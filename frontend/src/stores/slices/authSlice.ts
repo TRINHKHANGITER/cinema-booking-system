@@ -4,10 +4,9 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../../services/auth.service";
-import { userService } from "../../services/user.service";
 import type { ApiResponse } from "../../types/api";
 import type { GoogleLoginRequest, LoginRequest, LoginResponse } from "../../types/auth";
-import type { UserCreationRequest, UserResponse } from "../../types/user";
+import type { UserResponse } from "../../types/user";
 import {
     baseAsyncInitialState,
     mapUnknownError,
@@ -199,13 +198,9 @@ type AuthStoreCompat = AuthState & {
         newPassword: string
     ) => Promise<ApiResponse<null>>;
     signOut: () => Promise<void>;
-    signUp: (
-        fullName: string,
-        password: string,
-        email: string,
-        phoneNumber: string,
-        dateOfBirth?: string
-    ) => Promise<void>;
+    signUp: (email: string, password: string, phoneNumber?: string) => Promise<ApiResponse<null>>;
+    verifyEmailOtp: (email: string, otp: string) => Promise<ApiResponse<null>>;
+    resendVerifyEmailOtp: (email: string) => Promise<ApiResponse<null>>;
     refresh: () => Promise<void>;
     fetchMe: () => Promise<void>;
 };
@@ -280,30 +275,52 @@ export const useAuthStore = <T = AuthStoreCompat>(selector?: (state: AuthStoreCo
         signOut: async () => {
             dispatch(signOut());
         },
-        signUp: async (
-            fullName: string,
-            password: string,
-            email: string,
-            phoneNumber: string,
-            dateOfBirth?: string
-        ) => {
-            const payload: UserCreationRequest = {
-                fullName,
-                phoneNumber,
-                email,
-                password,
-                dateOfBirth: dateOfBirth || null,
-                sex: null,
-            };
+        signUp: async (email: string, password: string, phoneNumber?: string) => {
+            try {
+                const payload = phoneNumber?.trim()
+                    ? { email, password, phone: phoneNumber.trim() }
+                    : { email, password };
+                const response = await authService.register(payload);
+                const apiError = rejectIfNotSuccess(response);
 
-            const response = await userService.createUser(payload);
-            if (response.code === "SUCCESS") {
-                await dispatch(
-                    loginThunk({
-                        email,
-                        password,
-                    })
-                );
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        verifyEmailOtp: async (email: string, otp: string) => {
+            try {
+                const response = await authService.verifyEmail({ email, otp });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
+            }
+        },
+        resendVerifyEmailOtp: async (email: string) => {
+            try {
+                const response = await authService.resendVerifyEmail({ email });
+                const apiError = rejectIfNotSuccess(response);
+
+                if (apiError) {
+                    throw new Error(apiError.message);
+                }
+
+                return response;
+            } catch (error) {
+                const mappedError = mapUnknownError(error);
+                throw new Error(mappedError.message);
             }
         },
         refresh: async () => {

@@ -5,8 +5,23 @@ export type LoginRequest = {
     password: string;
 };
 
+export type RegisterRequest = {
+    email: string;
+    password: string;
+    phone?: string;
+};
+
 export type GoogleLoginRequest = {
     idToken: string;
+};
+
+export type VerifyEmailRequest = {
+    email: string;
+    otp: string;
+};
+
+export type ResendVerifyEmailRequest = {
+    email: string;
 };
 
 export type ForgotPasswordRequest = {

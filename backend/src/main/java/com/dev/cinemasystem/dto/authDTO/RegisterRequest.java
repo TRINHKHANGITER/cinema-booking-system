@@ -13,13 +13,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RegisterRequest {
 
-    @NotBlank(message = "FULLNAME_BLANK")
-    String fullName;
-
-    @NotBlank(message = "PHONE_NUMBER_BLANK")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "PHONE_NUMBER_INVALID")
-    String phoneNumber;
-
     @NotBlank(message = "EMAIL_BLANK")
     @Email(message = "EMAIL_INVALID")
     String email;
@@ -27,4 +20,7 @@ public class RegisterRequest {
     @NotBlank(message = "PASSWORD_BLANK")
     @Pattern(regexp = ".{8,}", message = "PASSWORD_INVALID")
     String password;
+
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "PHONE_NUMBER_INVALID")
+    String phone;
 }
