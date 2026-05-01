@@ -99,7 +99,10 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
-                "https://*.devtunnels.ms"
+                "https://*.vercel.app",
+                "https://*.devtunnels.ms",
+                "https://cinema-booking-system.vercel.app",
+                "https://cinema-booking-system-rust.vercel.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
