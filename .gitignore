@@ -24,6 +24,7 @@ backend/target/
 
 .env
 **/.env.release
+**/.env.release.local
 
 # **/resources/application.yml
 
