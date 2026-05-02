@@ -1,24 +1,27 @@
-import type { OrderEntity } from "./order";
-import type { PriceTicketEntity } from "./price-ticket";
-import type { SeatEntity } from "./seat";
-import type { ShowTimeEntity } from "./showtime";
+export type TicketStatus = "ACTIVE" | "CANCELLED";
 
 export type TicketEntity = {
     ticketId: number;
-    order: OrderEntity | null;
-    show: ShowTimeEntity;
-    seat: SeatEntity;
-    priceTicket: PriceTicketEntity | null;
+    orderId: number;
+    showTimeId: number;
+    seatId: number;
+    priceTicketId: number | null;
     unitPrice: number | null;
     qrCode: string | null;
     checkedInAt: string | null;
+    status: TicketStatus;
     createdAt: string;
     updatedAt: string;
 };
 
 export type TicketCreationRequest = {
+    orderId: number;
     showTimeId: number;
     seatId: number;
+};
+
+export type TicketStatusUpdateRequest = {
+    status: TicketStatus;
 };
 
 export type Ticket = TicketEntity;

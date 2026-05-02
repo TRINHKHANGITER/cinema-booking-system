@@ -18,8 +18,11 @@ import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
+import com.dev.cinemasystem.enums.Role;
+import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
@@ -41,6 +44,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -186,6 +191,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse updateStatusOrder(Integer orderId, OrderStatus status) {
+        ensureCurrentUserIsAdmin();
+
         if (status == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
@@ -198,11 +205,9 @@ public class OrderService {
             return orderMapper.toOrderResponse(order);
         }
 
-        validateStatusTransition(currentStatus, status);
+        validateStatusTransition(order, status);
 
         if (status == OrderStatus.CANCELLED || status == OrderStatus.REFUNDED) {
-            bookingService.releaseReservedSeatsAndCancelTickets(orderId);
-            cancelOrderCombos(orderId);
             cancelPendingPayments(orderId);
         }
 
@@ -223,15 +228,22 @@ public class OrderService {
 
         List<OrderSeatDetailResponse> seatDetails = buildSeatDetails(tickets, showTimeSeats);
         List<OrderComboDetailResponse> comboDetails = orderCombos.stream()
-                .map(orderCombo -> OrderComboDetailResponse.builder()
-                        .orderComboId(orderCombo.getOrderComboId())
-                        .comboId(orderCombo.getCombo().getComboId())
-                        .comboName(orderCombo.getCombo().getComboName())
-                        .comboImage(orderCombo.getCombo().getImage())
-                        .quantity(orderCombo.getQuantity())
-                        .unitPrice(orderCombo.getUnitPrice())
-                        .lineTotal(orderCombo.getUnitPrice().multiply(BigDecimal.valueOf(orderCombo.getQuantity())))
-                        .build())
+                .map(orderCombo -> {
+                    BigDecimal unitPrice = orderCombo.getUnitPrice() == null
+                            ? BigDecimal.ZERO
+                            : orderCombo.getUnitPrice();
+                    int quantity = orderCombo.getQuantity() == null ? 0 : orderCombo.getQuantity();
+                    return OrderComboDetailResponse.builder()
+                            .orderComboId(orderCombo.getOrderComboId())
+                            .comboId(orderCombo.getCombo().getComboId())
+                            .comboName(orderCombo.getCombo().getComboName())
+                            .comboImage(orderCombo.getCombo().getImage())
+                            .quantity(quantity)
+                            .unitPrice(unitPrice)
+                            .lineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)))
+                            .status(orderCombo.getStatus())
+                            .build();
+                })
                 .toList();
 
         List<OrderPaymentDetailResponse> paymentDetails = payments.stream()
@@ -267,7 +279,17 @@ public class OrderService {
                 .build();
     }
 
-    private void validateStatusTransition(OrderStatus currentStatus, OrderStatus targetStatus) {
+    private void validateStatusTransition(Order order, OrderStatus targetStatus) {
+        OrderStatus currentStatus = order.getStatus();
+
+        if (targetStatus == OrderStatus.EXPIRED) {
+            throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
+        }
+
+        if (bookingService.isShowTimeStarted(order.getShowTime())) {
+            throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
+        }
+
         if (currentStatus == OrderStatus.PAID
                 && (targetStatus == OrderStatus.CANCELLED || targetStatus == OrderStatus.REFUNDED)) {
             return;
@@ -280,8 +302,24 @@ public class OrderService {
         throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
     }
 
-    private void cancelOrderCombos(Integer orderId) {
-        orderComboRepository.deleteAllByOrder_OrderId(orderId);
+    private void ensureCurrentUserIsAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String email = authentication.getName() == null
+                ? null
+                : authentication.getName().trim().toLowerCase(Locale.ROOT);
+        if (email == null || email.isBlank() || "anonymoususer".equals(email)) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (currentUser.getRole() != Role.ADMIN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
     }
 
     private void cancelPendingPayments(Integer orderId) {
@@ -319,6 +357,7 @@ public class OrderService {
                         Seat seat = ticket.getSeat();
                         ShowTimeSeat showTimeSeat = showTimeSeatBySeatId.get(seat.getSeatId());
                         return OrderSeatDetailResponse.builder()
+                                .ticketId(ticket.getTicketId())
                                 .seatId(seat.getSeatId())
                                 .seatRow(seat.getSeatRow())
                                 .seatColumn(seat.getSeatColumn())
@@ -327,6 +366,7 @@ public class OrderService {
                                 .seatTypeName(seat.getSeatType().getSeatTypeName())
                                 .showTimeSeatStatus(showTimeSeat != null ? showTimeSeat.getStatus() : null)
                                 .unitPrice(ticket.getUnitPrice())
+                                .ticketStatus(ticket.getStatus())
                                 .build();
                     })
                     .toList();
@@ -340,6 +380,7 @@ public class OrderService {
                     .map(showTimeSeat -> {
                         Seat seat = showTimeSeat.getSeat();
                         return OrderSeatDetailResponse.builder()
+                                .ticketId(null)
                                 .seatId(seat.getSeatId())
                                 .seatRow(seat.getSeatRow())
                                 .seatColumn(seat.getSeatColumn())
@@ -348,6 +389,7 @@ public class OrderService {
                                 .seatTypeName(seat.getSeatType().getSeatTypeName())
                                 .showTimeSeatStatus(showTimeSeat.getStatus())
                                 .unitPrice(null)
+                                .ticketStatus(null)
                                 .build();
                     })
                     .toList();

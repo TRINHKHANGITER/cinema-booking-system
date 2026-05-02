@@ -8,9 +8,11 @@ import { checkoutService } from "../../services/checkout.service";
 import { cinemaService } from "../../services/cinema.service";
 import { comboService } from "../../services/combo.service";
 import { movieService } from "../../services/movie.service";
+import { orderComboService } from "../../services/orderCombo.service";
 import { orderService } from "../../services/order.service";
 import { provinceService } from "../../services/province.service";
 import { showTimeService } from "../../services/showtimeService";
+import { ticketService } from "../../services/ticket.service";
 import { userService } from "../../services/user.service";
 import type { CinemaResponse } from "../../types/cinema";
 import type { SelectedCombo } from "../../types/combo";
@@ -83,6 +85,12 @@ const parseApiErrorCode = (error: unknown) => {
     if (!axios.isAxiosError(error)) return undefined;
     const payload = error.response?.data as { code?: string } | undefined;
     return payload?.code;
+};
+
+const isOrderDetailShowtimeInFuture = (detail: OrderDetail | null) => {
+    if (!detail?.showTime?.releaseDate || !detail?.showTime?.startTime) return false;
+    const startAt = new Date(`${detail.showTime.releaseDate}T${detail.showTime.startTime}`);
+    return !Number.isNaN(startAt.getTime()) && startAt.getTime() > Date.now();
 };
 
 const buildTemporaryPassword = () => {
@@ -259,6 +267,9 @@ const OrderManagement = () => {
     const [statusTargetOrder, setStatusTargetOrder] = useState<Order | null>(null);
     const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [runningTicketId, setRunningTicketId] = useState<number | null>(null);
+    const [runningOrderComboId, setRunningOrderComboId] = useState<number | null>(null);
+    const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
     const [resumingOrderId, setResumingOrderId] = useState<number | null>(null);
 
     const visiblePages = useMemo(() => {
@@ -297,6 +308,10 @@ const OrderManagement = () => {
         () => selectedCombos.reduce((sum, combo) => sum + combo.quantity, 0),
         [selectedCombos]
     );
+
+    const canEditPaidOrderLines = useMemo(() => {
+        return detailOrder?.status === "PAID" && isOrderDetailShowtimeInFuture(detailOrder);
+    }, [detailOrder]);
 
     const loadStatuses = useCallback(async () => {
         try {
@@ -696,6 +711,35 @@ const OrderManagement = () => {
         setIsWizardOpen(true);
     };
 
+    const cancelPayingOrder = async (targetOrder: Order) => {
+        if (targetOrder.status !== "PAYING") {
+            toast.error("Chi co the huy don o trang thai PAYING.");
+            return;
+        }
+
+        const confirmed = window.confirm(`Xac nhan huy don #${targetOrder.orderId}?`);
+        if (!confirmed) return;
+
+        try {
+            setCancellingOrderId(targetOrder.orderId);
+            const response = await bookingService.cancelOrder(targetOrder.orderId);
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Khong the huy don.");
+                return;
+            }
+
+            toast.success("Huy don thanh cong.");
+            await fetchOrders();
+            if (detailTargetId && detailTargetId === targetOrder.orderId) {
+                await openOrderDetail(detailTargetId);
+            }
+        } catch (error) {
+            toast.error(resolveApiErrorMessage(error, "Khong the huy don."));
+        } finally {
+            setCancellingOrderId(null);
+        }
+    };
+
     const continuePayingOrder = async (targetOrder: Order) => {
         if (targetOrder.status !== "PAYING") {
             toast.error("Chỉ có thể tiếp tục với đơn đang ở trạng thái PAYING.");
@@ -1000,6 +1044,99 @@ const OrderManagement = () => {
         setIsDetailLoading(false);
     };
 
+    const refreshOrderDetailAndList = async (orderId: number) => {
+        await bookingService.recalculateOrderTotal(orderId);
+        await fetchOrders();
+        if (detailTargetId && detailTargetId === orderId) {
+            await openOrderDetail(orderId);
+        }
+    };
+
+    const updateTicketLineStatus = async (
+        ticketId: number,
+        currentStatus: "ACTIVE" | "CANCELLED" | null
+    ) => {
+        if (!detailOrder || detailOrder.status !== "PAID") {
+            toast.error("Chi don PAID moi duoc doi trang thai ve.");
+            return;
+        }
+        if (!isOrderDetailShowtimeInFuture(detailOrder)) {
+            toast.error("Chi duoc doi trang thai ve/combo khi suat chieu chua bat dau.");
+            return;
+        }
+
+        const nextStatus = currentStatus === "CANCELLED" ? "ACTIVE" : "CANCELLED";
+        const actionLabel = nextStatus === "ACTIVE" ? "khoi phuc" : "huy";
+        const confirmed = window.confirm(`Xac nhan ${actionLabel} ve #${ticketId}?`);
+        if (!confirmed) return;
+
+        try {
+            setRunningTicketId(ticketId);
+            const response = await ticketService.updateTicketStatus(ticketId, {
+                status: nextStatus,
+            });
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Khong the doi trang thai ve.");
+                return;
+            }
+
+            toast.success(
+                nextStatus === "ACTIVE" ? "Da khoi phuc ve thanh cong." : "Da huy ve thanh cong."
+            );
+            await refreshOrderDetailAndList(detailOrder.orderId);
+        } catch (error) {
+            const errorCode = parseApiErrorCode(error);
+            if (errorCode === "SHOWTIME_SEAT_NOT_AVAILABLE" && nextStatus === "ACTIVE") {
+                toast.error("Ve da het cho, khong the khoi phuc ve nay.");
+                return;
+            }
+            toast.error(resolveApiErrorMessage(error, "Khong the doi trang thai ve."));
+        } finally {
+            setRunningTicketId(null);
+        }
+    };
+
+    const updateOrderComboLineStatus = async (
+        orderComboId: number,
+        currentStatus: "ACTIVE" | "CANCELLED" | null
+    ) => {
+        if (!detailOrder || detailOrder.status !== "PAID") {
+            toast.error("Chi don PAID moi duoc doi trang thai combo.");
+            return;
+        }
+        if (!isOrderDetailShowtimeInFuture(detailOrder)) {
+            toast.error("Chi duoc doi trang thai ve/combo khi suat chieu chua bat dau.");
+            return;
+        }
+
+        const nextStatus = currentStatus === "CANCELLED" ? "ACTIVE" : "CANCELLED";
+        const actionLabel = nextStatus === "ACTIVE" ? "khoi phuc" : "huy";
+        const confirmed = window.confirm(`Xac nhan ${actionLabel} combo #${orderComboId}?`);
+        if (!confirmed) return;
+
+        try {
+            setRunningOrderComboId(orderComboId);
+            const response = await orderComboService.updateOrderComboStatus(orderComboId, {
+                status: nextStatus,
+            });
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Khong the doi trang thai combo.");
+                return;
+            }
+
+            toast.success(
+                nextStatus === "ACTIVE"
+                    ? "Da khoi phuc combo thanh cong."
+                    : "Da huy combo thanh cong."
+            );
+            await refreshOrderDetailAndList(detailOrder.orderId);
+        } catch (error) {
+            toast.error(resolveApiErrorMessage(error, "Khong the doi trang thai combo."));
+        } finally {
+            setRunningOrderComboId(null);
+        }
+    };
+
     const openStatusModal = (order: Order) => {
         setStatusTargetOrder(order);
         if (order.status === "PAID") {
@@ -1022,8 +1159,35 @@ const OrderManagement = () => {
     const updateOrderStatus = async () => {
         if (!statusTargetOrder || !nextStatus) return;
 
+        const confirmed = window.confirm(
+            `Xac nhan doi trang thai don #${statusTargetOrder.orderId} sang ${nextStatus}?`
+        );
+        if (!confirmed) return;
+
         try {
             setIsUpdatingStatus(true);
+
+            const detailResponse = await orderService.getOrderDetailByOrderId(statusTargetOrder.orderId);
+            if (detailResponse.code !== "SUCCESS" || !detailResponse.result) {
+                toast.error(detailResponse.message || "Khong the tai chi tiet don hang.");
+                return;
+            }
+
+            const currentStatus = detailResponse.result.status;
+            const isValidTransition =
+                (currentStatus === "PAID" &&
+                    (nextStatus === "CANCELLED" || nextStatus === "REFUNDED")) ||
+                (currentStatus === "CANCELLED" && nextStatus === "REFUNDED");
+            if (!isValidTransition) {
+                toast.error("Khong the doi trang thai don hang theo lua chon nay.");
+                return;
+            }
+
+            if (!isOrderDetailShowtimeInFuture(detailResponse.result)) {
+                toast.error("Chi duoc doi trang thai don khi suat chieu chua bat dau.");
+                return;
+            }
+
             const response = await orderService.updateOrderStatus(statusTargetOrder.orderId, {
                 status: nextStatus,
             });
@@ -1251,18 +1415,30 @@ const OrderManagement = () => {
                                                     </button>
                                                 )}
                                                 {order.status === "PAYING" && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            void continuePayingOrder(order)
-                                                        }
-                                                        disabled={resumingOrderId === order.orderId}
-                                                        className="rounded-md border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                                                    >
-                                                        {resumingOrderId === order.orderId
-                                                            ? "Đang mở..."
-                                                            : "Tiếp tục"}
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => void cancelPayingOrder(order)}
+                                                            disabled={cancellingOrderId === order.orderId}
+                                                            className="rounded-md border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            {cancellingOrderId === order.orderId
+                                                                ? "Dang huy..."
+                                                                : "Huy don"}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                void continuePayingOrder(order)
+                                                            }
+                                                            disabled={resumingOrderId === order.orderId}
+                                                            className="rounded-md border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            {resumingOrderId === order.orderId
+                                                                ? "Dang mo..."
+                                                                : "Tiep tuc thanh toan"}
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </td>
@@ -2303,18 +2479,26 @@ const OrderManagement = () => {
                             </div>
                         </div>
 
+                        {detailOrder.status === "PAID" && (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                                {canEditPaidOrderLines
+                                    ? "Don PAID nay co the doi trang thai ve/combo ACTIVE <-> CANCELLED truoc gio chieu."
+                                    : "Khong the doi trang thai ve/combo vi suat chieu da bat dau hoac da qua gio."}
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                             <div className="rounded-md border border-slate-200 p-4">
                                 <h4 className="text-base font-bold text-slate-800">
                                     Danh sách ghế đã đặt
                                 </h4>
                                 {detailOrder.seats.length === 0 ? (
-                                    <p className="mt-3 text-sm text-slate-500">Không có ghế.</p>
+                                    <p className="mt-3 text-sm text-slate-500">Khong co ghe.</p>
                                 ) : (
                                     <div className="mt-3 space-y-2">
                                         {detailOrder.seats.map((seat) => (
                                             <div
-                                                key={`seat-${seat.seatId}`}
+                                                key={`seat-${seat.ticketId ?? seat.seatId}`}
                                                 className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm"
                                             >
                                                 <div>
@@ -2324,9 +2508,33 @@ const OrderManagement = () => {
                                                     <div className="text-xs text-slate-500">
                                                         Seat map: {seat.showTimeSeatStatus ?? "-"}
                                                     </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Ticket status: {seat.ticketStatus ?? "ACTIVE"}
+                                                    </div>
                                                 </div>
-                                                <div className="font-semibold text-slate-700">
-                                                    {formatCurrency(seat.unitPrice)}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-semibold text-slate-700">
+                                                        {formatCurrency(seat.unitPrice)}
+                                                    </div>
+                                                    {canEditPaidOrderLines && seat.ticketId && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    void updateTicketLineStatus(
+                                                                        seat.ticketId!,
+                                                                        seat.ticketStatus ?? "ACTIVE"
+                                                                    )
+                                                                }
+                                                                disabled={runningTicketId === seat.ticketId}
+                                                                className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                {runningTicketId === seat.ticketId
+                                                                    ? "Dang xu ly..."
+                                                                    : seat.ticketStatus === "CANCELLED"
+                                                                      ? "Khoi phuc ve"
+                                                                      : "Huy ve"}
+                                                            </button>
+                                                        )}
                                                 </div>
                                             </div>
                                         ))}
@@ -2339,7 +2547,7 @@ const OrderManagement = () => {
                                     Combo đã chọn
                                 </h4>
                                 {detailOrder.combos.length === 0 ? (
-                                    <p className="mt-3 text-sm text-slate-500">Không có combo.</p>
+                                    <p className="mt-3 text-sm text-slate-500">Khong co combo.</p>
                                 ) : (
                                     <div className="mt-3 space-y-2">
                                         {detailOrder.combos.map((combo) => (
@@ -2352,11 +2560,35 @@ const OrderManagement = () => {
                                                         {combo.quantity}x {combo.comboName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Số lượng: {combo.quantity}
+                                                        So luong: {combo.quantity}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Status: {combo.status ?? "ACTIVE"}
                                                     </div>
                                                 </div>
-                                                <div className="font-semibold text-slate-700">
-                                                    {formatCurrency(combo.lineTotal)}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-semibold text-slate-700">
+                                                        {formatCurrency(combo.lineTotal)}
+                                                    </div>
+                                                    {canEditPaidOrderLines && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                void updateOrderComboLineStatus(
+                                                                    combo.orderComboId,
+                                                                    combo.status ?? "ACTIVE"
+                                                                )
+                                                            }
+                                                            disabled={runningOrderComboId === combo.orderComboId}
+                                                            className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            {runningOrderComboId === combo.orderComboId
+                                                                ? "Dang xu ly..."
+                                                                : combo.status === "CANCELLED"
+                                                                  ? "Khoi phuc combo"
+                                                                  : "Huy combo"}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -2462,8 +2694,9 @@ const OrderManagement = () => {
                                     ))}
                                 </select>
                                 <p className="text-xs text-slate-500">
-                                    Khi chuyển sang CANCELLED hoặc REFUNDED, hệ thống sẽ nhả ghế và
-                                    xóa ticket/combo đang giữ của đơn.
+                                    Don PAID chi duoc doi sang CANCELLED/REFUNDED, don CANCELLED chi duoc
+                                    doi sang REFUNDED. He thong khong tu dong doi status ve/combo khi doi
+                                    status don.
                                 </p>
                             </>
                         )}

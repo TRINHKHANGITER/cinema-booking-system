@@ -1474,12 +1474,12 @@ INSERT INTO orders (
       (4, 9, 255000,      0, 80000, 175000, 175000, DATE_ADD(NOW(), INTERVAL 5 MINUTE), NOW(), NOW(), 'PAYING');
 
 -- orderCombo
-INSERT INTO order_combo (order_id, combo_id, quantity, unit_price) VALUES
-(1, 1, 1, 125000),
-(2, 4, 1, 230000),
-(4, 1, 1, 125000),
-(5, 5, 1, 310000),
-(7, 3, 1, 175000);
+INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, status) VALUES
+(1, 1, 1, 125000, 'ACTIVE'),
+(2, 4, 1, 230000, 'ACTIVE'),
+(4, 1, 1, 125000, 'ACTIVE'),
+(5, 5, 1, 310000, 'ACTIVE'),
+(7, 3, 1, 175000, 'ACTIVE');
 
 -- payment
 -- INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
@@ -1537,6 +1537,7 @@ INSERT INTO ticket (
     unit_price,
     qr_code,
     checked_in_at,
+    status,
     created_at,
     updated_at
 ) 
@@ -1548,6 +1549,7 @@ SELECT
     pt.price AS unit_price,
     src.qr_code,
     src.checked_in_at,
+    'ACTIVE' AS status,
     src.created_at,
     src.updated_at
 FROM (
@@ -1582,7 +1584,8 @@ SET sts.status = 'SOLD',
     sts.order_id = t.order_id,
     sts.hold_expires_at = NULL,
     sts.updated_at = NOW()
-WHERE o.status = 'PAID';
+WHERE o.status = 'PAID'
+  AND t.status = 'ACTIVE';
 
 UPDATE show_time_seat
 SET status = 'HELD',

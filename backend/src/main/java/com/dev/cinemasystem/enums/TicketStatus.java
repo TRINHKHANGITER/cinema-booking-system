@@ -1,7 +1,6 @@
 package com.dev.cinemasystem.enums;
 
-public enum ComboDetailStatus {
+public enum TicketStatus {
     ACTIVE,
     CANCELLED
 }
-

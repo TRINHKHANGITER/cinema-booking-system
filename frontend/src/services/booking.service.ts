@@ -21,4 +21,9 @@ export const bookingService = {
         const res = await api.post<ApiResponse<Order>>(`/booking/order/${orderId}/cancel`);
         return res.data;
     },
+
+    recalculateOrderTotal: async (orderId: number) => {
+        const res = await api.post<ApiResponse<Order>>(`/booking/order/${orderId}/recalculate-total`);
+        return res.data;
+    },
 };

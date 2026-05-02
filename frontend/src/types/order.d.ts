@@ -1,6 +1,8 @@
 import type { UserResponse } from "./user";
 import type { PaymentStatus } from "./payment";
 import type { ShowTimeSeatStatus } from "./showtime-seat";
+import type { OrderComboStatus } from "./orderCombo";
+import type { TicketStatus } from "./ticket";
 
 export type OrderStatus = "PAYING" | "PAID" | "CANCELLED" | "REFUNDED" | "EXPIRED";
 
@@ -59,6 +61,7 @@ export type OrderShowTimeDetail = {
 };
 
 export type OrderSeatDetail = {
+    ticketId: number | null;
     seatId: number;
     seatRow: string;
     seatColumn: number;
@@ -67,6 +70,7 @@ export type OrderSeatDetail = {
     seatTypeName: string;
     showTimeSeatStatus: ShowTimeSeatStatus | null;
     unitPrice: number | null;
+    ticketStatus: TicketStatus | null;
 };
 
 export type OrderComboDetail = {
@@ -77,6 +81,7 @@ export type OrderComboDetail = {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
+    status: OrderComboStatus | null;
 };
 
 export type OrderPaymentDetail = {

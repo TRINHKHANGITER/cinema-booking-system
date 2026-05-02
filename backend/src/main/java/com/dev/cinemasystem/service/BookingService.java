@@ -18,12 +18,14 @@ import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.ComboStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.enums.PriceTicketStatus;
 import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.enums.ShowTimeStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
@@ -249,10 +251,12 @@ public class BookingService {
                         .combo(combo)
                         .quantity(quantity)
                         .unitPrice(combo.getPrice())
+                        .status(ComboDetailStatus.ACTIVE)
                         .build();
             } else {
                 row.setQuantity(quantity);
                 row.setUnitPrice(combo.getPrice());
+                row.setStatus(ComboDetailStatus.ACTIVE);
             }
             rowsToSave.add(row);
         }
@@ -273,7 +277,7 @@ public class BookingService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (order.getStatus() == OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.PAYING) {
             throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
         }
 
@@ -286,6 +290,14 @@ public class BookingService {
         recalculateOrderTotals(order);
         orderRepository.save(order);
 
+        return orderMapper.toOrderResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse recalculateOrderTotalsForOrder(Integer orderId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        recalculateOrderTotals(order);
         return orderMapper.toOrderResponse(order);
     }
 
@@ -385,6 +397,53 @@ public class BookingService {
         recalculateOrderTotals(order);
     }
 
+    @Transactional
+    public void cancelPaidOrderLinesForOrderStatusChange(Integer orderId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() != OrderStatus.PAID) {
+            throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
+        }
+
+        if (isShowTimeStarted(order.getShowTime())) {
+            throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
+        }
+
+        List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(orderId);
+        List<Ticket> activeTickets = tickets.stream()
+                .filter(ticket -> ticket.getStatus() == null || ticket.getStatus() == TicketStatus.ACTIVE)
+                .toList();
+        if (!activeTickets.isEmpty()) {
+            for (Ticket ticket : activeTickets) {
+                ticket.setStatus(TicketStatus.CANCELLED);
+            }
+            ticketRepository.saveAll(activeTickets);
+        }
+
+        List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(orderId);
+        List<OrderCombo> activeCombos = orderCombos.stream()
+                .filter(item -> item.getStatus() == null || item.getStatus() == ComboDetailStatus.ACTIVE)
+                .toList();
+        if (!activeCombos.isEmpty()) {
+            for (OrderCombo item : activeCombos) {
+                item.setStatus(ComboDetailStatus.CANCELLED);
+            }
+            orderComboRepository.saveAll(activeCombos);
+        }
+
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD, ShowTimeSeatStatus.SOLD), false);
+        recalculateOrderTotals(order);
+    }
+
+    public boolean isShowTimeStarted(ShowTime showTime) {
+        if (showTime == null || showTime.getReleaseDate() == null || showTime.getStartTime() == null) {
+            return true;
+        }
+        LocalDateTime showTimeStart = LocalDateTime.of(showTime.getReleaseDate(), showTime.getStartTime());
+        return !showTimeStart.isAfter(LocalDateTime.now());
+    }
+
     private Order resolveOrderForHold(HoldSeatRequest request, ShowTime showTime) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -451,11 +510,13 @@ public class BookingService {
     private void recalculateOrderTotals(Order order) {
         List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(order.getOrderId());
         BigDecimal ticketTotal = tickets.stream()
+                .filter(ticket -> ticket.getStatus() == null || ticket.getStatus() == TicketStatus.ACTIVE)
                 .map(ticket -> ticket.getUnitPrice() == null ? BigDecimal.ZERO : ticket.getUnitPrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(order.getOrderId());
         BigDecimal comboTotal = orderCombos.stream()
+                .filter(item -> item.getStatus() == null || item.getStatus() == ComboDetailStatus.ACTIVE)
                 .map(item -> {
                     BigDecimal unitPrice = item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice();
                     int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
@@ -639,6 +700,7 @@ public class BookingService {
             ticket.setPriceTicket(priceTicket);
             ticket.setUnitPrice(priceTicket.getPrice());
             ticket.setQrCode(buildTicketQr(order.getOrderId(), heldSeat.getShowTime().getShowTimeId(), seatId));
+            ticket.setStatus(TicketStatus.ACTIVE);
 
             ticketsToSave.add(ticket);
         }

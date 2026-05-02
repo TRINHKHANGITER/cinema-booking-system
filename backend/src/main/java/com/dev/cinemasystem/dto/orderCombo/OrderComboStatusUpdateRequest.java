@@ -1,6 +1,7 @@
-package com.dev.cinemasystem.dto.orderDTO;
+package com.dev.cinemasystem.dto.orderCombo;
 
 import com.dev.cinemasystem.enums.ComboDetailStatus;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,20 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderComboDetailResponse {
-    Integer orderComboId;
-    Integer comboId;
-    String comboName;
-    String comboImage;
-    Integer quantity;
-    BigDecimal unitPrice;
-    BigDecimal lineTotal;
+public class OrderComboStatusUpdateRequest {
+    @NotNull(message = "INVALID_REQUEST")
     ComboDetailStatus status;
 }

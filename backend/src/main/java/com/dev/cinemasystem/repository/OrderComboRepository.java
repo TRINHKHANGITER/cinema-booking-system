@@ -1,6 +1,7 @@
 package com.dev.cinemasystem.repository;
 
 import com.dev.cinemasystem.entity.OrderCombo;
+import com.dev.cinemasystem.enums.ComboDetailStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,8 @@ public interface OrderComboRepository extends JpaRepository<OrderCombo, Integer>
     List<OrderCombo> findAllByOrder_OrderId(Integer orderId);
 
     Optional<OrderCombo> findByOrder_OrderIdAndCombo_ComboId(Integer orderId, Integer comboId);
+
+    List<OrderCombo> findAllByOrder_OrderIdAndStatus(Integer orderId, ComboDetailStatus status);
 
     boolean existsByCombo_ComboId(Integer comboId);
 

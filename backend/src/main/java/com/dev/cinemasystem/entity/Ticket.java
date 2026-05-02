@@ -1,4 +1,5 @@
 package com.dev.cinemasystem.entity;
+import com.dev.cinemasystem.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -50,6 +51,11 @@ public class Ticket {
     String qrCode;
 
     LocalDateTime checkedInAt;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    TicketStatus status = TicketStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

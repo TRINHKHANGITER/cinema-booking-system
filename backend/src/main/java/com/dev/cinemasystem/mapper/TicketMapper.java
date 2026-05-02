@@ -17,6 +17,7 @@ public interface TicketMapper {
     @Mapping(target = "unitPrice", ignore = true)
     @Mapping(target = "qrCode", ignore = true)
     @Mapping(target = "checkedInAt", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Ticket toTicket(TicketCreationRequest ticketCreationRequest);

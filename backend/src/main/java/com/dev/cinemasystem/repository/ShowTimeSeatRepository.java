@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ShowTimeSeatRepository extends JpaRepository<ShowTimeSeat, Integer> {
 
@@ -52,6 +53,18 @@ public interface ShowTimeSeatRepository extends JpaRepository<ShowTimeSeat, Inte
     List<ShowTimeSeat> findAllByShowTimeIdAndStatus(
             @Param("showTimeId") Integer showTimeId,
             @Param("status") ShowTimeSeatStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select sts
+        from ShowTimeSeat sts
+        where sts.showTime.showTimeId = :showTimeId
+          and sts.seat.seatId = :seatId
+    """)
+    Optional<ShowTimeSeat> findByShowTimeIdAndSeatIdForUpdate(
+            @Param("showTimeId") Integer showTimeId,
+            @Param("seatId") Integer seatId
     );
 
     void deleteByShowTime_ShowTimeId(Integer showTimeId);

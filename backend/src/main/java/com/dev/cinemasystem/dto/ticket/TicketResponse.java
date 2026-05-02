@@ -1,4 +1,5 @@
 package com.dev.cinemasystem.dto.ticket;
+import com.dev.cinemasystem.enums.TicketStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,6 +20,7 @@ public class TicketResponse {
     BigDecimal unitPrice;
     String qrCode;
     LocalDateTime checkedInAt;
+    TicketStatus status;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

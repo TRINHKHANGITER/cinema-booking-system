@@ -1,19 +1,29 @@
-import axios from "axios";
-import type { OrderComboRequest } from "../types/orderCombo";
+import api from "../lib/axios";
+import type { ApiResponse } from "../types/api";
+import type {
+    OrderCombo,
+    OrderComboRequest,
+    OrderComboStatusUpdateRequest,
+} from "../types/orderCombo";
 
 export const orderComboService = {
     createOrderCombo: async (data: OrderComboRequest) => {
-        const res = await axios.post(`/orderCombo`, data);
+        const res = await api.post<ApiResponse<OrderCombo>>(`/orderCombo`, data);
+        return res.data;
+    },
+
+    updateOrderComboStatus: async (orderComboId: number, data: OrderComboStatusUpdateRequest) => {
+        const res = await api.patch<ApiResponse<OrderCombo>>(`/orderCombo/${orderComboId}/status`, data);
         return res.data;
     },
 
     getOrderComboById: async (orderComboId: number) => {
-        const res = await axios.get(`/orderCombo/${orderComboId}`);
+        const res = await api.get<ApiResponse<OrderCombo>>(`/orderCombo/${orderComboId}`);
         return res.data;
     },
 
     getOrdersCombo: async () => {
-        const res = await axios.get(`/orderCombo`);
+        const res = await api.get<ApiResponse<OrderCombo[]>>(`/orderCombo`);
         return res.data;
     },
 };

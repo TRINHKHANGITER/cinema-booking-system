@@ -8,7 +8,12 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/booking")
@@ -24,7 +29,7 @@ public class BookingController {
             @RequestBody @Valid UpdateOrderCombosRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Cập nhật combo của đơn hàng thành công")
+                .message("Cap nhat combo cua don hang thanh cong")
                 .result(bookingService.updateOrderCombos(orderId, request))
                 .build();
     }
@@ -32,8 +37,16 @@ public class BookingController {
     @PostMapping("/order/{orderId}/cancel")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable Integer orderId) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Hủy đơn hàng thành công")
+                .message("Huy don hang thanh cong")
                 .result(bookingService.cancelOrder(orderId))
+                .build();
+    }
+
+    @PostMapping("/order/{orderId}/recalculate-total")
+    public ApiResponse<OrderResponse> recalculateOrderTotal(@PathVariable Integer orderId) {
+        return ApiResponse.<OrderResponse>builder()
+                .message("Cap nhat tong tien don hang thanh cong")
+                .result(bookingService.recalculateOrderTotalsForOrder(orderId))
                 .build();
     }
 }
