@@ -281,9 +281,8 @@ public class BookingService {
             throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
         }
 
-        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD));
-        deleteOrderTickets(orderId);
-        deleteOrderCombos(orderId);
+        // Cancel PAYING order but keep ticket/combo rows for audit and total snapshots.
+        releaseSeats(order, EnumSet.of(ShowTimeSeatStatus.HELD), false);
         expirePendingPayments(orderId, PaymentStatus.CANCELLED);
 
         order.setStatus(OrderStatus.CANCELLED);

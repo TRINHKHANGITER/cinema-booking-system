@@ -296,6 +296,15 @@ public class OrderService {
         }
 
         if (currentStatus == OrderStatus.CANCELLED && targetStatus == OrderStatus.REFUNDED) {
+            boolean hasSuccessfulPayment = paymentRepository
+                    .findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(
+                            order.getOrderId(),
+                            PaymentStatus.SUCCESS
+                    )
+                    .isPresent();
+            if (!hasSuccessfulPayment) {
+                throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
+            }
             return;
         }
 
