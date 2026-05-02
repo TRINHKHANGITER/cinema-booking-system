@@ -140,5 +140,13 @@ public class OpenApiGroupConfig {
                 .pathsToMatch("/gemini/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi dashboardGroup() {
+        return GroupedOpenApi.builder()
+                .group("dashboard")
+                .pathsToMatch("/dashboard/**")
+                .build();
+    }
 }
 
