@@ -1,4 +1,4 @@
-use `cinema_booking_system_test`;
+use `cinema_booking_system`;
 
 -- ticket unique key migration:
 -- keep historical tickets for expired orders, but still prevent duplicate seat in same order
@@ -63,24 +63,23 @@ DEALLOCATE PREPARE stmt_ticket_add_uq;
 
 SET SQL_SAFE_UPDATES = 0;
 DELETE FROM order_combo;
--- DELETE FROM combo_detail;
-DELETE FROM combo;
+DELETE FROM payment;
 DELETE FROM ticket;
-DELETE FROM price_ticket;
 DELETE FROM show_time_seat;
+DELETE FROM orders;
+DELETE FROM combo;
 DELETE FROM show_time;
 DELETE FROM seat;
 DELETE FROM room;
-DELETE FROM cinema;
 DELETE FROM movie;
--- DELETE FROM product;
--- DELETE FROM product_type;
+DELETE FROM cinema;
+DELETE FROM price_ticket;
 DELETE FROM movie_type;
 DELETE FROM room_type;
 DELETE FROM seat_type;
 DELETE FROM province;
-DELETE FROM payment;
-DELETE FROM orders;
+
+DELETE FROM otp_token;
 DELETE FROM users;
 
 SET FOREIGN_KEY_CHECKS = 0;
