@@ -975,7 +975,7 @@ Nếu bạn muốn public project theo hướng mã nguồn mở, nên bổ sung
     $env:DATABASE_PASSWORD=<password>
  2. vào thư mục backend, 
     cd backend
-    copy hết code trong file .env ở backend cho vào PowerShell để set biến môi trường-> enter
+    mvn clean spring-boot:run
 3. copy hết file data_.sql vào MySQL rồi chạy để có dữ liệu mẫu
  4. mở terminal mới, vào thư mục frontend, 
     cd frontend
