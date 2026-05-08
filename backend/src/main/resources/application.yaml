@@ -14,7 +14,7 @@ spring:
             client:
                 registration:
                     google:
-                        client-id: ${GOOGLE_CLIENT_ID}
+                        client-id: ${GOOGLE_CLIENT_ID:}
                         scope:
                             - email
                             - profile
@@ -87,3 +87,6 @@ vnpay:
     curr-code: VND
     locale: vn
     order-type: otherx
+
+google:
+    client-id: ${GOOGLE_CLIENT_ID:}

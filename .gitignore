@@ -45,5 +45,6 @@ backend/target/
 **/dist/
 **/note/
 **/get_content/
+**/node_modules
 
 # backend/src/main/resources/
