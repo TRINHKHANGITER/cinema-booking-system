@@ -197,6 +197,13 @@ public class ShowTimeService {
         return toShowtimeMovieResponse(showTime.getMovie(), movieShowTimes);
     }
 
+    public ShowTimeResponse getShowTimeById_tdv(Integer showTimeId) {
+        var showTime = showTimeRepository.findById(showTimeId)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+
+        return showTimeMapper.toShowTimeResponse(showTime);
+    }
+
     public FullShowtimeMovieResponse createShowTime(ShowTimeCreationResquest request) {
         if (request == null) {
             log.error("ShowTime creation request is null");

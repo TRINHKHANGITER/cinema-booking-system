@@ -1,6 +1,5 @@
 package com.dev.cinemasystem.dto.orderDTO;
 
-import com.dev.cinemasystem.dto.userDto.UserResponse;
 import com.dev.cinemasystem.enums.OrderStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -13,12 +12,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderResponse {
-    Integer orderId;
+public class OrderUserResponse {
+    int orderId;
 
-    Integer userId;
-
-    UserResponse user;
+    int userId;
 
     Integer showTimeId;
 
@@ -31,8 +28,6 @@ public class OrderResponse {
     BigDecimal discountAmount;
 
     BigDecimal netAmount;
-
-    LocalDateTime expiredAt;
 
     LocalDateTime createdAt;
 

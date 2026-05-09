@@ -723,21 +723,25 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                                                                 .map((show) => (
                                                                     <Link
                                                                         key={show.showTimeId}
+
                                                                         onClick={(event) => {
                                                                             if (!user) {
                                                                                 event.preventDefault();
                                                                                 setOpenSignIn(true);
                                                                             }
                                                                         }}
+
                                                                         state={{
                                                                             showTimeId: show.showTimeId,
                                                                         }}
+
                                                                         to={`/dat-ve/${
                                                                             bookingSlug ||
                                                                             show.movieId
                                                                         }/showtime/${
                                                                             show.showTimeId
                                                                         }`}
+                                                                        
                                                                         className="py-2 md:px-8 px-6 border border-gray-300 rounded text-sm font-normal text-black-10 active:bg-[#034ea2] transition-all duration-500 ease-in-out hover:text-white hover:bg-[#034ea2]"
                                                                     >
                                                                         {formatTime(show.startTime)}

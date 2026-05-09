@@ -4,6 +4,7 @@ import type {
     PriceTicketCreationRequest,
     PriceTicketFilterParams,
     PriceTicketResponse,
+    PriceTicketResquest,
     PriceTicketStatus,
     PriceTicketUpdateRequest,
 } from "../types/price-ticket";
@@ -45,4 +46,10 @@ export const priceTicketService = {
         const res = await api.delete<ApiResponse<boolean>>(`/price-ticket/${priceTicketId}`);
         return res.data;
     },
+
+    getPriceTickets: async () => {
+        const res = await api.get<ApiResponse<PriceTicketResponse[]>>(`/price-ticket`);
+        return res.data;
+    },
+
 };

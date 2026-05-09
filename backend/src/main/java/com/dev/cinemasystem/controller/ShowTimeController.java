@@ -108,10 +108,18 @@ public class ShowTimeController {
 
     
     @GetMapping("/{showTimeId}")
-    public ApiResponse<FullShowtimeMovieResponse> getShowTimeById(@PathVariable  Integer showTimeId    ) {
+    public ApiResponse<FullShowtimeMovieResponse> getShowTimeById(@PathVariable Integer showTimeId) {
         return ApiResponse.<FullShowtimeMovieResponse>builder()
                 .message("Lấy thông tin suất chiếu thành công")
                 .result(showTimeService.getShowTimeById(showTimeId))
+                .build();
+    }
+
+    @GetMapping("/showTimeId-tdv/{showTimeId}")
+    public ApiResponse<ShowTimeResponse> getShowTimeById_tdv(@PathVariable Integer showTimeId) {
+        return ApiResponse.<ShowTimeResponse>builder()
+                .message("Lấy thông tin suất chiếu thành công")
+                .result(showTimeService.getShowTimeById_tdv(showTimeId))
                 .build();
     }
 

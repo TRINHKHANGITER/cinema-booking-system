@@ -3,6 +3,7 @@ package com.dev.cinemasystem.mapper;
 import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
+import com.dev.cinemasystem.dto.orderDTO.OrderUserResponse;
 import com.dev.cinemasystem.entity.Order;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -30,6 +31,10 @@ public interface OrderMapper {
     @Mapping(target = "userId", source = "user.userId")
     @Mapping(target = "showTimeId", source = "showTime.showTimeId")
     OrderResponse toOrderResponse(Order order);
+
+    @Mapping(target = "userId", source = "user.userId")
+    @Mapping(target = "showTimeId", source = "showTime.showTimeId")
+    OrderUserResponse tOrderUserResponse(Order order);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "orderId", ignore = true)

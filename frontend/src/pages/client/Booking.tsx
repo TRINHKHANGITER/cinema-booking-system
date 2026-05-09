@@ -20,6 +20,10 @@ import { orderService } from "../../services/order.service";
 import { toast } from "sonner";
 import axios from "axios";
 import type { OrderDetail } from "../../types/order";
+import type { PriceTicket } from "../../types/price-ticket";
+import { priceTicketService } from "../../services/priceTicket.service";
+import type { ShowTimeResponse } from "../../types/showtime";
+import { showTimeService } from "../../services/showtimeService";
 
 const STEPS = ["Chọn phim / Rạp / Suất", "Chọn ghế", "Chọn thức ăn", "Thanh toán", "Xác nhận"];
 
@@ -70,8 +74,10 @@ const Booking = () => {
     const showDetail = useAppSelector((store) => store.showtime.currentShowtime);
     const selectedMovie = showDetail?.movie;
 
+    const [showTime, setShowTime] = useState<ShowTimeResponse | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
     const [selectedCombos, setSelectedCombos] = useState<SelectedCombo[]>([]);
+    const [priceTickets, setPriceTickets] = useState<PriceTicket[]>([]);
     const [orderId, setOrderId] = useState<number | null>(null);
     const [orderExpiredAt, setOrderExpiredAt] = useState<string | null>(null);
     const [holdRemainingSeconds, setHoldRemainingSeconds] = useState<number | null>(null);
@@ -140,6 +146,21 @@ const Booking = () => {
 
         if (showTimeId) {
             dispatch(fetchShowTimeByIdThunk(showTimeId));
+
+            const fetchShowTime = async () => {
+                const res = await showTimeService.getShowTimeById_tdv(showTimeId);
+                console.log("res.fetchShowTime: ", res.result)
+                setShowTime(res.result || null)
+            }
+
+            const fetchPrices = async () => {
+                const res = await priceTicketService.getPriceTickets();
+                console.log("res.fetchPrices: ", res.result)
+                setPriceTickets(res.result || []);
+            };
+
+            fetchShowTime();
+            fetchPrices();
         }
 
         setSelectedSeats([]);
@@ -301,7 +322,10 @@ const Booking = () => {
         );
     }, [showDetail, showTimeId]);
 
-    const groupedSelected = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
+    const groupedSelected = useMemo(() => groupSelectedSeats(
+    showTime,
+    selectedSeats,
+    priceTickets), [selectedSeats]);
 
     const handleOrderChange = useCallback(
         (id: number, expiredAt?: string) => {
@@ -409,6 +433,7 @@ const Booking = () => {
             return null;
         }
     };
+    
     const handleNext = async () => {
         if (step === 1) {
             if (selectedSeats.length === 0 || !orderId) return;
@@ -545,7 +570,7 @@ const Booking = () => {
 
                                 <div className="col-span-2 md:col-span-1 xl:col-span-3">
 
-                                    
+
                                     <div className="xl:mt-4 text-sm xl:text-base">
                                         <strong>
                                             {selectedShowTime?.room?.cinema?.cinemaName}
@@ -559,7 +584,7 @@ const Booking = () => {
                                             {formatTime(selectedShowTime?.startTime ?? "")}
                                         </strong>
                                     </div>
-                                   
+
 
                                     {groupedSelected.length > 0 && (
                                         <>
@@ -613,7 +638,9 @@ const Booking = () => {
                                     <strong className="text-base">Tổng cộng</strong>
                                     <span className="font-bold text-[rgb(245,128,32)]">
                                         {calculateTotalPrice(
+                                            showTime,
                                             selectedSeats,
+                                            priceTickets,
                                             selectedCombos
                                         ).toLocaleString("vi-VN")}{" "}
                                         d
@@ -644,7 +671,9 @@ const Booking = () => {
                                 <span className="text-sm text-gray-500">Tổng cộng:</span>
                                 <span className="font-bold text-[rgb(245,128,32)]">
                                     {calculateTotalPrice(
+                                        showTime,
                                         selectedSeats,
+                                        priceTickets,
                                         selectedCombos
                                     ).toLocaleString("vi-VN")}{" "}
                                     d

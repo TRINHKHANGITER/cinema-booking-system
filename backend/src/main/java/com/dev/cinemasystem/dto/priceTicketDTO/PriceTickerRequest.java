@@ -1,17 +1,15 @@
-package com.dev.cinemasystem.dto.paymentDTO;
+package com.dev.cinemasystem.dto.priceTicketDTO;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentCreationRequest {
-    Integer orderId;
+public class PriceTickerRequest {
+    int roomTypeId;
 
-    BigDecimal amount;
+    int seatTypeId;
 }

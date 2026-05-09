@@ -115,6 +115,11 @@ export const showTimeService = {
         return res.data;
     },
 
+    getShowTimeById_tdv: async (showTimeId: number) => {
+        const res = await api.get<ApiResponse<ShowTimeResponse>>(`/showtime/showTimeId-tdv/${showTimeId}`);
+        return res.data;
+    },
+
     getShowTimesByCinema: async (cinemaId: number, params?: ShowTimeByCinemaParams) => {
         const res = await api.get<ApiResponse<PagingDto<FullShowtimeMovieResponse>>>(`/showtime/cinema/${cinemaId}`, {
             params: {
@@ -184,7 +189,7 @@ export const showTimeService = {
             direction,
         });
     },
-    
+
 
     getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
         return showTimeService.getShowTimesByFilters({
