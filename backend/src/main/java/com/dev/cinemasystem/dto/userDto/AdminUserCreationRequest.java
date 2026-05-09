@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.userDto;
 
+import com.dev.cinemasystem.validator.DobConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -40,6 +41,7 @@ public class AdminUserCreationRequest {
     @NotBlank(message = "USER_STATUS_BLANK")
     String status;
 
+    @DobConstraint(min = 12, message = "INVALID_DOB")
     LocalDate dateOfBirth;
 
     @Pattern(regexp = "^(male|female|other)$", message = "SEX_INVALID")

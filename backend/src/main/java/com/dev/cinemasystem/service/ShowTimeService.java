@@ -51,7 +51,6 @@ import java.util.Map;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ShowTimeService {
-
     ShowTimeRepository showTimeRepository;
     RoomRepository roomRepository;
     MovieRepository movieRepository;

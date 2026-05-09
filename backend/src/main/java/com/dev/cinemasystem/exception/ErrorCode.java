@@ -38,6 +38,7 @@ public enum ErrorCode {
 
     INVALID_PAGE_NUMBER("INVALID_PAGE_NUMBER", HttpStatus.BAD_REQUEST, "Số trang phải lớn hơn hoặc bằng 1"),
     INVALID_PAGE_SIZE("INVALID_PAGE_SIZE", HttpStatus.BAD_REQUEST, "Kích thước trang phải trong khoảng từ 1 đến 10"),
+    INVALID_DOB("INVALID_DOB", HttpStatus.BAD_REQUEST, "Người dùng phải ít nhất {min} tuổi!"),
 
     CINEMA_ADDRESS_EXISTS("CINEMA_ADDRESS_EXISTS", HttpStatus.BAD_REQUEST, "Rạp tại địa chỉ này đã tồn tại"),
     CINEMA_NOT_FOUND("CINEMA_NOT_FOUND", HttpStatus.NOT_FOUND, "Không tìm thấy rạp"),

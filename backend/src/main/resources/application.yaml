@@ -26,10 +26,10 @@ spring:
                         user-name-attribute: sub
 
     mail:
-        host: ${MAIL_HOST:}
+        host: ${MAIL_HOST:smtp.gmail.com}
         port: ${MAIL_PORT:587}
-        username: ${MAIL_USERNAME:}
-        password: ${MAIL_PASSWORD:}
+        username: ${MAIL_USERNAME}
+        password: ${MAIL_PASSWORD}
         protocol: ${MAIL_PROTOCOL:smtp}
         default-encoding: UTF-8
         properties:

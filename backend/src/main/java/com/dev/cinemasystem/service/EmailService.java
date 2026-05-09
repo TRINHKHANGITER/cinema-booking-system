@@ -2,22 +2,32 @@ package com.dev.cinemasystem.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class EmailService {
+    @NonFinal
+    @Value("${spring.mail.username}")
+    String myEmail;
 
-    private final JavaMailSender javaMailSender;
+    final JavaMailSender javaMailSender;
+
 
     public void sendForgotPasswordOtp(String to, String otp, int otpExpireMinutes) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
 
+            helper.setFrom(myEmail);
             helper.setTo(to);
             helper.setSubject("Mã OTP đặt lại mật khẩu - Galaxy Cinema");
             helper.setText(buildForgotPasswordOtpHtml(otp, otpExpireMinutes), true);
@@ -121,6 +131,7 @@ public class EmailService {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
 
+            helper.setFrom(myEmail);
             helper.setTo(to);
             helper.setSubject("Mã OTP xác thực tài khoản - Galaxy Cinema");
             helper.setText(buildVerifyEmailOtpHtml(otp, otpExpireMinutes), true);
@@ -224,6 +235,7 @@ public class EmailService {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
 
+            helper.setFrom(myEmail);
             helper.setTo(to);
             helper.setSubject("Mã OTP đổi email - Cinema Booking");
             helper.setText(buildChangeEmailOtpHtml(otp, otpExpireMinutes), true);

@@ -1,5 +1,6 @@
 package com.dev.cinemasystem.dto.userDto;
 
+import com.dev.cinemasystem.validator.DobConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -22,6 +23,7 @@ public class UserCreationRequest {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "PHONE_NUMBER_INVALID")
     String phoneNumber;
 
+    @DobConstraint(min = 12, message = "INVALID_DOB")
     LocalDate dateOfBirth;
 
     @Pattern( regexp = "^(male|female|other)$", message ="SEX_INVALID")
