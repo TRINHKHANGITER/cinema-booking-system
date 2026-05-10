@@ -21,6 +21,14 @@ const getTodayAsLocalDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+const getCurrentLocalTime = () => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+};
+
 const normalizeDate = (value?: string | null) => {
     if (!value) return "";
     return value.length >= 10 ? value.slice(0, 10) : value;
@@ -107,7 +115,7 @@ const SearchPage = () => {
         const hasDay = Boolean(safeDay);
 
         const effectiveDay = hasDay ? safeDay : today;
-        const releaseDateCondition = hasDay ? "EQ" : "GTE";
+        const startTimeFilter = effectiveDay === today ? getCurrentLocalTime() : undefined;
 
         setIsLoading(true);
 
@@ -115,8 +123,9 @@ const SearchPage = () => {
             const response = await showTimeService.getGroupedShowTimesByFilters({
                 movieName: trimmedKeyword || undefined,
                 provinceId: hasProvince ? Number(appliedFilters.provinceId) : undefined,
-                releaseDate: effectiveDay,
-                releaseDateCondition,
+                releaseFromDate: effectiveDay,
+                releaseToDate: hasDay ? effectiveDay : undefined,
+                startTime: startTimeFilter,
                 status: "SELLING",
                 page: currentPage,
                 size: pageSize,

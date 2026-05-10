@@ -54,7 +54,10 @@ type ShowtimeFilters = {
     provinceId?: number;
     cinemaId?: number;
     movieTypeId?: number;
-    releaseDate?: string;
+    releaseFromDate?: string;
+    releaseToDate?: string;
+    startTime?: string;
+    endTime?: string;
     status?: ShowTimeStatus;
     page: number;
     size: number;
@@ -189,6 +192,8 @@ const ShowtimeManagement = () => {
     const [cinemaInput, setCinemaInput] = useState<number | "">("");
     const [movieTypeInput, setMovieTypeInput] = useState<number | "">("");
     const [releaseDateInput, setReleaseDateInput] = useState("");
+    const [startTimeInput, setStartTimeInput] = useState("");
+    const [endTimeInput, setEndTimeInput] = useState("");
     const [statusInput, setStatusInput] = useState<ShowTimeStatus | "">("");
 
     const [filters, setFilters] = useState<ShowtimeFilters>({
@@ -348,7 +353,10 @@ const ShowtimeManagement = () => {
                 provinceId: filters.provinceId,
                 cinemaId: filters.cinemaId,
                 movieTypeId: filters.movieTypeId,
-                releaseDate: filters.releaseDate,
+                releaseFromDate: filters.releaseFromDate,
+                releaseToDate: filters.releaseToDate,
+                startTime: filters.startTime,
+                endTime: filters.endTime,
                 status: filters.status,
                 page: filters.page,
                 size: filters.size,
@@ -487,7 +495,10 @@ const ShowtimeManagement = () => {
             provinceId: provinceInput === "" ? undefined : provinceInput,
             cinemaId: cinemaInput === "" ? undefined : cinemaInput,
             movieTypeId: movieTypeInput === "" ? undefined : movieTypeInput,
-            releaseDate: releaseDateInput || undefined,
+            releaseFromDate: releaseDateInput || undefined,
+            releaseToDate: releaseDateInput || undefined,
+            startTime: startTimeInput ? toApiTime(startTimeInput) : undefined,
+            endTime: endTimeInput ? toApiTime(endTimeInput) : undefined,
             status: statusInput === "" ? undefined : statusInput,
             page: 1,
         }));
@@ -500,6 +511,8 @@ const ShowtimeManagement = () => {
         setCinemaInput("");
         setMovieTypeInput("");
         setReleaseDateInput("");
+        setStartTimeInput("");
+        setEndTimeInput("");
         setStatusInput("");
 
         try {
@@ -516,7 +529,10 @@ const ShowtimeManagement = () => {
             provinceId: undefined,
             cinemaId: undefined,
             movieTypeId: undefined,
-            releaseDate: undefined,
+            releaseFromDate: undefined,
+            releaseToDate: undefined,
+            startTime: undefined,
+            endTime: undefined,
             status: undefined,
             page: 1,
         }));
@@ -849,6 +865,22 @@ const ShowtimeManagement = () => {
                         type="date"
                         value={releaseDateInput}
                         onChange={(event) => setReleaseDateInput(event.target.value)}
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
+
+                    <input
+                        type="time"
+                        value={startTimeInput}
+                        onChange={(event) => setStartTimeInput(event.target.value)}
+                        placeholder="Giờ bắt đầu từ"
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
+
+                    <input
+                        type="time"
+                        value={endTimeInput}
+                        onChange={(event) => setEndTimeInput(event.target.value)}
+                        placeholder="Giờ bắt đầu đến"
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 

@@ -25,32 +25,32 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     Page<ShowTime> findAllByRoom_Cinema_CinemaIdAndStatus(Integer cinemaId, ShowTimeStatus status, Pageable pageable);
 
     @Query("""
-        select st
-        from ShowTime st
-        join st.room r
-        join r.cinema c
-        join c.province p
-        join st.movie m
-        join m.movieType mt
-        where (:provinceId is null or p.provinceId = :provinceId)
-          and (:cinemaId is null or c.cinemaId = :cinemaId)
-          and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
-          and (
-                :releaseDate is null
-                or (:releaseDateCondition = 'GT' and st.releaseDate > :releaseDate)
-                or (:releaseDateCondition = 'GTE' and st.releaseDate >= :releaseDate)
-                or (:releaseDateCondition = 'EQ' and st.releaseDate = :releaseDate)
-              )
-          and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
-          and (:movieId is null or m.movieId = :movieId)
-          and (:status is null or st.status = :status)
-    """)
+    select st
+    from ShowTime st
+    join st.room r
+    join r.cinema c
+    join c.province p
+    join st.movie m
+    join m.movieType mt
+    where (:provinceId is null or p.provinceId = :provinceId)
+      and (:cinemaId is null or c.cinemaId = :cinemaId)
+      and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
+      and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
+      and (:releaseToDate is null or st.releaseDate <= :releaseToDate)
+      and (:startTime is null or st.startTime >= :startTime)
+      and (:endTime is null or st.startTime <= :endTime)
+      and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
+      and (:movieId is null or m.movieId = :movieId)
+      and (:status is null or st.status = :status)
+""")
     Page<ShowTime> findAllByFilters(
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,
-            @Param("releaseDate") LocalDate releaseDate,
-            @Param("releaseDateCondition") String releaseDateCondition,
+            @Param("releaseFromDate") LocalDate releaseFromDate,
+            @Param("releaseToDate") LocalDate releaseToDate,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
             @Param("name") String name,
             @Param("movieId") Integer movieId,
             @Param("status") ShowTimeStatus status,
@@ -128,116 +128,113 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
 
     @Query(
             value = """
-        select st
-        from ShowTime st
-        join st.room r
-        join r.cinema c
-        join c.province p
-        join st.movie m
-        join m.movieType mt
-        where (:provinceId is null or p.provinceId = :provinceId)
-          and (:cinemaId is null or c.cinemaId = :cinemaId)
-          and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
-          and (
-                :releaseDate is null
-                or (:releaseDateCondition = 'GT' and st.releaseDate > :releaseDate)
-                or (:releaseDateCondition = 'GTE' and st.releaseDate >= :releaseDate)
-                or (:releaseDateCondition = 'EQ' and st.releaseDate = :releaseDate)
+    select st
+    from ShowTime st
+    join st.room r
+    join r.cinema c
+    join c.province p
+    join st.movie m
+    join m.movieType mt
+    where (:provinceId is null or p.provinceId = :provinceId)
+      and (:cinemaId is null or c.cinemaId = :cinemaId)
+      and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
+      and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
+      and (:releaseToDate is null or st.releaseDate <= :releaseToDate)
+      and (:startTime is null or st.startTime >= :startTime)
+      and (:endTime is null or st.startTime <= :endTime)
+      and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
+      and (:movieId is null or m.movieId = :movieId)
+      and (:status is null or st.status = :status)
+      and not exists (
+            select 1
+            from ShowTime st2
+            join st2.room r2
+            join r2.cinema c2
+            join c2.province p2
+            join st2.movie m2
+            join m2.movieType mt2
+            where m2.movieId = m.movieId
+              and (:provinceId is null or p2.provinceId = :provinceId)
+              and (:cinemaId is null or c2.cinemaId = :cinemaId)
+              and (:movieTypeId is null or mt2.movieTypeId = :movieTypeId)
+              and (:releaseFromDate is null or st2.releaseDate >= :releaseFromDate)
+              and (:releaseToDate is null or st2.releaseDate <= :releaseToDate)
+              and (:startTime is null or st2.startTime >= :startTime)
+              and (:endTime is null or st2.startTime <= :endTime)
+              and (:name is null or lower(m2.movieName) like lower(concat('%', :name, '%')))
+              and (:movieId is null or m2.movieId = :movieId)
+              and (:status is null or st2.status = :status)
+              and (
+                   st2.releaseDate < st.releaseDate
+                   or (st2.releaseDate = st.releaseDate and st2.startTime < st.startTime)
+                   or (st2.releaseDate = st.releaseDate and st2.startTime = st.startTime and st2.showTimeId < st.showTimeId)
               )
-          and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
-          and (:movieId is null or m.movieId = :movieId)
-          and (:status is null or st.status = :status)
-          and not exists (
-                select 1
-                from ShowTime st2
-                join st2.room r2
-                join r2.cinema c2
-                join c2.province p2
-                join st2.movie m2
-                join m2.movieType mt2
-                where m2.movieId = m.movieId
-                  and (:provinceId is null or p2.provinceId = :provinceId)
-                  and (:cinemaId is null or c2.cinemaId = :cinemaId)
-                  and (:movieTypeId is null or mt2.movieTypeId = :movieTypeId)
-                  and (
-                        :releaseDate is null
-                        or (:releaseDateCondition = 'GT' and st2.releaseDate > :releaseDate)
-                        or (:releaseDateCondition = 'GTE' and st2.releaseDate >= :releaseDate)
-                        or (:releaseDateCondition = 'EQ' and st2.releaseDate = :releaseDate)
-                      )
-                  and (:name is null or lower(m2.movieName) like lower(concat('%', :name, '%')))
-                  and (:movieId is null or m2.movieId = :movieId)
-                  and (:status is null or st2.status = :status)
-                  and (
-                       st2.releaseDate < st.releaseDate
-                       or (st2.releaseDate = st.releaseDate and st2.startTime < st.startTime)
-                       or (st2.releaseDate = st.releaseDate and st2.startTime = st.startTime and st2.showTimeId < st.showTimeId)
-                  )
-          )
-    """,
+      )
+""",
             countQuery = """
-        select count(distinct m.movieId)
-        from ShowTime st
-        join st.room r
-        join r.cinema c
-        join c.province p
-        join st.movie m
-        join m.movieType mt
-        where (:provinceId is null or p.provinceId = :provinceId)
-          and (:cinemaId is null or c.cinemaId = :cinemaId)
-          and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
-          and (
-                :releaseDate is null
-                or (:releaseDateCondition = 'GT' and st.releaseDate > :releaseDate)
-                or (:releaseDateCondition = 'GTE' and st.releaseDate >= :releaseDate)
-                or (:releaseDateCondition = 'EQ' and st.releaseDate = :releaseDate)
-              )
-          and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
-          and (:movieId is null or m.movieId = :movieId)
-          and (:status is null or st.status = :status)
-    """
+    select count(distinct m.movieId)
+    from ShowTime st
+    join st.room r
+    join r.cinema c
+    join c.province p
+    join st.movie m
+    join m.movieType mt
+    where (:provinceId is null or p.provinceId = :provinceId)
+      and (:cinemaId is null or c.cinemaId = :cinemaId)
+      and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
+      and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
+      and (:releaseToDate is null or st.releaseDate <= :releaseToDate)
+      and (:startTime is null or st.startTime >= :startTime)
+      and (:endTime is null or st.startTime <= :endTime)
+      and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
+      and (:movieId is null or m.movieId = :movieId)
+      and (:status is null or st.status = :status)
+"""
     )
     Page<ShowTime> findAllByFiltersWithUniqueMovie(
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,
-            @Param("releaseDate") LocalDate releaseDate,
-            @Param("releaseDateCondition") String releaseDateCondition,
+            @Param("releaseFromDate") LocalDate releaseFromDate,
+            @Param("releaseToDate") LocalDate releaseToDate,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
             @Param("name") String name,
             @Param("movieId") Integer movieId,
             @Param("status") ShowTimeStatus status,
             Pageable pageable
     );
 
+
     @Query("""
-        select st
-        from ShowTime st
-        join st.room r
-        join r.cinema c
-        join c.province p
-        join st.movie m
-        join m.movieType mt
-        where m.movieId in :movieIds
-          and (:provinceId is null or p.provinceId = :provinceId)
-          and (:cinemaId is null or c.cinemaId = :cinemaId)
-          and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
-          and (
-                :releaseDate is null
-                or (:releaseDateCondition = 'GT' and st.releaseDate > :releaseDate)
-                or (:releaseDateCondition = 'GTE' and st.releaseDate >= :releaseDate)
-                or (:releaseDateCondition = 'EQ' and st.releaseDate = :releaseDate)
-              )
-          and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
-          and (:movieId is null or m.movieId = :movieId)
-          and (:status is null or st.status = :status)
-        order by m.movieId, st.releaseDate, st.startTime, st.showTimeId
-    """)
+    select st
+    from ShowTime st
+    join st.room r
+    join r.cinema c
+    join c.province p
+    join st.movie m
+    join m.movieType mt
+    where m.movieId in :movieIds
+      and (:provinceId is null or p.provinceId = :provinceId)
+      and (:cinemaId is null or c.cinemaId = :cinemaId)
+      and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
+      and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
+      and (:releaseToDate is null or st.releaseDate <= :releaseToDate)
+      and (:startTime is null or st.startTime >= :startTime)
+      and (:endTime is null or st.startTime <= :endTime)
+      and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
+      and (:movieId is null or m.movieId = :movieId)
+      and (:status is null or st.status = :status)
+    order by m.movieId, st.releaseDate, st.startTime, st.showTimeId
+""")
     List<ShowTime> findAllByFiltersAndMovieIds(
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,
-            @Param("releaseDate") LocalDate releaseDate,
-            @Param("releaseDateCondition") String releaseDateCondition,
+            @Param("releaseFromDate") LocalDate releaseFromDate,
+            @Param("releaseToDate") LocalDate releaseToDate,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
             @Param("name") String name,
             @Param("movieId") Integer movieId,
             @Param("status") ShowTimeStatus status,

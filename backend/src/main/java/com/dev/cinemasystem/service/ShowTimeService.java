@@ -361,37 +361,42 @@ public class ShowTimeService {
                 cinemaId,
                 null,
                 null,
-                "EQ",
+                null,
+                null,
+                null,
                 null,
                 null,
                 status,
                 pageable
         );
 
-        PagingDto<FullShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
-                uniqueMoviePage,
-                null,
-                cinemaId,
-                null,
-                null,
-                "EQ",
-                null,
-                null,
-                status,
-                uniqueMoviePage.getNumber(),
-                uniqueMoviePage.getSize()
-        );
+            PagingDto<FullShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
+                    uniqueMoviePage,
+                    null,
+                    cinemaId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    status,
+                    uniqueMoviePage.getNumber() + 1,
+                    uniqueMoviePage.getSize()
+            );
 
         log.info("Retrieved {} grouped showtimes with filters cinemaId={}, status={}", response.getItems().size(), cinemaId, status);
         return response;
     }
-
     public PagingDto<ShowTimeResponse> getShowTimesByFilters(
             Integer provinceId,
             Integer cinemaId,
             Integer movieTypeId,
-            LocalDate releaseDate,
-            String releaseDateCondition,
+            LocalDate releaseFromDate,
+            LocalDate releaseToDate,
+            LocalTime startTime,
+            LocalTime endTime,
             String name,
             Integer movieId,
             ShowTimeStatus status,
@@ -410,15 +415,17 @@ public class ShowTimeService {
         }
 
         String normalizedName = (name == null || name.isBlank()) ? null : name.trim();
-        String normalizedReleaseDateCondition = normalizeReleaseDateCondition(releaseDateCondition);
+
         Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
 
         Page<ShowTime> showTimePage = showTimeRepository.findAllByFilters(
                 provinceId,
                 cinemaId,
                 movieTypeId,
-                releaseDate,
-                normalizedReleaseDateCondition,
+                releaseFromDate,
+                releaseToDate,
+                startTime,
+                endTime,
                 normalizedName,
                 movieId,
                 status,
@@ -438,13 +445,15 @@ public class ShowTimeService {
                 .build();
 
         log.info(
-                "Retrieved {} showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseDate={}, releaseDateCondition={}, name={}, movieId={}, status={}",
+                "Retrieved {} showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
                 response.getItems().size(),
                 provinceId,
                 cinemaId,
                 movieTypeId,
-                releaseDate,
-                normalizedReleaseDateCondition,
+                releaseFromDate,
+                releaseToDate,
+                startTime,
+                endTime,
                 normalizedName,
                 movieId,
                 status
@@ -452,13 +461,14 @@ public class ShowTimeService {
 
         return response;
     }
-
     public PagingDto<FullShowtimeMovieResponse> getGroupedShowTimesByFilters(
             Integer provinceId,
             Integer cinemaId,
             Integer movieTypeId,
-            LocalDate releaseDate,
-            String releaseDateCondition,
+            LocalDate releaseFromDate,
+            LocalDate releaseToDate,
+            LocalTime startTime,
+            LocalTime endTime,
             String name,
             Integer movieId,
             ShowTimeStatus status,
@@ -477,15 +487,17 @@ public class ShowTimeService {
         }
 
         String normalizedName = (name == null || name.isBlank()) ? null : name.trim();
-        String normalizedReleaseDateCondition = normalizeReleaseDateCondition(releaseDateCondition);
+
         Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
 
         Page<ShowTime> uniqueMoviePage = showTimeRepository.findAllByFiltersWithUniqueMovie(
                 provinceId,
                 cinemaId,
                 movieTypeId,
-                releaseDate,
-                normalizedReleaseDateCondition,
+                releaseFromDate,
+                releaseToDate,
+                startTime,
+                endTime,
                 normalizedName,
                 movieId,
                 status,
@@ -497,8 +509,10 @@ public class ShowTimeService {
                 provinceId,
                 cinemaId,
                 movieTypeId,
-                releaseDate,
-                normalizedReleaseDateCondition,
+                releaseFromDate,
+                releaseToDate,
+                startTime,
+                endTime,
                 normalizedName,
                 movieId,
                 status,
@@ -507,13 +521,15 @@ public class ShowTimeService {
         );
 
         log.info(
-                "Retrieved {} grouped showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseDate={}, releaseDateCondition={}, name={}, movieId={}, status={}",
+                "Retrieved {} grouped showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
                 response.getItems().size(),
                 provinceId,
                 cinemaId,
                 movieTypeId,
-                releaseDate,
-                normalizedReleaseDateCondition,
+                releaseFromDate,
+                releaseToDate,
+                startTime,
+                endTime,
                 normalizedName,
                 movieId,
                 status
@@ -522,64 +538,27 @@ public class ShowTimeService {
         return response;
     }
 
+
     private PagingDto<FullShowtimeMovieResponse> buildMovieGroupedPagingResponse(
-            Page<ShowTime> uniqueMoviePage,
-            Integer provinceId,
-            Integer cinemaId,
-            Integer movieTypeId,
-            LocalDate releaseDate,
-            String releaseDateCondition,
-            String name,
-            Integer movieId,
-            ShowTimeStatus status,
-            int currentPage,
-            int pageSize
-    ) {
-        List<ShowTime> representativeShowTimes = uniqueMoviePage.getContent();
-        if (representativeShowTimes.isEmpty()) {
-            return PagingDto.<FullShowtimeMovieResponse>builder()
-                    .items(List.of())
-                    .currentPage(currentPage)
-                    .pageSize(pageSize)
-                    .totalItems(uniqueMoviePage.getTotalElements())
-                    .totalPages(uniqueMoviePage.getTotalPages())
-                    .build();
-        }
+        Page<ShowTime> uniqueMoviePage,
+        Integer provinceId,
+        Integer cinemaId,
+        Integer movieTypeId,
+        LocalDate releaseFromDate,
+        LocalDate releaseToDate,
+        LocalTime startTime,
+        LocalTime endTime,
+        String name,
+        Integer movieId,
+        ShowTimeStatus status,
+        int currentPage,
+        int pageSize
+) {
+    List<ShowTime> representativeShowTimes = uniqueMoviePage.getContent();
 
-        Map<Integer, ShowTime> representativeByMovieId = new LinkedHashMap<>();
-        for (ShowTime showTime : representativeShowTimes) {
-            representativeByMovieId.putIfAbsent(showTime.getMovie().getMovieId(), showTime);
-        }
-
-        List<Integer> movieIds = new ArrayList<>(representativeByMovieId.keySet());
-        List<ShowTime> groupedShowTimes = showTimeRepository.findAllByFiltersAndMovieIds(
-                provinceId,
-                cinemaId,
-                movieTypeId,
-                releaseDate,
-                releaseDateCondition,
-                name,
-                movieId,
-                status,
-                movieIds
-        );
-
-        Map<Integer, List<ShowTime>> showTimesByMovieId = new LinkedHashMap<>();
-        for (ShowTime showTime : groupedShowTimes) {
-            Integer groupedMovieId = showTime.getMovie().getMovieId();
-            showTimesByMovieId.computeIfAbsent(groupedMovieId, ignored -> new ArrayList<>()).add(showTime);
-        }
-
-        List<FullShowtimeMovieResponse> items = movieIds.stream()
-                .map(currentMovieId -> {
-                    ShowTime representativeShowTime = representativeByMovieId.get(currentMovieId);
-                    List<ShowTime> movieShowTimes = showTimesByMovieId.getOrDefault(currentMovieId, List.of(representativeShowTime));
-                    return toShowtimeMovieResponse(representativeShowTime.getMovie(), movieShowTimes);
-                })
-                .toList();
-
+    if (representativeShowTimes.isEmpty()) {
         return PagingDto.<FullShowtimeMovieResponse>builder()
-                .items(items)
+                .items(List.of())
                 .currentPage(currentPage)
                 .pageSize(pageSize)
                 .totalItems(uniqueMoviePage.getTotalElements())
@@ -587,7 +566,61 @@ public class ShowTimeService {
                 .build();
     }
 
-    private FullShowtimeMovieResponse toShowtimeMovieResponse(Movie movie, List<ShowTime> showTimes) {
+    Map<Integer, ShowTime> representativeByMovieId = new LinkedHashMap<>();
+
+    for (ShowTime showTime : representativeShowTimes) {
+        representativeByMovieId.putIfAbsent(showTime.getMovie().getMovieId(), showTime);
+    }
+
+    List<Integer> movieIds = new ArrayList<>(representativeByMovieId.keySet());
+
+    List<ShowTime> groupedShowTimes = showTimeRepository.findAllByFiltersAndMovieIds(
+            provinceId,
+            cinemaId,
+            movieTypeId,
+            releaseFromDate,
+            releaseToDate,
+            startTime,
+            endTime,
+            name,
+            movieId,
+            status,
+            movieIds
+    );
+
+    Map<Integer, List<ShowTime>> showTimesByMovieId = new LinkedHashMap<>();
+
+    for (ShowTime showTime : groupedShowTimes) {
+        Integer groupedMovieId = showTime.getMovie().getMovieId();
+        showTimesByMovieId
+                .computeIfAbsent(groupedMovieId, ignored -> new ArrayList<>())
+                .add(showTime);
+    }
+
+    List<FullShowtimeMovieResponse> items = movieIds.stream()
+            .map(currentMovieId -> {
+                ShowTime representativeShowTime = representativeByMovieId.get(currentMovieId);
+                List<ShowTime> movieShowTimes = showTimesByMovieId.getOrDefault(
+                        currentMovieId,
+                        List.of(representativeShowTime)
+                );
+
+                return toShowtimeMovieResponse(
+                        representativeShowTime.getMovie(),
+                        movieShowTimes
+                );
+            })
+            .toList();
+
+    return PagingDto.<FullShowtimeMovieResponse>builder()
+            .items(items)
+            .currentPage(currentPage)
+            .pageSize(pageSize)
+            .totalItems(uniqueMoviePage.getTotalElements())
+            .totalPages(uniqueMoviePage.getTotalPages())
+            .build();
+}
+   private FullShowtimeMovieResponse toShowtimeMovieResponse(Movie movie, List<ShowTime> showTimes) {
         List<ShowTimeResponse> showTimeResponses = showTimes.stream()
                 .map(showTimeMapper::toShowTimeResponse)
                 .toList();

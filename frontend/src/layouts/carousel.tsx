@@ -35,6 +35,22 @@ const getDateValue = (value: string) => {
     return value.length >= 10 ? value.slice(0, 10) : value;
 };
 
+const getTodayAsLocalDate = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+const getCurrentLocalTime = () => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+};
+
 const formatDateLabel = (value: string) => {
     const normalized = getDateValue(value);
     const [year, month, day] = normalized.split("-");
@@ -194,7 +210,10 @@ const HeroSlider = () => {
         const fetchHeroSlides = async () => {
             setIsHeroLoading(true);
             try {
+                const today = getTodayAsLocalDate();
                 const response = await showTimeService.getGroupedShowTimesByFilters({
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 10,
@@ -305,8 +324,11 @@ const HeroSlider = () => {
             setIsMovieLoading(true);
 
             try {
+                const today = getTodayAsLocalDate();
                 const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: selectedProvinceId,
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 10,
@@ -360,9 +382,12 @@ const HeroSlider = () => {
             setIsCinemaLoading(true);
 
             try {
+                const today = getTodayAsLocalDate();
                 const response = await showTimeService.getShowTimesByFilters({
                     provinceId: selectedProvinceId,
                     movieId: selectedMovieId,
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -414,10 +439,13 @@ const HeroSlider = () => {
             setIsDateLoading(true);
 
             try {
+                const today = getTodayAsLocalDate();
                 const response = await showTimeService.getShowTimesByFilters({
                     provinceId: selectedProvinceId,
                     cinemaId: selectedCinemaId,
                     movieId: selectedMovieId,
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -472,12 +500,15 @@ const HeroSlider = () => {
             setIsShowtimeLoading(true);
 
             try {
+                const today = getTodayAsLocalDate();
+                const startTimeFilter = selectedDate === today ? getCurrentLocalTime() : undefined;
                 const response = await showTimeService.getShowTimesByFilters({
                     provinceId: selectedProvinceId,
                     cinemaId: selectedCinemaId,
                     movieId: selectedMovieId,
-                    releaseDate: selectedDate,
-                    releaseDateCondition: "EQ",
+                    releaseFromDate: selectedDate,
+                    releaseToDate: selectedDate,
+                    startTime: startTimeFilter,
                     status: "SELLING",
                     page: 1,
                     size: 200,

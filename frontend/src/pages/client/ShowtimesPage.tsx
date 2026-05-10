@@ -45,6 +45,14 @@ const getTodayAsLocalDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+const getCurrentLocalTime = () => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+};
+
 const isValidDayParam = (value?: string) => {
     if (!value) return false;
     return /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -216,8 +224,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
             try {
                 const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: effectiveProvinceId,
-                    releaseDate: today,
-                    releaseDateCondition: "GTE",
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -302,11 +310,13 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
             setIsShowtimeLoading(true);
 
             try {
+                const startTimeFilter = effectiveDay === today ? getCurrentLocalTime() : undefined;
                 const response = await showTimeService.getShowTimesByFilters({
                     movieId: targetMovieId,
                     provinceId: effectiveProvinceId,
-                    releaseDate: effectiveDay,
-                    releaseDateCondition: "EQ",
+                    releaseFromDate: effectiveDay,
+                    releaseToDate: effectiveDay,
+                    startTime: startTimeFilter,
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -352,8 +362,8 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
             try {
                 const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: effectiveProvinceId,
-                    releaseDate: today,
-                    releaseDateCondition: "GTE",
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 12,
@@ -623,7 +633,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                         <div className="movie__content mt-3 mb-1 lg:mt-0">
                             <span className="border-l-4 border-solid border-blue-800 mr-2"></span>
                             <h1 className="mb-4 text-base inline-block capitalize font-bold">
-                                Noi dung phim
+                                Nội dung phim
                             </h1>
                             <div className="text-black-10 text-sm font-normal content-text">
                                 <p className="mb-1">
@@ -637,7 +647,7 @@ const ShowtimesPage = ({ slug, province, day }: ShowtimesPageProps) => {
                             <div className="movie__showtime-header">
                                 <span className="border-l-4 border-solid border-blue-800 mr-2" />
                                 <h1 className="mb-4 text-base inline-block capitalize font-bold">
-                                    Lich chieu
+                                    Lịch chiếu
                                 </h1>
                             </div>
 

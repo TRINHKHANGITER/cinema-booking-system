@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { showTimeSeatService } from "../../services/showtimeSeat.service";
 import type { ShowTimeSeat } from "../../types/showtime-seat";
 import type { Seat } from "../../types/seat";
-import { formatTime, seatUnitPrice } from "../../utils/utils";
+import { formatTime } from "../../utils/utils";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -231,7 +231,7 @@ const ChoiceSeat = ({
                                                     <button
                                                         disabled={isBlocked}
                                                         onClick={() => toggle(ids)}
-                                                        title={`${seat.seatRow}${seat.seatColumn} - ${seatUnitPrice({ seatTypeId: seat.seatTypeId } as Seat).toLocaleString()}d`}
+                                                        title={`${seat.seatRow}${seat.seatColumn}`}
                                                         className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium transition-all duration-150 flex-shrink-0 ${isCouple ? "w-16" : "w-7"} ${seatClass}`}
                                                     >
                                                         {isCouple

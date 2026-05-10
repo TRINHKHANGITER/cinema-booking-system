@@ -19,14 +19,16 @@ import {
 } from "./sliceUtils";
 
 type ShowTimeSortDirection = "ASC" | "DESC";
-type ReleaseDateCondition = "EQ" | "GT" | "GTE";
 
 type ShowTimeFilterParams = {
     provinceId?: number;
     cinemaId?: number;
     movieTypeId?: number;
-    releaseDate?: string;
-    releaseDateCondition?: ReleaseDateCondition;
+    releaseFromDate?: string;
+    releaseToDate?: string;
+    startTime?: string;
+    endTime?: string;
+    movieName?: string;
     name?: string;
     movieId?: number;
     status?: ShowTimeStatus;

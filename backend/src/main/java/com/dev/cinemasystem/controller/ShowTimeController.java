@@ -16,7 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -27,15 +29,16 @@ import java.util.List;
 public class ShowTimeController {
     ShowTimeService showTimeService;
 
-    @GetMapping
+    @GetMapping("/search")
     public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimesByFilters(
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
-            @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseFromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseToDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
             @RequestParam(required = false) String movieName,
-            @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer movieId,
             @RequestParam(required = false) ShowTimeStatus status,
             @RequestParam(defaultValue = "1") Integer page,
@@ -49,9 +52,11 @@ public class ShowTimeController {
                         provinceId,
                         cinemaId,
                         movieTypeId,
-                        releaseDate,
-                        releaseDateCondition,
-                        movieName != null && !movieName.isBlank() ? movieName : name,
+                        releaseFromDate,
+                        releaseToDate,
+                        startTime,
+                        endTime,
+                        movieName ,
                         movieId,
                         status,
                         page,
@@ -62,15 +67,16 @@ public class ShowTimeController {
                 .build();
     }
 
-    @GetMapping("/grouped")
+    @GetMapping("/search/grouped")
     public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getGroupedShowTimesByFilters(
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseDate,
-            @RequestParam(defaultValue = "EQ") String releaseDateCondition,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseFromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate releaseToDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
             @RequestParam(required = false) String movieName,
-            @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer movieId,
             @RequestParam(required = false) ShowTimeStatus status,
             @RequestParam(defaultValue = "1") Integer page,
@@ -84,9 +90,11 @@ public class ShowTimeController {
                         provinceId,
                         cinemaId,
                         movieTypeId,
-                        releaseDate,
-                        releaseDateCondition,
-                        movieName != null && !movieName.isBlank() ? movieName : name,
+                        releaseFromDate,
+                        releaseToDate,
+                        startTime,
+                        endTime,
+                        movieName ,
                         movieId,
                         status,
                         page,
@@ -164,13 +172,6 @@ public class ShowTimeController {
 
 
 
-    @PostMapping("/search")
-    public ApiResponse<PagingDto<ShowTimeSearchDto>> searchShowTimes(@RequestBody @Valid ShowTimeSearchRequest request) {
-        return ApiResponse.<PagingDto<ShowTimeSearchDto>>builder()
-                .message("Lấy danh sách suất chiếu thành công")
-                .result(showTimeService.searchShowTimes(request))
-                .build();
-    }
 
 
 

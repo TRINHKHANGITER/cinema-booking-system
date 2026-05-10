@@ -57,6 +57,14 @@ const getTodayAsLocalDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+const getCurrentLocalTime = () => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+};
+
 const normalizeDateValue = (value?: string | null) => {
     if (!value) return "";
     return value.length >= 10 ? value.slice(0, 10) : value;
@@ -284,8 +292,8 @@ export default function QuickBookingPage() {
             try {
                 const response = await showTimeService.getGroupedShowTimesByFilters({
                     provinceId: selectedProvinceId,
-                    releaseDate: today,
-                    releaseDateCondition: "GTE",
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 200,
@@ -353,8 +361,8 @@ export default function QuickBookingPage() {
                 const response = await showTimeService.getShowTimesByFilters({
                     provinceId: selectedProvinceId,
                     movieId: selectedMovieId,
-                    releaseDate: today,
-                    releaseDateCondition: "GTE",
+                    releaseFromDate: today,
+                    startTime: getCurrentLocalTime(),
                     status: "SELLING",
                     page: 1,
                     size: 500,

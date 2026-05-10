@@ -11,14 +11,15 @@ import type {
 } from "../types/showtime";
 
 type ShowTimeSortDirection = "ASC" | "DESC";
-type ReleaseDateCondition = "EQ" | "GT" | "GTE";
 
 type ShowTimeFilterParams = {
     provinceId?: number;
     cinemaId?: number;
     movieTypeId?: number;
-    releaseDate?: string;
-    releaseDateCondition?: ReleaseDateCondition;
+    releaseFromDate?: string;
+    releaseToDate?: string;
+    startTime?: string;
+    endTime?: string;
     movieName?: string;
     name?: string;
     movieId?: number;
@@ -45,31 +46,61 @@ type ShowTimeLocationFilterParams = {
     size?: number;
     sortBy?: string;
     direction?: ShowTimeSortDirection;
+    startTime?: string;
+    endTime?: string;
 };
+
+const normalizeMovieName = (params?: ShowTimeFilterParams) =>
+    params?.movieName?.trim() || params?.name?.trim() || undefined;
+
+const normalizeTimeValue = (value?: string) => {
+    if (!value) return undefined;
+    const normalized = value.trim();
+    if (!normalized) return undefined;
+    return normalized.length === 5 ? `${normalized}:00` : normalized;
+};
+
+const addDaysToDate = (dateValue: string, days: number) => {
+    const date = new Date(`${dateValue}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return dateValue;
+    date.setDate(date.getDate() + days);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const getCurrentLocalTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+};
+
+const buildShowTimeFilterQuery = (params?: ShowTimeFilterParams) => ({
+    provinceId: params?.provinceId,
+    cinemaId: params?.cinemaId,
+    movieTypeId: params?.movieTypeId,
+    releaseFromDate: params?.releaseFromDate,
+    releaseToDate: params?.releaseToDate,
+    startTime: normalizeTimeValue(params?.startTime),
+    endTime: normalizeTimeValue(params?.endTime),
+    movieName: normalizeMovieName(params),
+    movieId: params?.movieId,
+    status: params?.status,
+    page: params?.page ?? 1,
+    size: params?.size ?? 10,
+    sortBy: params?.sortBy ?? "showtime",
+    direction: params?.direction ?? "ASC",
+});
 
 export const showTimeService = {
     getGroupedShowTimesByFilters: async (params?: ShowTimeFilterParams) => {
-        const normalizedMovieName =
-            params?.movieName?.trim() || params?.name?.trim() || undefined;
-
         const res = await api.get<ApiResponse<PagingDto<FullShowtimeMovieResponse>>>(
-            "/showtime/grouped",
+            "/showtime/search/grouped",
             {
-                params: {
-                    provinceId: params?.provinceId,
-                    cinemaId: params?.cinemaId,
-                    movieTypeId: params?.movieTypeId,
-                    releaseDate: params?.releaseDate,
-                    releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-                    movieName: normalizedMovieName,
-                    name: normalizedMovieName,
-                    movieId: params?.movieId,
-                    status: params?.status,
-                    page: params?.page ?? 1,
-                    size: params?.size ?? 10,
-                    sortBy: params?.sortBy ?? "showtime",
-                    direction: params?.direction ?? "ASC",
-                },
+                params: buildShowTimeFilterQuery(params),
             }
         );
 
@@ -77,25 +108,8 @@ export const showTimeService = {
     },
 
     getShowTimesByFilters: async (params?: ShowTimeFilterParams) => {
-        const normalizedMovieName =
-            params?.movieName?.trim() || params?.name?.trim() || undefined;
-
-        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime", {
-            params: {
-                provinceId: params?.provinceId,
-                cinemaId: params?.cinemaId,
-                movieTypeId: params?.movieTypeId,
-                releaseDate: params?.releaseDate,
-                releaseDateCondition: params?.releaseDateCondition ?? "EQ",
-                movieName: normalizedMovieName,
-                name: normalizedMovieName,
-                movieId: params?.movieId,
-                status: params?.status,
-                page: params?.page ?? 1,
-                size: params?.size ?? 10,
-                sortBy: params?.sortBy ?? "showtime",
-                direction: params?.direction ?? "ASC",
-            },
+        const res = await api.get<ApiResponse<PagingDto<ShowTimeResponse>>>("/showtime/search", {
+            params: buildShowTimeFilterQuery(params),
         });
 
         return res.data;
@@ -174,15 +188,14 @@ export const showTimeService = {
 
     getShowTimesByReleaseDate: async (
         releaseDate: string,
-        releaseDateCondition: ReleaseDateCondition = "EQ",
         page = 1,
         size = 10,
         sortBy = "showtimeId",
         direction: ShowTimeSortDirection = "ASC"
     ) => {
         return showTimeService.getShowTimesByFilters({
-            releaseDate,
-            releaseDateCondition,
+            releaseFromDate: releaseDate,
+            releaseToDate: releaseDate,
             page,
             size,
             sortBy,
@@ -193,8 +206,7 @@ export const showTimeService = {
 
     getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
         return showTimeService.getShowTimesByFilters({
-            releaseDate,
-            releaseDateCondition: "GT",
+            releaseFromDate: addDaysToDate(releaseDate, 1),
             provinceId: filters?.provinceId,
             cinemaId: filters?.cinemaId,
             status: filters?.status,
@@ -202,6 +214,8 @@ export const showTimeService = {
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",
             direction: filters?.direction ?? "ASC",
+            startTime: filters?.startTime,
+            endTime: filters?.endTime,
         });
     },
 
@@ -210,8 +224,7 @@ export const showTimeService = {
         filters?: ShowTimeLocationFilterParams
     ) => {
         return showTimeService.getGroupedShowTimesByFilters({
-            releaseDate,
-            releaseDateCondition: "GT",
+            releaseFromDate: addDaysToDate(releaseDate, 1),
             provinceId: filters?.provinceId,
             cinemaId: filters?.cinemaId,
             status: filters?.status,
@@ -219,19 +232,23 @@ export const showTimeService = {
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",
             direction: filters?.direction ?? "ASC",
+            startTime: filters?.startTime,
+            endTime: filters?.endTime,
         });
     },
 
     getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
         return showTimeService.getShowTimesByFilters({
-            releaseDate,
-            releaseDateCondition: "EQ",
+            releaseFromDate: releaseDate,
+            releaseToDate: releaseDate,
             provinceId: filters?.provinceId,
             status: filters?.status ?? "SELLING",
             page: filters?.page ?? 1,
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",
             direction: filters?.direction ?? "ASC",
+            startTime: filters?.startTime ?? getCurrentLocalTime(),
+            endTime: filters?.endTime,
         });
     },
 
@@ -240,14 +257,16 @@ export const showTimeService = {
         filters?: ShowTimeLocationFilterParams
     ) => {
         return showTimeService.getGroupedShowTimesByFilters({
-            releaseDate,
-            releaseDateCondition: "EQ",
+            releaseFromDate: releaseDate,
+            releaseToDate: releaseDate,
             provinceId: filters?.provinceId,
             status: filters?.status ?? "SELLING",
             page: filters?.page ?? 1,
             size: filters?.size ?? 10,
             sortBy: filters?.sortBy ?? "releaseDate",
             direction: filters?.direction ?? "ASC",
+            startTime: filters?.startTime ?? getCurrentLocalTime(),
+            endTime: filters?.endTime,
         });
     },
 

@@ -291,7 +291,10 @@ const OrderManagement = () => {
         return pages;
     }, [filters.page, totalPages]);
 
-    const selectedSeatGroups = useMemo(() => groupSelectedSeats(selectedSeats), [selectedSeats]);
+    const selectedSeatGroups = useMemo(
+        () => groupSelectedSeats(selectedShowtime, selectedSeats),
+        [selectedShowtime, selectedSeats]
+    );
 
     const availableStatusTransitions = useMemo<OrderStatus[]>(() => {
         if (!statusTargetOrder) return [];
@@ -433,7 +436,9 @@ const OrderManagement = () => {
                 movieName: showtimeKeyword.trim() || undefined,
                 provinceId: showtimeProvinceId === "" ? undefined : Number(showtimeProvinceId),
                 cinemaId: showtimeCinemaId === "" ? undefined : Number(showtimeCinemaId),
-                releaseDate: showtimeDate || undefined,
+                releaseFromDate: showtimeDate || undefined,
+                releaseToDate: showtimeDate || undefined,
+                startTime: showtimeTime || undefined,
                 status: "SELLING",
                 page: showtimePage,
                 size: showtimeSize,
@@ -2288,7 +2293,12 @@ const OrderManagement = () => {
                                         <span>Tổng cộng</span>
                                         <span>
                                             {formatCurrency(
-                                                calculateTotalPrice(selectedSeats, selectedCombos)
+                                                calculateTotalPrice(
+                                                    selectedShowtime,
+                                                    selectedSeats,
+                                                    [],
+                                                    selectedCombos
+                                                )
                                             )}
                                         </span>
                                     </div>
