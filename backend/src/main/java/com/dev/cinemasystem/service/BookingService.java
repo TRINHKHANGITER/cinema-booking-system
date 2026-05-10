@@ -4,20 +4,12 @@ import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.dto.bookingDTO.OrderComboItemRequest;
 import com.dev.cinemasystem.dto.bookingDTO.UpdateOrderCombosRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
+import com.dev.cinemasystem.dto.seatDTO.CoupleSeat;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.HoldSeatRequest;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.HoldSeatResponse;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.ReleaseSeatRequest;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.ShowTimeSeatResponse;
-import com.dev.cinemasystem.entity.Combo;
-import com.dev.cinemasystem.entity.Order;
-import com.dev.cinemasystem.entity.OrderCombo;
-import com.dev.cinemasystem.entity.Payment;
-import com.dev.cinemasystem.entity.PriceTicket;
-import com.dev.cinemasystem.entity.Seat;
-import com.dev.cinemasystem.entity.ShowTime;
-import com.dev.cinemasystem.entity.ShowTimeSeat;
-import com.dev.cinemasystem.entity.Ticket;
-import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.entity.*;
 import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.ComboStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
@@ -115,6 +107,7 @@ public class BookingService {
                         .filter(Objects::nonNull)
                         .distinct()
                         .toList();
+
         if (normalizedSeatIds.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
         }
@@ -510,12 +503,67 @@ public class BookingService {
         return order;
     }
 
+    private Ticket findPairSeat(Ticket ticket, List<Ticket> tickets) {
+        String row = ticket.getSeat().getSeatRow();
+        int column = ticket.getSeat().getSeatColumn();
+
+        int pairColumn = column % 2 == 1
+                ? column + 1
+                : column - 1;
+
+        return tickets.stream()
+                .filter(seat -> seat.getSeat().getSeatType().getSeatTypeId() == 3)
+                .filter(seat -> seat.getSeat().getSeatRow().equals(row))
+                .filter(seat -> seat.getSeat().getSeatColumn().equals(pairColumn))
+                .findFirst()
+                .orElseThrow(null);
+    }
+
+
     private void recalculateOrderTotals(Order order) {
         List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(order.getOrderId());
-        BigDecimal ticketTotal = tickets.stream()
-                .filter(ticket -> ticket.getStatus() == null || ticket.getStatus() == TicketStatus.ACTIVE)
-                .map(ticket -> ticket.getUnitPrice() == null ? BigDecimal.ZERO : ticket.getUnitPrice())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+//        List<Seat> seats = tickets.stream().map(
+//                Ticket::getSeat
+//        ).toList();
+//        System.out.println("seats: " + seats);
+
+        tickets = tickets.stream().filter(ticket -> ticket.getStatus() == null
+                || ticket.getStatus() == TicketStatus.ACTIVE).toList();
+
+       BigDecimal ticketTotal = BigDecimal.ZERO;
+
+        // Ghế đôi
+       Set<Integer> countedCoupleSeats = new HashSet<>();
+       for (Ticket ticket : tickets) {
+           Seat seat = ticket.getSeat();
+           int seatTypeId = seat.getSeatType().getSeatTypeId();
+
+           BigDecimal price = ticket.getUnitPrice();
+
+           if (seatTypeId == 3) {
+               int seatId = seat.getSeatId();
+
+               if (countedCoupleSeats.contains(seatId)) {
+                   continue;
+               }
+
+               Ticket pairSeat = findPairSeat(ticket, tickets);
+               if (pairSeat == null) throw new RuntimeException("Ghế đôi phải đủ cặp!");
+
+               countedCoupleSeats.add(seatId);
+               countedCoupleSeats.add(pairSeat.getSeat().getSeatId());
+
+               System.out.println("vé đôi");
+               ticketTotal = ticketTotal.add(price); // giá này là giá cho cả cặp
+               continue;
+           }
+
+           // Ghế thường / VIP
+           System.out.println("vé đơn");
+           ticketTotal = ticketTotal.add(price);
+       }
+        System.out.println("ticketTotal: " + ticketTotal);
 
         List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(order.getOrderId());
         BigDecimal comboTotal = orderCombos.stream()
@@ -774,4 +822,5 @@ public class BookingService {
                 .orderId(showTimeSeat.getOrder() != null ? showTimeSeat.getOrder().getOrderId() : null)
                 .build();
     }
+
 }
