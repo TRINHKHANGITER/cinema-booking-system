@@ -17,6 +17,7 @@ const Header = () => {
     const navigate = useNavigate();
     const { user, accessToken, signOut } = useAuthStore();
     const isSignedIn = Boolean(accessToken);
+    const isAdmin = isSignedIn && user?.role === "ADMIN";
 
     const [open, setOpen] = useState<boolean>(false);
     const [openSignIn, setOpenSignIn] = useState<boolean>(false);
@@ -443,7 +444,31 @@ scale-100 blur-0 grayscale-0)'
                                         }}
                                     >
                                         <ul className="flex flex-col">
-                                            <li>
+                                          
+                                            {isAdmin && (
+                                                <li>
+                                                    <a
+                                                        onClick={() => navigate("/admin")}
+                                                        className="text-sm text-left text-[#034ea2] py-2 px-[18px] border-l-4 border-[#034ea2] bg-[#034ea20f] hover:text-white hover:bg-[#034ea2] transition-all duration-300 flex items-center capitalize cursor-pointer"
+                                                    >
+                                                        <svg
+                                                            aria-hidden="true"
+                                                            focusable="false"
+                                                            className="w-4 h-4"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 512 512"
+                                                        >
+                                                            <path
+                                                                fill="currentColor"
+                                                                d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"
+                                                            />
+                                                        </svg>
+                                                        <span className="grow ml-4">{"[-> ADMIN]"}</span>
+                                                    </a>
+                                                </li>
+                                            )}
+
+                                              <li>
                                                 <a
                                                     onClick={() => navigate(routePath.tai_khoan)}
                                                     className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"

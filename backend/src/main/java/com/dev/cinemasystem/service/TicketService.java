@@ -172,20 +172,7 @@ public class TicketService {
         return ticketMapper.toTicketResponse(ticket);
     }
 
-    private void releaseSeatForCancelledTicket(ShowTimeSeat showTimeSeat, Integer orderId) {
-        Integer currentOrderId = showTimeSeat.getOrder() != null ? showTimeSeat.getOrder().getOrderId() : null;
-        if (!Objects.equals(currentOrderId, orderId)) {
-            return;
-        }
-        if (showTimeSeat.getStatus() != ShowTimeSeatStatus.SOLD && showTimeSeat.getStatus() != ShowTimeSeatStatus.HELD) {
-            return;
-        }
 
-        showTimeSeat.setStatus(ShowTimeSeatStatus.AVAILABLE);
-        showTimeSeat.setOrder(null);
-        showTimeSeat.setHoldExpiresAt(null);
-        showTimeSeatRepository.save(showTimeSeat);
-    }
 
     private void reserveSeatForActiveTicket(ShowTimeSeat showTimeSeat, Order order) {
         Integer orderId = order.getOrderId();
