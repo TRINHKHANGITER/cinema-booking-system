@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+﻿import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import Close from "../../components/icon/close";
 import { cinemaService } from "../../services/cinema.service";
@@ -6,12 +6,14 @@ import { movieService } from "../../services/movie.service";
 import { movieTypeService } from "../../services/movieType.service";
 import { provinceService } from "../../services/province.service";
 import { roomService } from "../../services/room.service";
+import { showTimeSeatService } from "../../services/showtimeSeat.service";
 import { showTimeService } from "../../services/showtimeService";
 import type { CinemaResponse } from "../../types/cinema";
 import type { Movie, MovieStatus } from "../../types/movie";
 import type { MovieTypeResponse } from "../../types/movie-type";
 import type { ProvinceResponse } from "../../types/province";
 import type { RoomResponse, RoomStatus } from "../../types/room";
+import type { ShowTimeSeat } from "../../types/showtime-seat";
 import type {
     ShowTimeCreationRequest,
     ShowTimeResponse,
@@ -37,6 +39,8 @@ const statusClassByShowTimeStatus: Record<ShowTimeStatus, string> = {
     COMPLETED: "bg-slate-200 text-slate-700",
     CANCELLED: "bg-rose-100 text-rose-700",
 };
+
+type SeatVariant = "STANDARD" | "VIP" | "COUPLE";
 
 type ModalShellProps = {
     open: boolean;
@@ -147,6 +151,35 @@ const buildDefaultFormValues = (status: ShowTimeStatus): ShowtimeFormValues => (
     status,
 });
 
+const normalizeKeyword = (value?: string | null) => {
+    return (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "d")
+        .toLowerCase()
+        .trim();
+};
+
+const resolveSeatVariant = (seatTypeId?: number, seatTypeName?: string | null): SeatVariant => {
+    if (seatTypeId === 3) return "COUPLE";
+    if (seatTypeId === 2) return "VIP";
+
+    const keyword = normalizeKeyword(seatTypeName);
+    if (keyword.includes("vip")) return "VIP";
+    if (keyword.includes("doi") || keyword.includes("couple") || keyword.includes("double")) {
+        return "COUPLE";
+    }
+    return "STANDARD";
+};
+
+const resolveMergedSeatStatus = (seats: ShowTimeSeat[]) => {
+    if (seats.some((seat) => seat.status === "SOLD")) return "SOLD";
+    if (seats.some((seat) => seat.status === "HELD")) return "HELD";
+    if (seats.some((seat) => seat.status === "BLOCKED")) return "BLOCKED";
+    return "AVAILABLE";
+};
+
 const ModalShell = ({ open, title, onClose, panelClassName, children }: ModalShellProps) => {
     return (
         <div
@@ -218,6 +251,10 @@ const ShowtimeManagement = () => {
 
     const [deleteTarget, setDeleteTarget] = useState<ShowTimeResponse | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSeatMapOpen, setIsSeatMapOpen] = useState(false);
+    const [isSeatMapLoading, setIsSeatMapLoading] = useState(false);
+    const [seatMapTarget, setSeatMapTarget] = useState<ShowTimeResponse | null>(null);
+    const [seatMapItems, setSeatMapItems] = useState<ShowTimeSeat[]>([]);
 
     const [isMovieSearchOpen, setIsMovieSearchOpen] = useState(false);
     const [movieSearchName, setMovieSearchName] = useState("");
@@ -275,6 +312,38 @@ const ShowtimeManagement = () => {
         }
         return pages;
     }, [movieSearchPage, movieSearchTotalPages]);
+
+    const seatMapRows = useMemo(() => {
+        const grouped = new Map<string, ShowTimeSeat[]>();
+        for (const seat of seatMapItems) {
+            if (!grouped.has(seat.seatRow)) {
+                grouped.set(seat.seatRow, []);
+            }
+            grouped.get(seat.seatRow)?.push(seat);
+        }
+
+        return Array.from(grouped.entries())
+            .sort(([first], [second]) => first.localeCompare(second))
+            .map(([row, rowSeats]) => ({
+                row,
+                seats: [...rowSeats].sort((first, second) => first.seatColumn - second.seatColumn),
+            }));
+    }, [seatMapItems]);
+
+    const seatMapSummary = useMemo(
+        () =>
+            seatMapItems.reduce(
+                (accumulator, seat) => {
+                    if (seat.status === "SOLD") accumulator.sold += 1;
+                    if (seat.status === "HELD") accumulator.held += 1;
+                    if (seat.status === "BLOCKED") accumulator.blocked += 1;
+                    if (seat.status === "AVAILABLE") accumulator.available += 1;
+                    return accumulator;
+                },
+                { available: 0, held: 0, sold: 0, blocked: 0 }
+            ),
+        [seatMapItems]
+    );
 
     const fetchFilterCinemas = useCallback(async (provinceId?: number) => {
         const response = await cinemaService.getCinemaItemList({
@@ -661,6 +730,125 @@ const ShowtimeManagement = () => {
         setIsMovieSearchOpen(false);
     };
 
+    const openSeatMapModal = (showTime: ShowTimeResponse) => {
+        setSeatMapTarget(showTime);
+        setSeatMapItems([]);
+        setIsSeatMapOpen(true);
+    };
+
+    const closeSeatMapModal = () => {
+        setIsSeatMapOpen(false);
+        setIsSeatMapLoading(false);
+        setSeatMapTarget(null);
+        setSeatMapItems([]);
+    };
+
+    useEffect(() => {
+        if (!isSeatMapOpen || !seatMapTarget) return;
+
+        let isCancelled = false;
+
+        const fetchSeatMap = async () => {
+            try {
+                setIsSeatMapLoading(true);
+                const response = await showTimeSeatService.getSeatMap(seatMapTarget.showTimeId);
+                if (isCancelled) return;
+
+                if (response.code !== "SUCCESS") {
+                    toast.error(response.message || "Không thể tải sơ đồ ghế");
+                    setSeatMapItems([]);
+                    return;
+                }
+
+                setSeatMapItems(response.result ?? []);
+            } catch (error) {
+                if (isCancelled) return;
+                toast.error(resolveApiErrorMessage(error, "Không thể tải sơ đồ ghế"));
+                setSeatMapItems([]);
+            } finally {
+                if (!isCancelled) {
+                    setIsSeatMapLoading(false);
+                }
+            }
+        };
+
+        void fetchSeatMap();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [isSeatMapOpen, seatMapTarget]);
+
+    const renderSeatMapButtons = (rowSeats: ShowTimeSeat[]) => {
+        const elements: ReactNode[] = [];
+
+        for (let index = 0; index < rowSeats.length; index += 1) {
+            const seat = rowSeats[index];
+            const variant = resolveSeatVariant(seat.seatTypeId, seat.seatTypeName);
+
+            let buttonLabel = `${seat.seatRow}${seat.seatColumn}`;
+            let widthClass = "w-7";
+            let seatsToRender: ShowTimeSeat[] = [seat];
+            let skipNext = false;
+
+            if (variant === "COUPLE") {
+                const nextSeat = rowSeats[index + 1];
+                const isPair =
+                    nextSeat != null &&
+                    resolveSeatVariant(nextSeat.seatTypeId, nextSeat.seatTypeName) === "COUPLE" &&
+                    nextSeat.seatColumn === seat.seatColumn + 1;
+
+                if (isPair) {
+                    buttonLabel = `${seat.seatRow}${seat.seatColumn}-${nextSeat.seatRow}${nextSeat.seatColumn}`;
+                    widthClass = "w-16";
+                    seatsToRender = [seat, nextSeat];
+                    skipNext = true;
+                } else {
+                    widthClass = "w-10";
+                }
+            }
+
+            const mergedStatus = resolveMergedSeatStatus(seatsToRender);
+            const visualClass =
+                mergedStatus === "SOLD"
+                    ? "bg-rose-100 border-rose-200 text-rose-500"
+                    : mergedStatus === "HELD"
+                      ? "bg-amber-100 border-amber-300 text-amber-700"
+                      : mergedStatus === "BLOCKED"
+                        ? "bg-slate-200 border-slate-300 text-slate-500"
+                        : variant === "VIP"
+                          ? "bg-[#FAEEDA] border-[#EF9F27] text-[#854F0B]"
+                          : variant === "COUPLE"
+                            ? "bg-[#FBEAF0] border-[#ED93B1] text-[#72243E]"
+                            : "bg-white border-gray-300 text-gray-600";
+
+            const statusLabel =
+                mergedStatus === "SOLD"
+                    ? "Đã bán"
+                    : mergedStatus === "HELD"
+                      ? "Đang giữ chỗ"
+                      : mergedStatus === "BLOCKED"
+                        ? "Đang khóa"
+                        : "Trống";
+
+            elements.push(
+                <button
+                    key={seat.showTimeSeatId}
+                    type="button"
+                    disabled
+                    className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium ${widthClass} ${visualClass}`}
+                    title={`${buttonLabel} - ${statusLabel}`}
+                >
+                    {buttonLabel}
+                </button>
+            );
+
+            if (skipNext) index += 1;
+        }
+
+        return elements;
+    };
+
     const applyMovieSearchFilters = () => {
         setMovieSearchPage(1);
         void fetchMovieSearch(1);
@@ -989,13 +1177,13 @@ const ShowtimeManagement = () => {
                         <tbody className="divide-y divide-[var(--glx-border)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-500">
                                         Đang tải suất chiếu...
                                     </td>
                                 </tr>
                             ) : showtimeRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
+                                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-500">
                                         Không tìm thấy suất chiếu
                                     </td>
                                 </tr>
@@ -1050,6 +1238,13 @@ const ShowtimeManagement = () => {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="inline-flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openSeatMapModal(row)}
+                                                        className="rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-blue)] transition-all duration-300 hover:bg-[var(--glx-blue)] hover:text-white"
+                                                    >
+                                                        Sơ đồ ghế
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => openEditModal(row)}
@@ -1116,6 +1311,133 @@ const ShowtimeManagement = () => {
                     </button>
                 </div>
             </section>
+
+            <ModalShell
+                open={isSeatMapOpen}
+                onClose={closeSeatMapModal}
+                title="Sơ đồ ghế suất chiếu"
+                panelClassName="max-w-[1120px]"
+            >
+                <div className="space-y-4">
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                            <p>
+                                <span className="font-semibold text-slate-800">Mã suất:</span>{" "}
+                                {seatMapTarget ? `#${seatMapTarget.showTimeId}` : "-"}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-slate-800">Phim:</span>{" "}
+                                {seatMapTarget?.movie?.movieName ?? "-"}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-slate-800">Lịch chiếu:</span>{" "}
+                                {seatMapTarget
+                                    ? `${toDisplayDate(seatMapTarget.releaseDate)} | ${formatShowTimePeriod(seatMapTarget)}`
+                                    : "-"}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-slate-800">
+                                    {"M\u00e3 ph\u00f2ng:"}
+                                </span>{" "}
+                                {seatMapTarget?.roomId ? `#${seatMapTarget.roomId}` : "-"}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-slate-800">
+                                    {"T\u00ean ph\u00f2ng:"}
+                                </span>{" "}
+                                {seatMapTarget ? resolveRoomNameFromShowTime(seatMapTarget) : "-"}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-slate-800">
+                                    {"T\u00ean r\u1ea1p:"}
+                                </span>{" "}
+                                {seatMapTarget ? resolveCinemaNameFromShowTime(seatMapTarget) : "-"}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[var(--glx-border)] bg-[#f6f6f7] p-4 md:p-6">
+                        <div className="mb-6 flex flex-col items-center">
+                            <div className="h-1 w-3/5 rounded-full bg-[#034ea2] opacity-50" />
+                            <p className="mt-2 text-xs tracking-[0.2em] text-slate-400">Màn hình</p>
+                        </div>
+
+                        {isSeatMapLoading ? (
+                            <p className="py-8 text-center text-sm text-slate-500">
+                                Đang tải sơ đồ ghế...
+                            </p>
+                        ) : seatMapRows.length === 0 ? (
+                            <p className="py-8 text-center text-sm text-slate-500">
+                                Chưa có dữ liệu ghế cho suất chiếu này
+                            </p>
+                        ) : (
+                            <div className="flex flex-col items-center gap-1.5 overflow-auto">
+                                {seatMapRows.map((rowGroup) => (
+                                    <div key={rowGroup.row} className="flex items-center gap-2">
+                                        <span className="w-4 text-center text-[11px] text-slate-400">
+                                            {rowGroup.row}
+                                        </span>
+
+                                        <div className="flex items-center gap-1">
+                                            {renderSeatMapButtons(rowGroup.seats)}
+                                        </div>
+
+                                        <span className="w-4 text-center text-[11px] text-slate-400">
+                                            {rowGroup.row}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="mt-7 space-y-3 border-t border-slate-200 pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-block h-5 w-5 rounded border border-gray-300 bg-white" />
+                                        <span className="text-xs text-slate-500">
+                                            Trống ({seatMapSummary.available})
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-block h-5 w-5 rounded border border-amber-300 bg-amber-100" />
+                                        <span className="text-xs text-slate-500">
+                                            Đang giữ chỗ ({seatMapSummary.held})
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-block h-5 w-5 rounded border border-rose-200 bg-rose-100" />
+                                        <span className="text-xs text-slate-500">
+                                            Đã đặt ({seatMapSummary.sold})
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="inline-block h-5 w-5 rounded border border-slate-300 bg-slate-200" />
+                                        <span className="text-xs text-slate-500">
+                                            Khóa ({seatMapSummary.blocked})
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="inline-block h-5 w-5 rounded border border-gray-300 bg-white" />
+                                    <span className="text-xs text-slate-500">Ghế đơn</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="inline-block h-5 w-5 rounded border border-[#EF9F27] bg-[#FAEEDA]" />
+                                    <span className="text-xs text-slate-500">VIP</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="inline-block h-5 w-10 rounded border border-[#ED93B1] bg-[#FBEAF0]" />
+                                    <span className="text-xs text-slate-500">Ghế đôi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ModalShell>
 
             <ModalShell
                 open={isFormOpen}
@@ -1510,3 +1832,4 @@ const ShowtimeManagement = () => {
 };
 
 export default ShowtimeManagement;
+
