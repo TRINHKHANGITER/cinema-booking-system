@@ -49,6 +49,7 @@ public class SecurityConfig {
             "/checkout/vnpay/**",
             "/gemini/**",
             "/image/**",
+            "/data/image/**",
 
             // Swagger
             "/swagger-ui/**",

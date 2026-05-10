@@ -14,6 +14,7 @@ import com.dev.cinemasystem.repository.MovieRepository;
 import com.dev.cinemasystem.repository.MovieTypeRepository;
 import com.dev.cinemasystem.repository.ShowTimeRepository;
 import com.dev.cinemasystem.utils.FileStoreUtil;
+import com.dev.cinemasystem.utils.StoragePathResolver;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -362,7 +362,7 @@ public class MovieService {
 
     private String saveMovieImage(Integer movieId, MultipartFile image, String imageDirConfig) {
         try {
-            Path imageDir = Paths.get(imageDirConfig).toAbsolutePath().normalize();
+            Path imageDir = StoragePathResolver.resolveToAbsolutePath(imageDirConfig);
             return FileStoreUtil.saveWithBaseNameOverwrite(image, imageDir, String.valueOf(movieId));
         } catch (RuntimeException exception) {
             log.error("Failed to save movie image for movie id {}", movieId, exception);
