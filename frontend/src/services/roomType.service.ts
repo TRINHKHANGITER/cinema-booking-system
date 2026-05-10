@@ -26,6 +26,7 @@ export const roomTypeService = {
 
     filterRoomTypes: async (params: RoomTypeFilterParams) => {
         const query = new URLSearchParams();
+        if (params.roomTypeId) query.set("roomTypeId", String(params.roomTypeId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
@@ -48,7 +49,10 @@ export const roomTypeService = {
     },
 
     updateRoomType: async (roomTypeId: number, request: RoomTypeUpdateRequest) => {
-        const res = await api.patch<ApiResponse<RoomTypeResponse>>(`/room-type/${roomTypeId}`, request);
+        const res = await api.patch<ApiResponse<RoomTypeResponse>>(
+            `/room-type/${roomTypeId}`,
+            request
+        );
         return res.data;
     },
 

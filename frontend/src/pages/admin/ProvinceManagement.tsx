@@ -73,9 +73,11 @@ const ProvinceManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [nameInput, setNameInput] = useState("");
+    const [provinceIdInput, setProvinceIdInput] = useState<number | "">("");
     const [statusInput, setStatusInput] = useState<ProvinceStatus | "">("");
 
     const [filters, setFilters] = useState({
+        provinceId: undefined as number | undefined,
         name: "",
         status: "" as ProvinceStatus | "",
         page: 1,
@@ -120,6 +122,7 @@ const ProvinceManagement = () => {
         try {
             setIsLoading(true);
             const response = await provinceService.filterProvinces({
+                provinceId: filters.provinceId,
                 name: filters.name,
                 status: filters.status,
                 page: filters.page,
@@ -177,6 +180,7 @@ const ProvinceManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            provinceId: provinceIdInput === "" ? undefined : provinceIdInput,
             name: nameInput.trim(),
             status: statusInput,
             page: 1,
@@ -230,7 +234,10 @@ const ProvinceManagement = () => {
         };
 
         try {
-            const response = await provinceService.updateProvince(editingProvince.provinceId, payload);
+            const response = await provinceService.updateProvince(
+                editingProvince.provinceId,
+                payload
+            );
             if (response.code !== "SUCCESS") {
                 toast.error(response.message || "Cập nhật tỉnh/thành thất bại");
                 return;
@@ -288,7 +295,23 @@ const ProvinceManagement = () => {
                     </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1.6fr_1fr_auto]">
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.6fr_1fr_auto]">
+                    <input
+                        value={provinceIdInput}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setProvinceIdInput(value ? Number(value) : "");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Tìm theo ID tỉnh/thành..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
                     <input
                         value={nameInput}
                         onChange={(event) => setNameInput(event.target.value)}
@@ -304,7 +327,9 @@ const ProvinceManagement = () => {
 
                     <select
                         value={statusInput}
-                        onChange={(event) => setStatusInput(event.target.value as ProvinceStatus | "")}
+                        onChange={(event) =>
+                            setStatusInput(event.target.value as ProvinceStatus | "")
+                        }
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
                         <option value="">Tất cả trạng thái</option>
@@ -360,7 +385,9 @@ const ProvinceManagement = () => {
                                 <th className="px-6 py-3 font-bold text-slate-600">Mã</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Tên</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -384,8 +411,13 @@ const ProvinceManagement = () => {
                                 </tr>
                             ) : (
                                 provinces.map((province) => (
-                                    <tr key={province.provinceId} className="bg-white hover:bg-slate-50/80">
-                                        <td className="px-6 py-4 text-slate-600">{province.provinceId}</td>
+                                    <tr
+                                        key={province.provinceId}
+                                        className="bg-white hover:bg-slate-50/80"
+                                    >
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {province.provinceId}
+                                        </td>
                                         <td className="px-6 py-4 font-semibold text-slate-700">
                                             {province.provinceName}
                                         </td>
@@ -406,12 +438,16 @@ const ProvinceManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(province)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >Sửa</button>
+                                                >
+                                                    Sửa
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(province)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >Xóa</button>
+                                                >
+                                                    Xóa
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -464,7 +500,11 @@ const ProvinceManagement = () => {
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={() => setOpenCreate(false)} title="Thêm tỉnh/thành">
+            <ModalShell
+                open={openCreate}
+                onClose={() => setOpenCreate(false)}
+                title="Thêm tỉnh/thành"
+            >
                 <form className="space-y-3" onSubmit={submitCreate}>
                     <div>
                         <label className="mb-1 block text-xs font-bold text-slate-500">
@@ -483,7 +523,9 @@ const ProvinceManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">
+                            Trạng thái *
+                        </label>
                         <select
                             {...createForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -506,12 +548,16 @@ const ProvinceManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Tạo mới</button>
+                        >
+                            Tạo mới
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -535,7 +581,9 @@ const ProvinceManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">
+                            Trạng thái *
+                        </label>
                         <select
                             {...editForm.register("status")}
                             className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -558,12 +606,16 @@ const ProvinceManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Lưu</button>
+                        >
+                            Lưu
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -575,7 +627,8 @@ const ProvinceManagement = () => {
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Bạn có chắc muốn xóa tỉnh/thành <strong>{deleteTarget?.provinceName}</strong>?
+                        Bạn có chắc muốn xóa tỉnh/thành{" "}
+                        <strong>{deleteTarget?.provinceName}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
                         Không thể xóa nếu còn rạp ACTIVE đang dùng tỉnh/thành này.
@@ -585,12 +638,16 @@ const ProvinceManagement = () => {
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >Xóa</button>
+                        >
+                            Xóa
+                        </button>
                     </div>
                 </div>
             </ModalShell>
@@ -599,6 +656,3 @@ const ProvinceManagement = () => {
 };
 
 export default ProvinceManagement;
-
-
-

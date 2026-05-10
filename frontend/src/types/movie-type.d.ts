@@ -20,6 +20,7 @@ export type MovieTypeUpdateRequest = {
 };
 
 export type MovieTypeFilterParams = {
+    movieTypeId?: number;
     name?: string;
     status?: MovieTypeStatus | "";
     page?: number;

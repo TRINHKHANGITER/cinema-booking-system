@@ -32,6 +32,7 @@ export type OrderUpdateRequest = {
 };
 
 export type OrderFilterParams = {
+    orderId?: number;
     customerName?: string;
     email?: string;
     phone?: string;

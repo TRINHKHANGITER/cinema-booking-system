@@ -75,10 +75,11 @@ public class ProvinceService {
     }
 
     public PagingDto<ProvinceResponse> getAllProvinces(ProvinceStatus status, Integer page, Integer size) {
-        return filterProvinces(null, status != null ? status.name() : null, page, size);
+        return filterProvinces(null, null, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<ProvinceResponse> filterProvinces(
+            Integer provinceId,
             String name,
             String status,
             Integer page,
@@ -89,6 +90,10 @@ public class ProvinceService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<Province> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (provinceId != null) {
+                predicates.add(builder.equal(root.get("provinceId"), provinceId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -176,3 +181,6 @@ public class ProvinceService {
         }
     }
 }
+
+
+

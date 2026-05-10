@@ -116,6 +116,7 @@ public class MovieService {
     }
 
     public PagingDto<MovieResponse> filterMovies(
+            Integer movieId,
             String name,
             Integer movieTypeId,
             MovieStatus status,
@@ -127,6 +128,10 @@ public class MovieService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<Movie> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (movieId != null) {
+                predicates.add(builder.equal(root.get("movieId"), movieId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -161,7 +166,7 @@ public class MovieService {
     }
 
     public PagingDto<MovieResponse> getAllmovies(Integer movieTypeId, MovieStatus status, Integer page, Integer size) {
-        return filterMovies(null, movieTypeId, status, page, size);
+        return filterMovies(null, null, movieTypeId, status, page, size);
     }
 
     public MovieResponse updateMovie(Integer movieId, MovieUpdateResquest request) {
@@ -370,3 +375,6 @@ public class MovieService {
         }
     }
 }
+
+
+

@@ -26,6 +26,7 @@ export type PriceTicketUpdateResquest = {
 };
 
 export type PriceTicketFilterParams = {
+    priceTicketId?: number;
     roomTypeId?: number;
     seatTypeId?: number;
     status?: PriceTicketStatus | "";

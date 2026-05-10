@@ -123,6 +123,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public PagingDto<OrderResponse> filterOrders(
+            Integer orderId,
             String customerName,
             String email,
             String phone,
@@ -132,6 +133,9 @@ public class OrderService {
             int size
     ) {
         validatePageAndSize(page, size);
+        if (orderId != null && orderId < 1) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
         if (showTimeId != null && showTimeId < 1) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
@@ -142,6 +146,10 @@ public class OrderService {
         Specification<Order> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
             Join<Order, User> userJoin = root.join("user", JoinType.LEFT);
+
+            if (orderId != null) {
+                predicates.add(builder.equal(root.get("orderId"), orderId));
+            }
 
             if (customerName != null && !customerName.isBlank()) {
                 String keyword = "%" + customerName.trim().toLowerCase(Locale.ROOT) + "%";
@@ -463,3 +471,6 @@ public class OrderService {
 
 
 }
+
+
+

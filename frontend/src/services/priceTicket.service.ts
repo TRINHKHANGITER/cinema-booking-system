@@ -12,6 +12,7 @@ import type {
 export const priceTicketService = {
     filterPriceTickets: async (params: PriceTicketFilterParams) => {
         const query = new URLSearchParams();
+        if (params.priceTicketId) query.set("priceTicketId", String(params.priceTicketId));
         if (params.roomTypeId) query.set("roomTypeId", String(params.roomTypeId));
         if (params.seatTypeId) query.set("seatTypeId", String(params.seatTypeId));
         if (params.status) query.set("status", params.status);
@@ -25,7 +26,8 @@ export const priceTicketService = {
     },
 
     getAllPriceTicketStatuses: async () => {
-        const res = await api.get<ApiResponse<ItemListDto<PriceTicketStatus>>>("/price-ticket/statuses");
+        const res =
+            await api.get<ApiResponse<ItemListDto<PriceTicketStatus>>>("/price-ticket/statuses");
         return res.data;
     },
 
@@ -51,5 +53,4 @@ export const priceTicketService = {
         const res = await api.get<ApiResponse<PriceTicketResponse[]>>(`/price-ticket`);
         return res.data;
     },
-
 };

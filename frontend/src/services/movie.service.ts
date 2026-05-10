@@ -1,11 +1,6 @@
 import api from "../lib/axios";
 import type { ApiResponse, ItemListDto, PagingDto } from "../types/api";
-import type {
-    Movie,
-    MovieCreationRequest,
-    MovieStatus,
-    MovieUpdateRequest,
-} from "../types/movie";
+import type { Movie, MovieCreationRequest, MovieStatus, MovieUpdateRequest } from "../types/movie";
 
 type MovieListParams = {
     cinemaId?: number;
@@ -16,6 +11,7 @@ type MovieListParams = {
 };
 
 export type MovieFilterParams = {
+    movieId?: number;
     name?: string;
     movieTypeId?: number;
     status?: MovieStatus;
@@ -76,13 +72,16 @@ export const movieService = {
 
     filterMovies: async (params: MovieFilterParams) => {
         const query = new URLSearchParams();
+        if (params.movieId) query.set("movieId", String(params.movieId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.movieTypeId) query.set("movieTypeId", String(params.movieTypeId));
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
         query.set("size", String(params.size ?? 10));
 
-        const res = await api.get<ApiResponse<PagingDto<Movie>>>(`/movie/filter?${query.toString()}`);
+        const res = await api.get<ApiResponse<PagingDto<Movie>>>(
+            `/movie/filter?${query.toString()}`
+        );
         return res.data;
     },
 

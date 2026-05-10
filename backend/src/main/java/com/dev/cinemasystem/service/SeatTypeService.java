@@ -68,10 +68,11 @@ public class SeatTypeService {
     }
 
     public PagingDto<SeatTypeResponse> getAllSeatTypes(SeatTypeStatus status, Integer page, Integer size) {
-        return filterSeatTypes(null, status != null ? status.name() : null, page, size);
+        return filterSeatTypes(null, null, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<SeatTypeResponse> filterSeatTypes(
+            Integer seatTypeId,
             String name,
             String status,
             Integer page,
@@ -82,6 +83,10 @@ public class SeatTypeService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<SeatType> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (seatTypeId != null) {
+                predicates.add(builder.equal(root.get("seatTypeId"), seatTypeId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -175,3 +180,6 @@ public class SeatTypeService {
         }
     }
 }
+
+
+

@@ -100,6 +100,7 @@ public class RoomService {
     }
 
     public PagingDto<RoomResponse> filterRooms(
+            Integer roomId,
             Integer provinceId,
             Integer cinemaId,
             Integer roomTypeId,
@@ -122,6 +123,10 @@ public class RoomService {
 
         Specification<Room> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (roomId != null) {
+                predicates.add(builder.equal(root.get("roomId"), roomId));
+            }
 
             if (provinceId != null) {
                 predicates.add(builder.equal(root.get("cinema").get("province").get("provinceId"), provinceId));
@@ -234,4 +239,6 @@ public class RoomService {
     }
 
 }
+
+
 

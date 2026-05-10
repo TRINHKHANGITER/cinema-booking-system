@@ -71,6 +71,7 @@ export const cinemaService = {
 
     filterCinemas: async (params: CinemaFilterParams) => {
         const query = new URLSearchParams();
+        if (params.cinemaId) query.set("cinemaId", String(params.cinemaId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.provinceId) query.set("provinceId", String(params.provinceId));
         if (params.status) query.set("status", params.status);

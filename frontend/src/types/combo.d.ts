@@ -31,6 +31,7 @@ export type ComboUpdateRequest = {
 };
 
 export type ComboFilterParams = {
+    comboId?: number;
     name?: string;
     status?: ComboStatus | "";
     page?: number;

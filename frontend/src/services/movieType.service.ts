@@ -20,6 +20,7 @@ export const movieTypeService = {
 
     filterMovieTypes: async (params: MovieTypeFilterParams) => {
         const query = new URLSearchParams();
+        if (params.movieTypeId) query.set("movieTypeId", String(params.movieTypeId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
@@ -32,7 +33,8 @@ export const movieTypeService = {
     },
 
     getAllMovieTypeStatuses: async () => {
-        const res = await api.get<ApiResponse<ItemListDto<MovieTypeStatus>>>("/movie-type/statuses");
+        const res =
+            await api.get<ApiResponse<ItemListDto<MovieTypeStatus>>>("/movie-type/statuses");
         return res.data;
     },
 

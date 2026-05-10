@@ -71,10 +71,11 @@ public class RoomTypeService {
     }
 
     public PagingDto<RoomTypeResponse> getAllRoomTypes(RoomTypeStatus status, Integer page, Integer size) {
-        return filterRoomTypes(null, status != null ? status.name() : null, page, size);
+        return filterRoomTypes(null, null, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<RoomTypeResponse> filterRoomTypes(
+            Integer roomTypeId,
             String name,
             String status,
             Integer page,
@@ -85,6 +86,10 @@ public class RoomTypeService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<RoomType> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (roomTypeId != null) {
+                predicates.add(builder.equal(root.get("roomTypeId"), roomTypeId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -198,3 +203,6 @@ public class RoomTypeService {
         }
     }
 }
+
+
+

@@ -275,6 +275,7 @@ public class UserService {
     }
 
     public PagingDto<UserResponse> filterUsers(
+            Integer userId,
             String name,
             String role,
             String status,
@@ -286,6 +287,10 @@ public class UserService {
 
         Specification<User> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (userId != null) {
+                predicates.add(builder.equal(root.get("userId"), userId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String normalizedKeyword = name.trim().toLowerCase(Locale.ROOT);
@@ -593,3 +598,5 @@ public class UserService {
                 .build();
     }
 }
+
+

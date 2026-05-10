@@ -20,6 +20,7 @@ export type RoomTypeUpdateRequest = {
 };
 
 export type RoomTypeFilterParams = {
+    roomTypeId?: number;
     name?: string;
     status?: RoomTypeStatus | "";
     page?: number;

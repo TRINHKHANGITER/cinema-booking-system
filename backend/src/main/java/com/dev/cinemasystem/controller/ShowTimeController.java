@@ -31,6 +31,7 @@ public class ShowTimeController {
 
     @GetMapping("/search")
     public ApiResponse<PagingDto<ShowTimeResponse>> getShowTimesByFilters(
+            @RequestParam(required = false) Integer showTimeId,
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
@@ -47,8 +48,9 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
         return ApiResponse.<PagingDto<ShowTimeResponse>>builder()
-                .message("Lấy danh sách suất chiếu thành công")
+                .message("Láº¥y danh sÃ¡ch suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.getShowTimesByFilters(
+                        showTimeId,
                         provinceId,
                         cinemaId,
                         movieTypeId,
@@ -69,6 +71,7 @@ public class ShowTimeController {
 
     @GetMapping("/search/grouped")
     public ApiResponse<PagingDto<FullShowtimeMovieResponse>> getGroupedShowTimesByFilters(
+            @RequestParam(required = false) Integer showTimeId,
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer movieTypeId,
@@ -85,8 +88,9 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
         return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
-                .message("Lấy danh sách suất chiếu theo nhóm thành công")
+                .message("Láº¥y danh sÃ¡ch suáº¥t chiáº¿u theo nhÃ³m thÃ nh cÃ´ng")
                 .result(showTimeService.getGroupedShowTimesByFilters(
+                        showTimeId,
                         provinceId,
                         cinemaId,
                         movieTypeId,
@@ -109,7 +113,7 @@ public class ShowTimeController {
     public ApiResponse<ItemListDto<String>> getAllShowTimeStatuses() {
         List<String> statuses = showTimeService.getAllShowTimeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Lấy danh sách trạng thái suất chiếu thành công")
+                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -118,7 +122,7 @@ public class ShowTimeController {
     @GetMapping("/{showTimeId}")
     public ApiResponse<FullShowtimeMovieResponse> getShowTimeById(@PathVariable Integer showTimeId) {
         return ApiResponse.<FullShowtimeMovieResponse>builder()
-                .message("Lấy thông tin suất chiếu thành công")
+                .message("Láº¥y thÃ´ng tin suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.getShowTimeById(showTimeId))
                 .build();
     }
@@ -126,7 +130,7 @@ public class ShowTimeController {
     @GetMapping("/showTimeId-tdv/{showTimeId}")
     public ApiResponse<ShowTimeResponse> getShowTimeById_tdv(@PathVariable Integer showTimeId) {
         return ApiResponse.<ShowTimeResponse>builder()
-                .message("Lấy thông tin suất chiếu thành công")
+                .message("Láº¥y thÃ´ng tin suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.getShowTimeById_tdv(showTimeId))
                 .build();
     }
@@ -141,7 +145,7 @@ public class ShowTimeController {
             @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
         return ApiResponse.<PagingDto<FullShowtimeMovieResponse>>builder()
-                .message("Lấy danh sách suất chiếu thành công")
+                .message("Láº¥y danh sÃ¡ch suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.getShowTimes(cinemaId, status, page, size, sortBy, direction))
                 .build();
     }
@@ -149,7 +153,7 @@ public class ShowTimeController {
     @PostMapping
     public ApiResponse<FullShowtimeMovieResponse> createShowTime(@RequestBody @Valid ShowTimeCreationResquest request) {
         return ApiResponse.<FullShowtimeMovieResponse>builder()
-                .message("Tạo suất chiếu thành công")
+                .message("Táº¡o suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.createShowTime(request))
                 .build();
     }
@@ -157,7 +161,7 @@ public class ShowTimeController {
     @PatchMapping("/{showTimeId}")
     public ApiResponse<FullShowtimeMovieResponse> updateShowTime(@PathVariable Integer showTimeId, @RequestBody @Valid ShowTimeUpdateResquest request) {
         return ApiResponse.<FullShowtimeMovieResponse>builder()
-                .message("Cập nhật suất chiếu thành công")
+                .message("Cáº­p nháº­t suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .result(showTimeService.updateShowTime(showTimeId, request))
                 .build();
     }
@@ -166,7 +170,7 @@ public class ShowTimeController {
     public ApiResponse<Boolean> deleteShowTime(@PathVariable Integer showTimeId) {
         return ApiResponse.<Boolean>builder()
                 .result(showTimeService.deleteShowTime(showTimeId))
-                .message("Xóa suất chiếu thành công")
+                .message("XÃ³a suáº¥t chiáº¿u thÃ nh cÃ´ng")
                 .build();
     }
 
@@ -177,3 +181,7 @@ public class ShowTimeController {
 
 
 }
+
+
+
+

@@ -358,6 +358,7 @@ public class ShowTimeService {
         Pageable pageable = PageRequest.of(page, size, buildShowTimeSort(sortBy, direction));
         Page<ShowTime> uniqueMoviePage = showTimeRepository.findAllByFiltersWithUniqueMovie(
                 null,
+                null,
                 cinemaId,
                 null,
                 null,
@@ -372,6 +373,7 @@ public class ShowTimeService {
 
             PagingDto<FullShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
                     uniqueMoviePage,
+                    null,
                     null,
                     cinemaId,
                     null,
@@ -390,6 +392,7 @@ public class ShowTimeService {
         return response;
     }
     public PagingDto<ShowTimeResponse> getShowTimesByFilters(
+            Integer showTimeId,
             Integer provinceId,
             Integer cinemaId,
             Integer movieTypeId,
@@ -419,6 +422,7 @@ public class ShowTimeService {
         Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
 
         Page<ShowTime> showTimePage = showTimeRepository.findAllByFilters(
+                showTimeId,
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -445,8 +449,9 @@ public class ShowTimeService {
                 .build();
 
         log.info(
-                "Retrieved {} showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
+                "Retrieved {} showtimes with filters showTimeId={}, provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
                 response.getItems().size(),
+                showTimeId,
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -462,6 +467,7 @@ public class ShowTimeService {
         return response;
     }
     public PagingDto<FullShowtimeMovieResponse> getGroupedShowTimesByFilters(
+            Integer showTimeId,
             Integer provinceId,
             Integer cinemaId,
             Integer movieTypeId,
@@ -491,6 +497,7 @@ public class ShowTimeService {
         Pageable pageable = PageRequest.of(page - 1, size, buildShowTimeSort(sortBy, direction));
 
         Page<ShowTime> uniqueMoviePage = showTimeRepository.findAllByFiltersWithUniqueMovie(
+                showTimeId,
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -506,6 +513,7 @@ public class ShowTimeService {
 
         PagingDto<FullShowtimeMovieResponse> response = buildMovieGroupedPagingResponse(
                 uniqueMoviePage,
+                showTimeId,
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -521,8 +529,9 @@ public class ShowTimeService {
         );
 
         log.info(
-                "Retrieved {} grouped showtimes with filters provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
+                "Retrieved {} grouped showtimes with filters showTimeId={}, provinceId={}, cinemaId={}, movieTypeId={}, releaseFromDate={}, releaseToDate={}, startTime={}, endTime={}, name={}, movieId={}, status={}",
                 response.getItems().size(),
+                showTimeId,
                 provinceId,
                 cinemaId,
                 movieTypeId,
@@ -541,6 +550,7 @@ public class ShowTimeService {
 
     private PagingDto<FullShowtimeMovieResponse> buildMovieGroupedPagingResponse(
         Page<ShowTime> uniqueMoviePage,
+        Integer showTimeId,
         Integer provinceId,
         Integer cinemaId,
         Integer movieTypeId,
@@ -575,6 +585,7 @@ public class ShowTimeService {
     List<Integer> movieIds = new ArrayList<>(representativeByMovieId.keySet());
 
     List<ShowTime> groupedShowTimes = showTimeRepository.findAllByFiltersAndMovieIds(
+            showTimeId,
             provinceId,
             cinemaId,
             movieTypeId,
@@ -666,3 +677,8 @@ public class ShowTimeService {
                 .build();
     }
 }
+
+
+
+
+

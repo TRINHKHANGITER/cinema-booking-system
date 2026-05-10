@@ -28,6 +28,7 @@ export type CinemaUpdateRequest = {
 };
 
 export type CinemaFilterParams = {
+    cinemaId?: number;
     name?: string;
     provinceId?: number;
     status?: CinemaStatus | "";

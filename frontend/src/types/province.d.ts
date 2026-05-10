@@ -17,6 +17,7 @@ export type ProvinceUpdateRequest = {
 };
 
 export type ProvinceFilterParams = {
+    provinceId?: number;
     name?: string;
     status?: ProvinceStatus | "";
     page?: number;

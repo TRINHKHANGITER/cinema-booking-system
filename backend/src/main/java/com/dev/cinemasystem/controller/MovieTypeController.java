@@ -38,7 +38,7 @@ public class MovieTypeController {
             @RequestParam(required = false) MovieTypeStatus status
     ) {
         return ApiResponse.<ItemListDto<MovieTypeResponse>>builder()
-                .message("Lấy danh sách thể loại phim thành công")
+                .message("Láº¥y danh sÃ¡ch thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(ItemListDto.<MovieTypeResponse>builder()
                         .items(movieTypeService.getMovieTypesForMovieDropdown(status))
                         .build())
@@ -48,7 +48,7 @@ public class MovieTypeController {
     @GetMapping("/{movieTypeId}")
     public ApiResponse<MovieTypeResponse> getMovieTypeById(@PathVariable Integer movieTypeId) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Lấy thông tin thể loại phim thành công")
+                .message("Láº¥y thÃ´ng tin thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(movieTypeService.getMovieTypeById(movieTypeId))
                 .build();
     }
@@ -58,7 +58,7 @@ public class MovieTypeController {
             @RequestBody @Valid MovieTypeCreationRequest request
     ) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Tạo thể loại phim thành công")
+                .message("Táº¡o thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(movieTypeService.createMovieType(request))
                 .build();
     }
@@ -70,21 +70,22 @@ public class MovieTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieTypeResponse>>builder()
-                .message("Lấy danh sách thể loại phim thành công")
+                .message("Láº¥y danh sÃ¡ch thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(movieTypeService.getAllMovieTypes(status, page, size))
                 .build();
     }
 
     @GetMapping("/filter")
     public ApiResponse<PagingDto<MovieTypeResponse>> filterMovieTypes(
+            @RequestParam(required = false) Integer movieTypeId,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieTypeResponse>>builder()
-                .message("Lọc thể loại phim thành công")
-                .result(movieTypeService.filterMovieTypes(name, status, page, size))
+                .message("Lá»c thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .result(movieTypeService.filterMovieTypes(movieTypeId, name, status, page, size))
                 .build();
     }
 
@@ -92,7 +93,7 @@ public class MovieTypeController {
     public ApiResponse<ItemListDto<String>> getAllMovieTypeStatuses() {
         List<String> statuses = movieTypeService.getAllMovieTypeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Lấy danh sách trạng thái thể loại phim thành công")
+                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -103,7 +104,7 @@ public class MovieTypeController {
             @RequestBody @Valid MovieTypeUpdateRequest request
     ) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Cập nhật thể loại phim thành công")
+                .message("Cáº­p nháº­t thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .result(movieTypeService.updateMovieType(movieTypeId, request))
                 .build();
     }
@@ -112,7 +113,9 @@ public class MovieTypeController {
     public ApiResponse<Boolean> deleteMovieType(@PathVariable Integer movieTypeId) {
         return ApiResponse.<Boolean>builder()
                 .result(movieTypeService.deleteMovieType(movieTypeId))
-                .message("Xóa thể loại phim thành công")
+                .message("XÃ³a thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
                 .build();
     }
 }
+
+

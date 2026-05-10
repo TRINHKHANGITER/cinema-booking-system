@@ -75,9 +75,11 @@ const MovieTypeManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [nameInput, setNameInput] = useState("");
+    const [movieTypeIdInput, setMovieTypeIdInput] = useState<number | "">("");
     const [statusInput, setStatusInput] = useState<MovieTypeStatus | "">("");
 
     const [filters, setFilters] = useState({
+        movieTypeId: undefined as number | undefined,
         name: "",
         status: "" as MovieTypeStatus | "",
         page: 1,
@@ -124,6 +126,7 @@ const MovieTypeManagement = () => {
         try {
             setIsLoading(true);
             const response = await movieTypeService.filterMovieTypes({
+                movieTypeId: filters.movieTypeId,
                 name: filters.name,
                 status: filters.status,
                 page: filters.page,
@@ -181,6 +184,7 @@ const MovieTypeManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            movieTypeId: movieTypeIdInput === "" ? undefined : movieTypeIdInput,
             name: nameInput.trim(),
             status: statusInput,
             page: 1,
@@ -297,7 +301,23 @@ const MovieTypeManagement = () => {
                     </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1.6fr_1fr_auto]">
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.6fr_1fr_auto]">
+                    <input
+                        value={movieTypeIdInput}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setMovieTypeIdInput(value ? Number(value) : "");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Tìm theo ID thể loại phim..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
                     <input
                         value={nameInput}
                         onChange={(event) => setNameInput(event.target.value)}
@@ -372,7 +392,9 @@ const MovieTypeManagement = () => {
                                 <th className="px-6 py-3 font-bold text-slate-600">Tên</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Mô tả</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -426,12 +448,16 @@ const MovieTypeManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(movieType)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >Sửa</button>
+                                                >
+                                                    Sửa
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(movieType)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >Xóa</button>
+                                                >
+                                                    Xóa
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -548,12 +574,16 @@ const MovieTypeManagement = () => {
                             type="button"
                             onClick={() => setOpenCreate(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Tạo mới</button>
+                        >
+                            Tạo mới
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -622,12 +652,16 @@ const MovieTypeManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Lưu</button>
+                        >
+                            Lưu
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -650,12 +684,16 @@ const MovieTypeManagement = () => {
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >Xóa</button>
+                        >
+                            Xóa
+                        </button>
                     </div>
                 </div>
             </ModalShell>
@@ -664,7 +702,3 @@ const MovieTypeManagement = () => {
 };
 
 export default MovieTypeManagement;
-
-
-
-

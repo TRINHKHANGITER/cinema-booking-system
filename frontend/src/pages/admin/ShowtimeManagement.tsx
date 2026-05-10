@@ -53,6 +53,7 @@ type ModalShellProps = {
 type FormMode = "create" | "edit";
 
 type ShowtimeFilters = {
+    showTimeId?: number;
     movieName: string;
     movieId?: number;
     provinceId?: number;
@@ -129,7 +130,9 @@ const resolveCinemaIdFromShowTime = (showTime: ShowTimeResponse) => {
 };
 
 const resolveProvinceNameFromShowTime = (showTime: ShowTimeResponse) => {
-    return showTime.room?.cinema?.provinceName ?? showTime.room?.cinema?.province?.provinceName ?? "-";
+    return (
+        showTime.room?.cinema?.provinceName ?? showTime.room?.cinema?.province?.provinceName ?? "-"
+    );
 };
 
 const resolveCinemaNameFromShowTime = (showTime: ShowTimeResponse) => {
@@ -221,6 +224,7 @@ const ShowtimeManagement = () => {
 
     const [movieNameInput, setMovieNameInput] = useState("");
     const [movieIdInput, setMovieIdInput] = useState<number | "">("");
+    const [showTimeIdInput, setShowTimeIdInput] = useState<number | "">("");
     const [provinceInput, setProvinceInput] = useState<number | "">("");
     const [cinemaInput, setCinemaInput] = useState<number | "">("");
     const [movieTypeInput, setMovieTypeInput] = useState<number | "">("");
@@ -230,6 +234,7 @@ const ShowtimeManagement = () => {
     const [statusInput, setStatusInput] = useState<ShowTimeStatus | "">("");
 
     const [filters, setFilters] = useState<ShowtimeFilters>({
+        showTimeId: undefined,
         movieName: "",
         page: 1,
         size: 10,
@@ -417,6 +422,7 @@ const ShowtimeManagement = () => {
             setIsLoading(true);
 
             const response = await showTimeService.getShowTimesByFilters({
+                showTimeId: filters.showTimeId,
                 movieName: filters.movieName,
                 movieId: filters.movieId,
                 provinceId: filters.provinceId,
@@ -559,6 +565,7 @@ const ShowtimeManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            showTimeId: showTimeIdInput === "" ? undefined : showTimeIdInput,
             movieName: movieNameInput.trim(),
             movieId: movieIdInput === "" ? undefined : movieIdInput,
             provinceId: provinceInput === "" ? undefined : provinceInput,
@@ -576,6 +583,7 @@ const ShowtimeManagement = () => {
     const resetFilters = async () => {
         setMovieNameInput("");
         setMovieIdInput("");
+        setShowTimeIdInput("");
         setProvinceInput("");
         setCinemaInput("");
         setMovieTypeInput("");
@@ -593,6 +601,7 @@ const ShowtimeManagement = () => {
 
         setFilters((prev) => ({
             ...prev,
+            showTimeId: undefined,
             movieName: "",
             movieId: undefined,
             provinceId: undefined,
@@ -909,7 +918,9 @@ const ShowtimeManagement = () => {
             return;
         }
 
-        const startDateTime = new Date(`${formValues.releaseDate}T${toApiTime(formValues.startTime)}`);
+        const startDateTime = new Date(
+            `${formValues.releaseDate}T${toApiTime(formValues.startTime)}`
+        );
         if (!Number.isNaN(startDateTime.getTime()) && startDateTime.getTime() < Date.now()) {
             toast.error("Suất chiếu phải lớn hơn hoặc bằng thời điểm hiện tại");
             return;
@@ -994,7 +1005,9 @@ const ShowtimeManagement = () => {
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                             Quản trị lịch chiếu
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý suất chiếu</h2>
+                        <h2 className="mt-1 text-2xl font-bold text-slate-800">
+                            Quản lý suất chiếu
+                        </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
                             Quản lý lịch chiếu theo phim, tỉnh/thành, rạp và phòng chiếu.
                         </p>
@@ -1031,6 +1044,18 @@ const ShowtimeManagement = () => {
                         type="number"
                         min={1}
                         placeholder="Mã phim"
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
+
+                    <input
+                        value={showTimeIdInput}
+                        onChange={(event) => {
+                            const nextValue = event.target.value;
+                            setShowTimeIdInput(nextValue ? Number(nextValue) : "");
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Mã suất chiếu"
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
 
@@ -1102,7 +1127,9 @@ const ShowtimeManagement = () => {
 
                     <select
                         value={statusInput}
-                        onChange={(event) => setStatusInput(event.target.value as ShowTimeStatus | "")}
+                        onChange={(event) =>
+                            setStatusInput(event.target.value as ShowTimeStatus | "")
+                        }
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     >
                         <option value="">Tất cả trạng thái</option>
@@ -1171,19 +1198,27 @@ const ShowtimeManagement = () => {
                                 <th className="px-6 py-3 font-bold text-slate-600">Ngày chiếu</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Khung giờ</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
-                                <th className="px-6 py-3 text-right font-bold text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 text-right font-bold text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-500">
+                                    <td
+                                        colSpan={8}
+                                        className="px-6 py-10 text-center text-sm text-slate-500"
+                                    >
                                         Đang tải suất chiếu...
                                     </td>
                                 </tr>
                             ) : showtimeRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-500">
+                                    <td
+                                        colSpan={8}
+                                        className="px-6 py-10 text-center text-sm text-slate-500"
+                                    >
                                         Không tìm thấy suất chiếu
                                     </td>
                                 </tr>
@@ -1203,7 +1238,9 @@ const ShowtimeManagement = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <img
-                                                    src={resolveMoviePortraitImage(row.movie?.imagePortrait)}
+                                                    src={resolveMoviePortraitImage(
+                                                        row.movie?.imagePortrait
+                                                    )}
                                                     alt={row.movie?.movieName ?? "Movie"}
                                                     className="h-16 w-12 rounded border border-slate-200 object-cover"
                                                 />
@@ -1452,7 +1489,9 @@ const ShowtimeManagement = () => {
                                 <p className="text-sm font-semibold text-slate-700">
                                     {selectedMovie.movieName}
                                 </p>
-                                <p className="text-xs text-slate-500">Mã phim: {selectedMovie.movieId}</p>
+                                <p className="text-xs text-slate-500">
+                                    Mã phim: {selectedMovie.movieId}
+                                </p>
                                 <p className="text-xs text-slate-500">
                                     Ngày khởi chiếu: {toDisplayDate(selectedMovie.releaseDate)}
                                 </p>
@@ -1471,10 +1510,14 @@ const ShowtimeManagement = () => {
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Tỉnh/Thành *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Tỉnh/Thành *
+                            </label>
                             <select
                                 value={formValues.provinceId ?? ""}
-                                onChange={(event) => void handleFormProvinceChange(event.target.value)}
+                                onChange={(event) =>
+                                    void handleFormProvinceChange(event.target.value)
+                                }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
                                 <option value="">Chọn tỉnh/thành</option>
@@ -1487,10 +1530,14 @@ const ShowtimeManagement = () => {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Rạp *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Rạp *
+                            </label>
                             <select
                                 value={formValues.cinemaId ?? ""}
-                                onChange={(event) => void handleFormCinemaChange(event.target.value)}
+                                onChange={(event) =>
+                                    void handleFormCinemaChange(event.target.value)
+                                }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
                             >
                                 <option value="">Chọn rạp</option>
@@ -1503,13 +1550,17 @@ const ShowtimeManagement = () => {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Phòng *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Phòng *
+                            </label>
                             <select
                                 value={formValues.roomId ?? ""}
                                 onChange={(event) =>
                                     setFormValues((prev) => ({
                                         ...prev,
-                                        roomId: event.target.value ? Number(event.target.value) : null,
+                                        roomId: event.target.value
+                                            ? Number(event.target.value)
+                                            : null,
                                     }))
                                 }
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -1526,7 +1577,9 @@ const ShowtimeManagement = () => {
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Ngày chiếu *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Ngày chiếu *
+                            </label>
                             <input
                                 type="date"
                                 value={formValues.releaseDate}
@@ -1541,7 +1594,9 @@ const ShowtimeManagement = () => {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Trạng thái *
+                            </label>
                             <select
                                 value={formValues.status}
                                 onChange={(event) =>
@@ -1563,7 +1618,9 @@ const ShowtimeManagement = () => {
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Giờ bắt đầu *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Giờ bắt đầu *
+                            </label>
                             <input
                                 type="time"
                                 value={formValues.startTime}
@@ -1578,7 +1635,9 @@ const ShowtimeManagement = () => {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Giờ kết thúc *</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Giờ kết thúc *
+                            </label>
                             <input
                                 type="time"
                                 value={formValues.endTime}
@@ -1702,9 +1761,15 @@ const ShowtimeManagement = () => {
                             <thead className="bg-slate-50 text-left">
                                 <tr>
                                     <th className="px-4 py-2 font-semibold text-slate-600">Mã</th>
-                                    <th className="px-4 py-2 font-semibold text-slate-600">Tên phim</th>
-                                    <th className="px-4 py-2 font-semibold text-slate-600">Thể loại</th>
-                                    <th className="px-4 py-2 font-semibold text-slate-600">Khởi chiếu</th>
+                                    <th className="px-4 py-2 font-semibold text-slate-600">
+                                        Tên phim
+                                    </th>
+                                    <th className="px-4 py-2 font-semibold text-slate-600">
+                                        Thể loại
+                                    </th>
+                                    <th className="px-4 py-2 font-semibold text-slate-600">
+                                        Khởi chiếu
+                                    </th>
                                     <th className="px-4 py-2 text-right font-semibold text-slate-600">
                                         Chọn
                                     </th>
@@ -1713,21 +1778,31 @@ const ShowtimeManagement = () => {
                             <tbody className="divide-y divide-slate-200">
                                 {movieSearchLoading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                                        <td
+                                            colSpan={5}
+                                            className="px-4 py-6 text-center text-slate-500"
+                                        >
                                             Đang tải danh sách phim...
                                         </td>
                                     </tr>
                                 ) : movieSearchResults.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                                        <td
+                                            colSpan={5}
+                                            className="px-4 py-6 text-center text-slate-500"
+                                        >
                                             Không tìm thấy phim
                                         </td>
                                     </tr>
                                 ) : (
                                     movieSearchResults.map((movie) => (
                                         <tr key={movie.movieId} className="hover:bg-slate-50">
-                                            <td className="px-4 py-3 text-slate-600">#{movie.movieId}</td>
-                                            <td className="px-4 py-3 text-slate-700">{movie.movieName}</td>
+                                            <td className="px-4 py-3 text-slate-600">
+                                                #{movie.movieId}
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-700">
+                                                {movie.movieName}
+                                            </td>
                                             <td className="px-4 py-3 text-slate-600">
                                                 {movie.movieType?.movieTypeName ?? "-"}
                                             </td>
@@ -1783,9 +1858,13 @@ const ShowtimeManagement = () => {
                         <button
                             type="button"
                             onClick={() =>
-                                setMovieSearchPage((prev) => Math.min(movieSearchTotalPages, prev + 1))
+                                setMovieSearchPage((prev) =>
+                                    Math.min(movieSearchTotalPages, prev + 1)
+                                )
                             }
-                            disabled={movieSearchPage >= movieSearchTotalPages || movieSearchLoading}
+                            disabled={
+                                movieSearchPage >= movieSearchTotalPages || movieSearchLoading
+                            }
                             className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
                         >
                             Tiếp
@@ -1832,4 +1911,3 @@ const ShowtimeManagement = () => {
 };
 
 export default ShowtimeManagement;
-

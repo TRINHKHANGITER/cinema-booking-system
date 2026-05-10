@@ -33,7 +33,7 @@ public class RoomController {
             @RequestParam(required = false) RoomStatus status
     ) {
         return ApiResponse.<ItemListDto<RoomResponse>>builder()
-                .message("Lấy danh sách phòng thành công")
+                .message("Láº¥y danh sÃ¡ch phÃ²ng thÃ nh cÃ´ng")
                 .result(ItemListDto.<RoomResponse>builder()
                         .items(roomService.getRooms(cinemaId, status))
                         .build())
@@ -43,7 +43,7 @@ public class RoomController {
     @GetMapping("/{roomId}")
     public ApiResponse<RoomResponse> getRoomById(@PathVariable Integer roomId    ) {
         return ApiResponse.<RoomResponse>builder()
-                .message("Lấy thông tin phòng thành công")
+                .message("Láº¥y thÃ´ng tin phÃ²ng thÃ nh cÃ´ng")
                 .result(roomService.getRoomById(roomId))
                 .build();
     }
@@ -51,13 +51,14 @@ public class RoomController {
     @PostMapping
     public ApiResponse<RoomResponse> createRoom(@RequestBody @Valid RoomCreationResquest request) {
         return ApiResponse.<RoomResponse>builder()
-                .message("Tạo phòng thành công")
+                .message("Táº¡o phÃ²ng thÃ nh cÃ´ng")
                 .result(roomService.createRoom(request))
                 .build();
     }
 
     @GetMapping("/filter")
     public ApiResponse<PagingDto<RoomResponse>> filterRooms(
+            @RequestParam(required = false) Integer roomId,
             @RequestParam(required = false) Integer provinceId,
             @RequestParam(required = false) Integer cinemaId,
             @RequestParam(required = false) Integer roomTypeId,
@@ -69,8 +70,8 @@ public class RoomController {
     ) {
         Integer resolvedRoomTypeId = roomTypeId != null ? roomTypeId : roomType;
         return ApiResponse.<PagingDto<RoomResponse>>builder()
-                .message("Lấy danh sách phòng thành công")
-                .result(roomService.filterRooms(provinceId, cinemaId, resolvedRoomTypeId, name, status, page, size))
+                .message("Láº¥y danh sÃ¡ch phÃ²ng thÃ nh cÃ´ng")
+                .result(roomService.filterRooms(roomId, provinceId, cinemaId, resolvedRoomTypeId, name, status, page, size))
                 .build();
     }
 
@@ -78,7 +79,7 @@ public class RoomController {
     public ApiResponse<ItemListDto<String>> getAllRoomStatuses() {
         List<String> statuses = roomService.getAllRoomStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Lấy danh sách trạng thái phòng thành công")
+                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -86,7 +87,7 @@ public class RoomController {
     @PatchMapping("/{roomId}")
     public ApiResponse<RoomResponse> updateRoom(@PathVariable Integer roomId, @RequestBody @Valid RoomUpdateResquest request) {
         return ApiResponse.<RoomResponse>builder()
-                .message("Cập nhật phòng thành công")
+                .message("Cáº­p nháº­t phÃ²ng thÃ nh cÃ´ng")
                 .result(roomService.updateRoom(roomId, request))
                 .build();
     }
@@ -98,8 +99,10 @@ public class RoomController {
     public ApiResponse<Boolean> deleteRoom(@PathVariable Integer roomId) {
         return ApiResponse.<Boolean>builder()
                 .result(roomService.deleteRoom(roomId))
-                .message("Xóa phòng thành công")
+                .message("XÃ³a phÃ²ng thÃ nh cÃ´ng")
                 .build();
     }
 
 }
+
+

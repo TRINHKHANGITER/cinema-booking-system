@@ -55,6 +55,7 @@ export const userService = {
 
     filterUsers: async (params: UserFilterParams) => {
         const query = new URLSearchParams();
+        if (params.userId) query.set("userId", String(params.userId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.role) query.set("role", params.role);
         if (params.status) query.set("status", params.status);
@@ -83,7 +84,10 @@ export const userService = {
     },
 
     confirmChangeOwnEmail: async (request: ConfirmChangeEmailRequest) => {
-        const res = await api.post<ApiResponse<LoginResponse>>("/user/change-email/confirm", request);
+        const res = await api.post<ApiResponse<LoginResponse>>(
+            "/user/change-email/confirm",
+            request
+        );
         return res.data;
     },
 
@@ -109,8 +113,10 @@ export const userService = {
     },
 
     adminConfirmCreatedUserVerifyEmail: async (request: VerifyEmailRequest) => {
-        const res = await api.post<ApiResponse<UserResponse>>("/user/admin/verify-email/confirm", request);
+        const res = await api.post<ApiResponse<UserResponse>>(
+            "/user/admin/verify-email/confirm",
+            request
+        );
         return res.data;
     },
 };
-

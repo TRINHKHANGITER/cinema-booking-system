@@ -43,7 +43,7 @@ public class RoomTypeController {
     ) {
         Integer resolvedCinemaId = cinemaId != null ? cinemaId : cinema;
         return ApiResponse.<ItemListDto<RoomTypeResponse>>builder()
-                .message("Lấy danh sách loại phòng thành công")
+                .message("Láº¥y danh sÃ¡ch loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(ItemListDto.<RoomTypeResponse>builder()
                         .items(roomTypeService.getRoomTypesForRoomDropdown(provinceId, resolvedCinemaId, status))
                         .build())
@@ -54,7 +54,7 @@ public class RoomTypeController {
     @GetMapping("/{roomTypeId}")
     public ApiResponse<RoomTypeResponse> getRoomTypeById(@PathVariable Integer roomTypeId) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Lấy thông tin loại phòng thành công")
+                .message("Láº¥y thÃ´ng tin loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(roomTypeService.getRoomTypeById(roomTypeId))
                 .build();
     }
@@ -62,7 +62,7 @@ public class RoomTypeController {
     @PostMapping
     public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeCreationRequest request) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Tạo loại phòng thành công")
+                .message("Táº¡o loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(roomTypeService.createRoomType(request))
                 .build();
     }
@@ -74,21 +74,22 @@ public class RoomTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<RoomTypeResponse>>builder()
-                .message("Lấy danh sách loại phòng thành công")
+                .message("Láº¥y danh sÃ¡ch loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(roomTypeService.getAllRoomTypes(status, page, size))
                 .build();
     }
 
     @GetMapping("/filter")
     public ApiResponse<PagingDto<RoomTypeResponse>> filterRoomTypes(
+            @RequestParam(required = false) Integer roomTypeId,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<RoomTypeResponse>>builder()
-                .message("Lọc loại phòng thành công")
-                .result(roomTypeService.filterRoomTypes(name, status, page, size))
+                .message("Lá»c loáº¡i phÃ²ng thÃ nh cÃ´ng")
+                .result(roomTypeService.filterRoomTypes(roomTypeId, name, status, page, size))
                 .build();
     }
 
@@ -96,7 +97,7 @@ public class RoomTypeController {
     public ApiResponse<ItemListDto<String>> getAllRoomTypeStatuses() {
         List<String> statuses = roomTypeService.getAllRoomTypeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Lấy danh sách trạng thái loại phòng thành công")
+                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -107,7 +108,7 @@ public class RoomTypeController {
             @RequestBody @Valid RoomTypeUpdateRequest request
     ) {
         return ApiResponse.<RoomTypeResponse>builder()
-                .message("Cập nhật loại phòng thành công")
+                .message("Cáº­p nháº­t loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .result(roomTypeService.updateRoomType(roomTypeId, request))
                 .build();
     }
@@ -116,7 +117,9 @@ public class RoomTypeController {
     public ApiResponse<Boolean> deleteRoomType(@PathVariable Integer roomTypeId) {
         return ApiResponse.<Boolean>builder()
                 .result(roomTypeService.deleteRoomType(roomTypeId))
-                .message("Xóa loại phòng thành công")
+                .message("XÃ³a loáº¡i phÃ²ng thÃ nh cÃ´ng")
                 .build();
     }
 }
+
+

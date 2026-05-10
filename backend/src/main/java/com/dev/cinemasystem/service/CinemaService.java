@@ -55,10 +55,11 @@ public class CinemaService {
             Integer page,
             Integer size
     ) {
-        return filterCinemas(null, provinceId, status != null ? status.name() : null, page, size);
+        return filterCinemas(null, null, provinceId, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<CinemaResponse> filterCinemas(
+            Integer cinemaId,
             String name,
             Integer provinceId,
             String status,
@@ -70,6 +71,10 @@ public class CinemaService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<Cinema> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (cinemaId != null) {
+                predicates.add(builder.equal(root.get("cinemaId"), cinemaId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -238,4 +243,7 @@ public class CinemaService {
         return normalized.isBlank() ? null : normalized;
     }
 }
+
+
+
 

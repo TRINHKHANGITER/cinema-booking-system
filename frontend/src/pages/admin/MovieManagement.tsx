@@ -23,27 +23,21 @@ import {
 
 const defaultStatuses: MovieStatus[] = ["ACTIVE", "COMING_SOON", "STOPPED", "INACTIVE"];
 
-const optionalNumberSchema = z.preprocess(
-    (value) => {
-        if (value === "" || value === null || value === undefined) {
-            return undefined;
-        }
-        const numericValue = Number(value);
-        return Number.isNaN(numericValue) ? value : numericValue;
-    },
-    z.number().min(0, "Giá trị phải >= 0").optional()
-);
+const optionalNumberSchema = z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) {
+        return undefined;
+    }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? value : numericValue;
+}, z.number().min(0, "Giá trị phải >= 0").optional());
 
-const optionalIntegerSchema = z.preprocess(
-    (value) => {
-        if (value === "" || value === null || value === undefined) {
-            return undefined;
-        }
-        const numericValue = Number(value);
-        return Number.isNaN(numericValue) ? value : numericValue;
-    },
-    z.number().int("Giá trị phải là số nguyên").min(0, "Giá trị phải >= 0").optional()
-);
+const optionalIntegerSchema = z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) {
+        return undefined;
+    }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? value : numericValue;
+}, z.number().int("Giá trị phải là số nguyên").min(0, "Giá trị phải >= 0").optional());
 
 const movieFormSchema = z
     .object({
@@ -201,19 +195,28 @@ const MovieDetailRow = ({ label, value }: MovieDetailRowProps) => {
 const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
     if (!movie) {
         return (
-            <ModalShell open={open} title="Chi tiết phim" onClose={onClose} panelClassName="max-w-[1100px]">
+            <ModalShell
+                open={open}
+                title="Chi tiết phim"
+                onClose={onClose}
+                panelClassName="max-w-[1100px]"
+            >
                 <p className="text-sm text-slate-500">Chưa chọn phim.</p>
             </ModalShell>
         );
     }
 
-    const statusClass =
-        statusClassByMovieStatus[movie.status] ?? "bg-slate-200 text-slate-700";
+    const statusClass = statusClassByMovieStatus[movie.status] ?? "bg-slate-200 text-slate-700";
     const actors = parseActors(movie.actors);
     const trailerUrl = movie.trailerUrl?.trim();
 
     return (
-        <ModalShell open={open} title="Chi tiết phim" onClose={onClose} panelClassName="max-w-[1100px]">
+        <ModalShell
+            open={open}
+            title="Chi tiết phim"
+            onClose={onClose}
+            panelClassName="max-w-[1100px]"
+        >
             <div className="space-y-6">
                 <div className="-mx-6 -mt-4 overflow-hidden border-b border-slate-100 bg-black">
                     <img
@@ -263,7 +266,8 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                                     Đánh giá
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-slate-700">
-                                    {movie.ratingAverage !== null && movie.ratingAverage !== undefined
+                                    {movie.ratingAverage !== null &&
+                                    movie.ratingAverage !== undefined
                                         ? movie.ratingAverage
                                         : "Chưa cập nhật"}
                                     {movie.totalVotes !== null && movie.totalVotes !== undefined
@@ -306,7 +310,10 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                                 label="Ngày khởi chiếu"
                                 value={formatMovieDate(movie.releaseDate)}
                             />
-                            <MovieDetailRow label="Ngày kết thúc" value={formatMovieDate(movie.endDate)} />
+                            <MovieDetailRow
+                                label="Ngày kết thúc"
+                                value={formatMovieDate(movie.endDate)}
+                            />
                             <MovieDetailRow
                                 label="Quốc gia"
                                 value={resolveMovieText(movie.country, "Chưa cập nhật")}
@@ -327,7 +334,9 @@ const MovieViewModal = ({ open, movie, onClose }: MovieViewModalProps) => {
                     </div>
 
                     <div className="rounded-xl border border-slate-200 bg-white p-4">
-                        <h5 className="text-base font-bold text-slate-800">Sản xuất và diễn viên</h5>
+                        <h5 className="text-base font-bold text-slate-800">
+                            Sản xuất và diễn viên
+                        </h5>
                         <div className="mt-3 divide-y divide-slate-100">
                             <MovieDetailRow
                                 label="Nhà sản xuất"
@@ -400,7 +409,9 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Trạng thái *</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">
+                        Trạng thái *
+                    </label>
                     <select
                         {...form.register("status")}
                         className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -493,7 +504,9 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Ngày kết thúc *</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">
+                        Ngày kết thúc *
+                    </label>
                     <input
                         type="date"
                         {...form.register("endDate")}
@@ -544,7 +557,9 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Tổng lượt đánh giá</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">
+                        Tổng lượt đánh giá
+                    </label>
                     <input
                         type="number"
                         min={0}
@@ -570,7 +585,9 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">Nhà sản xuất</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">
+                        Nhà sản xuất
+                    </label>
                     <input
                         type="text"
                         {...form.register("producer")}
@@ -602,7 +619,9 @@ const MovieFormFields = ({
             </div>
 
             <div>
-                <label className="mb-1 block text-xs font-bold text-slate-500">Đường dẫn trailer</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">
+                    Đường dẫn trailer
+                </label>
                 <input
                     type="url"
                     {...form.register("trailerUrl")}
@@ -612,9 +631,7 @@ const MovieFormFields = ({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Ảnh dọc
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Ảnh dọc</label>
                     <input
                         type="file"
                         accept="image/*"
@@ -634,9 +651,7 @@ const MovieFormFields = ({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-500">
-                        Ảnh ngang
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">Ảnh ngang</label>
                     <input
                         type="file"
                         accept="image/*"
@@ -670,10 +685,12 @@ const MovieManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [nameInput, setNameInput] = useState("");
+    const [movieIdInput, setMovieIdInput] = useState<number | "">("");
     const [movieTypeInput, setMovieTypeInput] = useState<number | "">("");
     const [statusInput, setStatusInput] = useState<MovieStatus | "">("");
 
     const [filters, setFilters] = useState({
+        movieId: undefined as number | undefined,
         name: "",
         movieTypeId: undefined as number | undefined,
         status: "" as MovieStatus | "",
@@ -765,6 +782,7 @@ const MovieManagement = () => {
         try {
             setIsLoading(true);
             const response = await movieService.filterMovies({
+                movieId: filters.movieId,
                 name: filters.name,
                 movieTypeId: filters.movieTypeId,
                 status: filters.status || undefined,
@@ -830,7 +848,9 @@ const MovieManagement = () => {
             setEditPortraitPreview(URL.createObjectURL(file));
             return;
         }
-        setEditPortraitPreview(editingMovie ? resolveMoviePortraitImage(editingMovie.imagePortrait) : null);
+        setEditPortraitPreview(
+            editingMovie ? resolveMoviePortraitImage(editingMovie.imagePortrait) : null
+        );
     };
 
     const handleEditLandscapeChange = (file: File | null) => {
@@ -868,6 +888,7 @@ const MovieManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            movieId: movieIdInput === "" ? undefined : movieIdInput,
             name: nameInput.trim(),
             movieTypeId: movieTypeInput === "" ? undefined : movieTypeInput,
             status: statusInput,
@@ -1060,9 +1081,7 @@ const MovieManagement = () => {
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                             Quản trị phim
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Quản lý phim
-                        </h2>
+                        <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý phim</h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
                             Lọc, tạo và cập nhật phim với đầy đủ thông tin.
                         </p>
@@ -1077,7 +1096,23 @@ const MovieManagement = () => {
                     </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto]">
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.5fr_1fr_1fr_auto]">
+                    <input
+                        value={movieIdInput}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setMovieIdInput(value ? Number(value) : "");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Tìm theo ID phim..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
                     <input
                         value={nameInput}
                         onChange={(event) => setNameInput(event.target.value)}
@@ -1167,7 +1202,9 @@ const MovieManagement = () => {
                                 <th className="px-6 py-3 font-bold text-slate-600">Loại</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Khoảng ngày</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
-                                <th className="px-6 py-3 text-right font-bold text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 text-right font-bold text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -1195,11 +1232,18 @@ const MovieManagement = () => {
                                         statusClassByMovieStatus[movie.status] ??
                                         "bg-slate-200 text-slate-700";
                                     return (
-                                        <tr key={movie.movieId} className="bg-white hover:bg-slate-50/80">
-                                            <td className="px-6 py-4 text-slate-600">{movie.movieId}</td>
+                                        <tr
+                                            key={movie.movieId}
+                                            className="bg-white hover:bg-slate-50/80"
+                                        >
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {movie.movieId}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <img
-                                                    src={resolveMoviePortraitImage(movie.imagePortrait)}
+                                                    src={resolveMoviePortraitImage(
+                                                        movie.imagePortrait
+                                                    )}
                                                     alt={resolveMovieText(movie.movieName, "Phim")}
                                                     className="h-16 w-12 rounded border border-slate-200 object-cover"
                                                 />
@@ -1215,7 +1259,10 @@ const MovieManagement = () => {
                                                 </div>
                                                 <div className="text-xs text-slate-500">
                                                     Quốc gia:{" "}
-                                                    {resolveMovieText(movie.country, "Chưa cập nhật")}
+                                                    {resolveMovieText(
+                                                        movie.country,
+                                                        "Chưa cập nhật"
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">
@@ -1233,7 +1280,10 @@ const MovieManagement = () => {
                                                 </div>
                                                 <div>
                                                     đến{" "}
-                                                    {resolveMovieText(movie.endDate, "Chưa cập nhật")}
+                                                    {resolveMovieText(
+                                                        movie.endDate,
+                                                        "Chưa cập nhật"
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -1249,17 +1299,23 @@ const MovieManagement = () => {
                                                         type="button"
                                                         onClick={() => openViewModal(movie)}
                                                         className="rounded-md border border-[var(--glx-blue)] px-3 py-1.5 text-xs font-semibold text-[var(--glx-blue)] transition-all duration-300 hover:bg-[var(--glx-blue)] hover:text-white"
-                                                    >Xem</button>
+                                                    >
+                                                        Xem
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => openEditModal(movie)}
                                                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                    >Sửa</button>
+                                                    >
+                                                        Sửa
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeleteTarget(movie)}
                                                         className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                    >Xóa</button>
+                                                    >
+                                                        Xóa
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -1332,12 +1388,16 @@ const MovieManagement = () => {
                             type="button"
                             onClick={closeCreateModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Tạo mới</button>
+                        >
+                            Tạo mới
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -1359,12 +1419,16 @@ const MovieManagement = () => {
                             type="button"
                             onClick={closeEditModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Lưu</button>
+                        >
+                            Lưu
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -1376,8 +1440,7 @@ const MovieManagement = () => {
             >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Bạn có chắc muốn xóa phim{" "}
-                        <strong>{deleteTarget?.movieName ?? ""}</strong>?
+                        Bạn có chắc muốn xóa phim <strong>{deleteTarget?.movieName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
                         Không thể xóa nếu còn suất chiếu đang hoạt động sử dụng phim này.
@@ -1387,12 +1450,16 @@ const MovieManagement = () => {
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >Xóa</button>
+                        >
+                            Xóa
+                        </button>
                     </div>
                 </div>
             </ModalShell>
@@ -1401,6 +1468,3 @@ const MovieManagement = () => {
 };
 
 export default MovieManagement;
-
-
-

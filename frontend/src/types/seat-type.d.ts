@@ -20,6 +20,7 @@ export type SeatTypeUpdateRequest = {
 };
 
 export type SeatTypeFilterParams = {
+    seatTypeId?: number;
     name?: string;
     status?: SeatTypeStatus | "";
     page?: number;

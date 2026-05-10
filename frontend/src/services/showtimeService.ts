@@ -13,6 +13,7 @@ import type {
 type ShowTimeSortDirection = "ASC" | "DESC";
 
 type ShowTimeFilterParams = {
+    showTimeId?: number;
     provinceId?: number;
     cinemaId?: number;
     movieTypeId?: number;
@@ -79,6 +80,7 @@ const getCurrentLocalTime = () => {
 };
 
 const buildShowTimeFilterQuery = (params?: ShowTimeFilterParams) => ({
+    showTimeId: params?.showTimeId,
     provinceId: params?.provinceId,
     cinemaId: params?.cinemaId,
     movieTypeId: params?.movieTypeId,
@@ -125,25 +127,32 @@ export const showTimeService = {
     },
 
     getShowTimeById: async (showTimeId: number) => {
-        const res = await api.get<ApiResponse<FullShowtimeMovieResponse>>(`/showtime/${showTimeId}`);
+        const res = await api.get<ApiResponse<FullShowtimeMovieResponse>>(
+            `/showtime/${showTimeId}`
+        );
         return res.data;
     },
 
     getShowTimeById_tdv: async (showTimeId: number) => {
-        const res = await api.get<ApiResponse<ShowTimeResponse>>(`/showtime/showTimeId-tdv/${showTimeId}`);
+        const res = await api.get<ApiResponse<ShowTimeResponse>>(
+            `/showtime/showTimeId-tdv/${showTimeId}`
+        );
         return res.data;
     },
 
     getShowTimesByCinema: async (cinemaId: number, params?: ShowTimeByCinemaParams) => {
-        const res = await api.get<ApiResponse<PagingDto<FullShowtimeMovieResponse>>>(`/showtime/cinema/${cinemaId}`, {
-            params: {
-                status: params?.status ?? "SELLING",
-                page: params?.page ?? 0,
-                size: params?.size ?? 10,
-                sortBy: params?.sortBy ?? "showtimeId",
-                direction: params?.direction ?? "ASC",
-            },
-        });
+        const res = await api.get<ApiResponse<PagingDto<FullShowtimeMovieResponse>>>(
+            `/showtime/cinema/${cinemaId}`,
+            {
+                params: {
+                    status: params?.status ?? "SELLING",
+                    page: params?.page ?? 0,
+                    size: params?.size ?? 10,
+                    sortBy: params?.sortBy ?? "showtimeId",
+                    direction: params?.direction ?? "ASC",
+                },
+            }
+        );
 
         return res.data;
     },
@@ -154,7 +163,10 @@ export const showTimeService = {
     },
 
     updateShowTime: async (showTimeId: number, request: ShowTimeUpdateRequest) => {
-        const res = await api.patch<ApiResponse<FullShowtimeMovieResponse>>(`/showtime/${showTimeId}`, request);
+        const res = await api.patch<ApiResponse<FullShowtimeMovieResponse>>(
+            `/showtime/${showTimeId}`,
+            request
+        );
         return res.data;
     },
 
@@ -164,7 +176,10 @@ export const showTimeService = {
     },
 
     searchShowTimes: async (request: ShowTimeSearchRequest) => {
-        const res = await api.post<ApiResponse<PagingDto<ShowtimeSearchItem>>>("/showtime/search", request);
+        const res = await api.post<ApiResponse<PagingDto<ShowtimeSearchItem>>>(
+            "/showtime/search",
+            request
+        );
         return res.data;
     },
 
@@ -203,8 +218,10 @@ export const showTimeService = {
         });
     },
 
-
-    getUpcomingShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+    getUpcomingShowTimesByProvince: async (
+        releaseDate: string,
+        filters?: ShowTimeLocationFilterParams
+    ) => {
         return showTimeService.getShowTimesByFilters({
             releaseFromDate: addDaysToDate(releaseDate, 1),
             provinceId: filters?.provinceId,
@@ -237,7 +254,10 @@ export const showTimeService = {
         });
     },
 
-    getTodayShowTimesByProvince: async (releaseDate: string, filters?: ShowTimeLocationFilterParams) => {
+    getTodayShowTimesByProvince: async (
+        releaseDate: string,
+        filters?: ShowTimeLocationFilterParams
+    ) => {
         return showTimeService.getShowTimesByFilters({
             releaseFromDate: releaseDate,
             releaseToDate: releaseDate,
@@ -280,4 +300,3 @@ export const showTimeService = {
         });
     },
 };
-

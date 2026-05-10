@@ -41,7 +41,7 @@ public class OrderController {
 //    public ApiResponse<String> cancelOrder(@PathVariable Integer orderId) {
 //        orderService.cancelOrder(orderId);
 //        return ApiResponse.<String>builder()
-//                .message("Hủy đơn hàng thành công!")
+//                .message("Há»§y Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng!")
 //                .build();
 //    }
 
@@ -75,6 +75,7 @@ public class OrderController {
 
     @GetMapping("/filter")
     public ApiResponse<PagingDto<OrderResponse>> filterOrders(
+            @RequestParam(required = false) Integer orderId,
             @RequestParam(required = false) String customerName,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String phone,
@@ -84,15 +85,15 @@ public class OrderController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<OrderResponse>>builder()
-                .message("Lọc đơn hàng thành công")
-                .result(orderService.filterOrders(customerName, email, phone, showTimeId, status, page, size))
+                .message("Lá»c Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
+                .result(orderService.filterOrders(orderId, customerName, email, phone, showTimeId, status, page, size))
                 .build();
     }
 
     @GetMapping("/statuses")
     public ApiResponse<ItemListDto<String>> getAllOrderStatuses() {
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Lấy danh sách trạng thái đơn hàng thành công")
+                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
                 .result(ItemListDto.<String>builder().items(orderService.getAllOrderStatuses()).build())
                 .build();
     }
@@ -103,7 +104,7 @@ public class OrderController {
             @RequestBody @Valid OrderStatusUpdateRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Cập nhật trạng thái đơn hàng thành công")
+                .message("Cáº­p nháº­t tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
                 .result(orderService.updateStatusOrder(orderId, request.getStatus()))
                 .build();
     }
@@ -113,8 +114,10 @@ public class OrderController {
         emailService.sendTicketWithCombo(orderId);
 
         return ApiResponse.<Void>builder()
-                .message("Gửi thông tin vé xem phim thành công!")
+                .message("Gá»­i thÃ´ng tin vÃ© xem phim thÃ nh cÃ´ng!")
                 .build();
     }
 
 }
+
+

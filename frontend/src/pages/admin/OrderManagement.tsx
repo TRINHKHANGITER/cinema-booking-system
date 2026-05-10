@@ -199,10 +199,12 @@ const OrderManagement = () => {
     const [customerNameInput, setCustomerNameInput] = useState("");
     const [emailInput, setEmailInput] = useState("");
     const [phoneInput, setPhoneInput] = useState("");
+    const [orderIdInput, setOrderIdInput] = useState("");
     const [showTimeIdInput, setShowTimeIdInput] = useState("");
     const [statusInput, setStatusInput] = useState<OrderStatus | "">("");
 
     const [filters, setFilters] = useState({
+        orderId: undefined as number | undefined,
         customerName: "",
         email: "",
         phone: "",
@@ -351,6 +353,7 @@ const OrderManagement = () => {
         try {
             setIsLoadingOrders(true);
             const response = await orderService.filterOrders({
+                orderId: filters.orderId,
                 customerName: filters.customerName,
                 email: filters.email,
                 phone: filters.phone,
@@ -685,6 +688,7 @@ const OrderManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            orderId: orderIdInput.trim() ? Number(orderIdInput.trim()) : undefined,
             customerName: customerNameInput.trim(),
             email: emailInput.trim(),
             phone: phoneInput.trim(),
@@ -698,10 +702,12 @@ const OrderManagement = () => {
         setCustomerNameInput("");
         setEmailInput("");
         setPhoneInput("");
+        setOrderIdInput("");
         setShowTimeIdInput("");
         setStatusInput("");
         setFilters((prev) => ({
             ...prev,
+            orderId: undefined,
             customerName: "",
             email: "",
             phone: "",
@@ -1172,7 +1178,9 @@ const OrderManagement = () => {
         try {
             setIsUpdatingStatus(true);
 
-            const detailResponse = await orderService.getOrderDetailByOrderId(statusTargetOrder.orderId);
+            const detailResponse = await orderService.getOrderDetailByOrderId(
+                statusTargetOrder.orderId
+            );
             if (detailResponse.code !== "SUCCESS" || !detailResponse.result) {
                 toast.error(detailResponse.message || "Không thể tải chi tiết đơn hàng.");
                 return;
@@ -1238,7 +1246,15 @@ const OrderManagement = () => {
                     </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[1.1fr_1fr_1fr_0.8fr_0.9fr_auto_auto]">
+                <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[0.8fr_1.1fr_1fr_1fr_0.8fr_0.9fr_auto_auto]">
+                    <input
+                        value={orderIdInput}
+                        onChange={(event) => setOrderIdInput(event.target.value)}
+                        type="number"
+                        min={1}
+                        placeholder="Mã đơn hàng"
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
                     <input
                         value={customerNameInput}
                         onChange={(event) => setCustomerNameInput(event.target.value)}
@@ -1264,7 +1280,7 @@ const OrderManagement = () => {
                         value={showTimeIdInput}
                         onChange={(event) => setShowTimeIdInput(event.target.value)}
                         type="text"
-                        placeholder="Showtime ID"
+                        placeholder="Mã suất chiếu"
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
                     <select
@@ -1423,8 +1439,12 @@ const OrderManagement = () => {
                                                     <>
                                                         <button
                                                             type="button"
-                                                            onClick={() => void cancelPayingOrder(order)}
-                                                            disabled={cancellingOrderId === order.orderId}
+                                                            onClick={() =>
+                                                                void cancelPayingOrder(order)
+                                                            }
+                                                            disabled={
+                                                                cancellingOrderId === order.orderId
+                                                            }
                                                             className="rounded-md border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
                                                             {cancellingOrderId === order.orderId
@@ -1436,7 +1456,9 @@ const OrderManagement = () => {
                                                             onClick={() =>
                                                                 void continuePayingOrder(order)
                                                             }
-                                                            disabled={resumingOrderId === order.orderId}
+                                                            disabled={
+                                                                resumingOrderId === order.orderId
+                                                            }
                                                             className="rounded-md border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
                                                             {resumingOrderId === order.orderId
@@ -2519,7 +2541,8 @@ const OrderManagement = () => {
                                                         Seat map: {seat.showTimeSeatStatus ?? "-"}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Ticket status: {seat.ticketStatus ?? "ACTIVE"}
+                                                        Ticket status:{" "}
+                                                        {seat.ticketStatus ?? "ACTIVE"}
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -2527,24 +2550,26 @@ const OrderManagement = () => {
                                                         {formatCurrency(seat.unitPrice)}
                                                     </div>
                                                     {canEditPaidOrderLines && seat.ticketId && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    void updateTicketLineStatus(
-                                                                        seat.ticketId!,
-                                                                        seat.ticketStatus ?? "ACTIVE"
-                                                                    )
-                                                                }
-                                                                disabled={runningTicketId === seat.ticketId}
-                                                                className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                            >
-                                                                {runningTicketId === seat.ticketId
-                                                                    ? "Đang xử lý..."
-                                                                    : seat.ticketStatus === "CANCELLED"
-                                                                      ? "Khôi phục vé"
-                                                                      : "Hủy vé"}
-                                                            </button>
-                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                void updateTicketLineStatus(
+                                                                    seat.ticketId!,
+                                                                    seat.ticketStatus ?? "ACTIVE"
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                runningTicketId === seat.ticketId
+                                                            }
+                                                            className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            {runningTicketId === seat.ticketId
+                                                                ? "Đang xử lý..."
+                                                                : seat.ticketStatus === "CANCELLED"
+                                                                  ? "Khôi phục vé"
+                                                                  : "Hủy vé"}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -2589,10 +2614,14 @@ const OrderManagement = () => {
                                                                     combo.status ?? "ACTIVE"
                                                                 )
                                                             }
-                                                            disabled={runningOrderComboId === combo.orderComboId}
+                                                            disabled={
+                                                                runningOrderComboId ===
+                                                                combo.orderComboId
+                                                            }
                                                             className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            {runningOrderComboId === combo.orderComboId
+                                                            {runningOrderComboId ===
+                                                            combo.orderComboId
                                                                 ? "Đang xử lý..."
                                                                 : combo.status === "CANCELLED"
                                                                   ? "Khôi phục combo"
@@ -2704,9 +2733,9 @@ const OrderManagement = () => {
                                     ))}
                                 </select>
                                 <p className="text-xs text-slate-500">
-                                    Đơn PAID chỉ được đổi sang CANCELLED/REFUNDED, đơn CANCELLED chỉ được
-                                    đổi sang REFUNDED. Hệ thống không tự động đổi status vé/combo khi đổi
-                                    status đơn.
+                                    Đơn PAID chỉ được đổi sang CANCELLED/REFUNDED, đơn CANCELLED chỉ
+                                    được đổi sang REFUNDED. Hệ thống không tự động đổi status
+                                    vé/combo khi đổi status đơn.
                                 </p>
                             </>
                         )}

@@ -45,6 +45,7 @@ export const comboService = {
 
     filterCombos: async (params: ComboFilterParams) => {
         const query = new URLSearchParams();
+        if (params.comboId) query.set("comboId", String(params.comboId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
@@ -82,4 +83,3 @@ export const comboService = {
         return res.data;
     },
 };
-

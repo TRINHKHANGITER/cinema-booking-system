@@ -65,6 +65,7 @@ public class ComboService {
     }
 
     public PagingDto<ComboResponse> filterCombos(
+            Integer comboId,
             String name,
             String status,
             Integer page,
@@ -75,6 +76,10 @@ public class ComboService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<Combo> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (comboId != null) {
+                predicates.add(builder.equal(root.get("comboId"), comboId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -226,3 +231,5 @@ public class ComboService {
         return value.trim();
     }
 }
+
+

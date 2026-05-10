@@ -29,6 +29,7 @@ export type RoomUpdateResquest = {
 };
 
 export type RoomFilterParams = {
+    roomId?: number;
     provinceId?: number;
     cinemaId?: number;
     roomTypeId?: number;

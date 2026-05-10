@@ -26,6 +26,7 @@ export const roomService = {
 
     filterRooms: async (params: RoomFilterParams) => {
         const query = new URLSearchParams();
+        if (params.roomId) query.set("roomId", String(params.roomId));
         if (params.provinceId) query.set("provinceId", String(params.provinceId));
         if (params.cinemaId) query.set("cinemaId", String(params.cinemaId));
         if (params.roomTypeId) query.set("roomTypeId", String(params.roomTypeId));
@@ -34,7 +35,9 @@ export const roomService = {
         query.set("page", String(params.page ?? 1));
         query.set("size", String(params.size ?? 10));
 
-        const res = await api.get<ApiResponse<PagingDto<RoomResponse>>>(`/room/filter?${query.toString()}`);
+        const res = await api.get<ApiResponse<PagingDto<RoomResponse>>>(
+            `/room/filter?${query.toString()}`
+        );
         return res.data;
     },
 

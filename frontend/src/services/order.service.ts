@@ -47,6 +47,7 @@ export const orderService = {
 
     filterOrders: async (params: OrderFilterParams) => {
         const query = new URLSearchParams();
+        if (params.orderId) query.set("orderId", String(params.orderId));
         if (params.customerName?.trim()) query.set("customerName", params.customerName.trim());
         if (params.email?.trim()) query.set("email", params.email.trim());
         if (params.phone?.trim()) query.set("phone", params.phone.trim());
@@ -55,7 +56,9 @@ export const orderService = {
         query.set("page", String(params.page ?? 1));
         query.set("size", String(params.size ?? 10));
 
-        const res = await api.get<ApiResponse<PagingDto<Order>>>(`/order/filter?${query.toString()}`);
+        const res = await api.get<ApiResponse<PagingDto<Order>>>(
+            `/order/filter?${query.toString()}`
+        );
         return res.data;
     },
 

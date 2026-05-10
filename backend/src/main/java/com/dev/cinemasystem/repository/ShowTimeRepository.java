@@ -32,7 +32,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join c.province p
     join st.movie m
     join m.movieType mt
-    where (:provinceId is null or p.provinceId = :provinceId)
+    where (:showTimeId is null or st.showTimeId = :showTimeId)
+      and (:provinceId is null or p.provinceId = :provinceId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
@@ -42,8 +43,9 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
       and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
       and (:movieId is null or m.movieId = :movieId)
       and (:status is null or st.status = :status)
-""")
+    """)
     Page<ShowTime> findAllByFilters(
+            @Param("showTimeId") Integer showTimeId,
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,
@@ -135,7 +137,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join c.province p
     join st.movie m
     join m.movieType mt
-    where (:provinceId is null or p.provinceId = :provinceId)
+    where (:showTimeId is null or st.showTimeId = :showTimeId)
+      and (:provinceId is null or p.provinceId = :provinceId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
@@ -154,6 +157,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
             join st2.movie m2
             join m2.movieType mt2
             where m2.movieId = m.movieId
+              and (:showTimeId is null or st2.showTimeId = :showTimeId)
               and (:provinceId is null or p2.provinceId = :provinceId)
               and (:cinemaId is null or c2.cinemaId = :cinemaId)
               and (:movieTypeId is null or mt2.movieTypeId = :movieTypeId)
@@ -179,7 +183,8 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join c.province p
     join st.movie m
     join m.movieType mt
-    where (:provinceId is null or p.provinceId = :provinceId)
+    where (:showTimeId is null or st.showTimeId = :showTimeId)
+      and (:provinceId is null or p.provinceId = :provinceId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
       and (:releaseFromDate is null or st.releaseDate >= :releaseFromDate)
@@ -189,9 +194,10 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
       and (:name is null or lower(m.movieName) like lower(concat('%', :name, '%')))
       and (:movieId is null or m.movieId = :movieId)
       and (:status is null or st.status = :status)
-"""
+    """
     )
     Page<ShowTime> findAllByFiltersWithUniqueMovie(
+            @Param("showTimeId") Integer showTimeId,
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,
@@ -215,6 +221,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     join st.movie m
     join m.movieType mt
     where m.movieId in :movieIds
+      and (:showTimeId is null or st.showTimeId = :showTimeId)
       and (:provinceId is null or p.provinceId = :provinceId)
       and (:cinemaId is null or c.cinemaId = :cinemaId)
       and (:movieTypeId is null or mt.movieTypeId = :movieTypeId)
@@ -228,6 +235,7 @@ public interface ShowTimeRepository extends JpaRepository<ShowTime, Integer> {
     order by m.movieId, st.releaseDate, st.startTime, st.showTimeId
 """)
     List<ShowTime> findAllByFiltersAndMovieIds(
+            @Param("showTimeId") Integer showTimeId,
             @Param("provinceId") Integer provinceId,
             @Param("cinemaId") Integer cinemaId,
             @Param("movieTypeId") Integer movieTypeId,

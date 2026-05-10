@@ -86,10 +86,11 @@ public class PriceTicketService {
             Integer page,
             Integer size
     ) {
-        return filterPriceTickets(null, null, status != null ? status.name() : null, page, size);
+        return filterPriceTickets(null, null, null, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<PriceTicketResponse> filterPriceTickets(
+            Integer priceTicketId,
             Integer roomTypeId,
             Integer seatTypeId,
             String status,
@@ -101,6 +102,10 @@ public class PriceTicketService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<PriceTicket> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (priceTicketId != null) {
+                predicates.add(builder.equal(root.get("priceTicketId"), priceTicketId));
+            }
 
             if (roomTypeId != null) {
                 predicates.add(builder.equal(root.get("roomType").get("roomTypeId"), roomTypeId));
@@ -230,3 +235,6 @@ public class PriceTicketService {
                 priceTicketMapper::toPriceTicketResponse).toList();
     }
 }
+
+
+

@@ -20,15 +20,18 @@ import type {
 const PHONE_REGEX = /^\+?[0-9]{10,15}$/;
 
 const defaultRoles: Role[] = ["USER", "STAFF", "ADMIN"];
-const defaultStatuses: UserStatus[] = ["PENDING_VERIFY", "ACTIVE", "LOCKED", "SUSPENDED", "DELETED"];
+const defaultStatuses: UserStatus[] = [
+    "PENDING_VERIFY",
+    "ACTIVE",
+    "LOCKED",
+    "SUSPENDED",
+    "DELETED",
+];
 
 const createUserSchema = z.object({
     fullName: z.string().trim().min(1, "Họ và tên là bắt buộc"),
     email: z.string().trim().email("Email không hợp lệ"),
-    phoneNumber: z
-        .string()
-        .trim()
-        .regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
+    phoneNumber: z.string().trim().regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
     password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
     role: z.string().trim().min(1, "Vai trò là bắt buộc"),
     dateOfBirth: z.string().optional(),
@@ -37,11 +40,11 @@ const createUserSchema = z.object({
 
 const updateUserSchema = z.object({
     fullName: z.string().trim().min(1, "Họ và tên là bắt buộc"),
-    phoneNumber: z
-        .string()
-        .trim()
-        .regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
-    password: z.union([z.string().length(0), z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự")]),
+    phoneNumber: z.string().trim().regex(PHONE_REGEX, "Số điện thoại phải từ 10 đến 15 chữ số"),
+    password: z.union([
+        z.string().length(0),
+        z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    ]),
     role: z.string().trim().min(1, "Vai trò là bắt buộc"),
     status: z.string().trim().min(1, "Trạng thái là bắt buộc"),
     dateOfBirth: z.string().optional(),
@@ -129,10 +132,12 @@ const UserManagement = () => {
     const [statuses, setStatuses] = useState<UserStatus[]>(defaultStatuses);
 
     const [nameInput, setNameInput] = useState("");
+    const [userIdInput, setUserIdInput] = useState<number | "">("");
     const [roleInput, setRoleInput] = useState<Role | "">("");
     const [statusInput, setStatusInput] = useState<UserStatus | "">("");
 
     const [filters, setFilters] = useState({
+        userId: undefined as number | undefined,
         name: "",
         role: "" as Role | "",
         status: "" as UserStatus | "",
@@ -229,6 +234,7 @@ const UserManagement = () => {
         try {
             setIsLoading(true);
             const response = await userService.filterUsers({
+                userId: filters.userId,
                 name: filters.name,
                 role: filters.role,
                 status: filters.status,
@@ -287,6 +293,7 @@ const UserManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            userId: userIdInput === "" ? undefined : userIdInput,
             name: nameInput.trim(),
             role: roleInput,
             status: statusInput,
@@ -527,9 +534,12 @@ const UserManagement = () => {
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                             Quản trị người dùng
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý người dùng</h2>
+                        <h2 className="mt-1 text-2xl font-bold text-slate-800">
+                            Quản lý người dùng
+                        </h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
-                            Quản lý tài khoản người dùng theo vai trò, trạng thái và thông tin liên hệ.
+                            Quản lý tài khoản người dùng theo vai trò, trạng thái và thông tin liên
+                            hệ.
                         </p>
                     </div>
                     <button
@@ -541,56 +551,67 @@ const UserManagement = () => {
                     </button>
                 </div>
 
-              <div className="mt-5 grid grid-cols-4 gap-3">
-    <input
-        value={nameInput}
-        onChange={(event) => setNameInput(event.target.value)}
-        onKeyDown={(event) => {
-            if (event.key === "Enter") {
-                applyFilters();
-            }
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.4fr_1fr_1fr_auto]">
+                    <input
+                        value={userIdInput}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setUserIdInput(value ? Number(value) : "");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Tìm theo ID người dùng..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
+                    <input
+                        value={nameInput}
+                        onChange={(event) => setNameInput(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
                         }}
                         type="text"
                         placeholder="Tìm theo tên / email / số điện thoại..."
                         className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
                     />
-
-    <select
-        value={roleInput}
-        onChange={(event) => setRoleInput(event.target.value as Role | "")}
-        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
-    >
-        <option value="">Tất cả vai trò</option>
-        {roles.map((role) => (
-            <option key={role} value={role}>
-                {role}
-            </option>
-        ))}
-    </select>
-
-    <select
-        value={statusInput}
-        onChange={(event) =>
-            setStatusInput(event.target.value as UserStatus | "")
-        }
-        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
-    >
-        <option value="">Tất cả trạng thái</option>
-        {statuses.map((status) => (
-            <option key={status} value={status}>
-                {status}
-            </option>
-        ))}
-    </select>
-
-    <button
-        type="button"
-        onClick={applyFilters}
-        className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
-    >
-        Áp dụng
-    </button>
-</div>
+                    <select
+                        value={roleInput}
+                        onChange={(event) => setRoleInput(event.target.value as Role | "")}
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    >
+                        <option value="">Tất cả vai trò</option>
+                        {roles.map((role) => (
+                            <option key={role} value={role}>
+                                {role}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={statusInput}
+                        onChange={(event) => setStatusInput(event.target.value as UserStatus | "")}
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    >
+                        <option value="">Tất cả trạng thái</option>
+                        {statuses.map((status) => (
+                            <option key={status} value={status}>
+                                {status}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={applyFilters}
+                        className="h-11 rounded-xl border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white transition-all duration-300 hover:bg-[var(--glx-blue-strong)]"
+                    >
+                        Áp dụng
+                    </button>
+                </div>
             </section>
 
             <section className="rounded-2xl border border-[var(--glx-border)] bg-white shadow-[0_18px_42px_-35px_rgba(15,23,42,0.5)]">
@@ -627,11 +648,15 @@ const UserManagement = () => {
                             <tr>
                                 <th className="px-6 py-3 font-bold text-slate-600">Họ và tên</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Thư điện tử</th>
-                                <th className="px-6 py-3 font-bold text-slate-600">Số điện thoại</th>
+                                <th className="px-6 py-3 font-bold text-slate-600">
+                                    Số điện thoại
+                                </th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Vai trò</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Cập nhật lúc</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -675,11 +700,11 @@ const UserManagement = () => {
                                                         ? "bg-emerald-100 text-emerald-700"
                                                         : user.status === "PENDING_VERIFY"
                                                           ? "bg-indigo-100 text-indigo-700"
-                                                        : user.status === "LOCKED"
-                                                          ? "bg-amber-100 text-amber-700"
-                                                          : user.status === "SUSPENDED"
-                                                            ? "bg-rose-100 text-rose-700"
-                                                            : "bg-slate-200 text-slate-700"
+                                                          : user.status === "LOCKED"
+                                                            ? "bg-amber-100 text-amber-700"
+                                                            : user.status === "SUSPENDED"
+                                                              ? "bg-rose-100 text-rose-700"
+                                                              : "bg-slate-200 text-slate-700"
                                                 }`}
                                             >
                                                 {user.status}
@@ -694,17 +719,23 @@ const UserManagement = () => {
                                                     type="button"
                                                     onClick={() => openEditModal(user)}
                                                     className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                >Sửa</button>
+                                                >
+                                                    Sửa
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => openChangeEmailModal(user)}
                                                     className="rounded-md border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all duration-300 hover:bg-amber-50"
-                                                >Đổi email</button>
+                                                >
+                                                    Đổi email
+                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeleteTarget(user)}
                                                     className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                >Xóa</button>
+                                                >
+                                                    Xóa
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -757,7 +788,11 @@ const UserManagement = () => {
                 </div>
             </section>
 
-            <ModalShell open={openCreate} onClose={resetCreateUserState} title="Thêm người dùng mới">
+            <ModalShell
+                open={openCreate}
+                onClose={resetCreateUserState}
+                title="Thêm người dùng mới"
+            >
                 {createUserStep === "form" ? (
                     <form className="space-y-3" onSubmit={submitCreate}>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -893,7 +928,8 @@ const UserManagement = () => {
                 ) : (
                     <form className="space-y-3" onSubmit={submitCreateUserVerifyOtp}>
                         <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-700">
-                            Người dùng đã được tạo ở trạng thái chờ xác thực. Vui lòng nhập OTP đã gửi về email để hoàn tất.
+                            Người dùng đã được tạo ở trạng thái chờ xác thực. Vui lòng nhập OTP đã
+                            gửi về email để hoàn tất.
                         </div>
 
                         <div>
@@ -942,7 +978,10 @@ const UserManagement = () => {
                             <button
                                 type="button"
                                 onClick={() => void resendCreateUserOtp()}
-                                disabled={isResendingCreateUserOtp || createUserVerifyOtpForm.formState.isSubmitting}
+                                disabled={
+                                    isResendingCreateUserOtp ||
+                                    createUserVerifyOtpForm.formState.isSubmitting
+                                }
                                 className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {isResendingCreateUserOtp ? "Đang gửi lại OTP..." : "Gửi lại OTP"}
@@ -962,7 +1001,8 @@ const UserManagement = () => {
             <ModalShell open={openEdit} onClose={() => setOpenEdit(false)} title="Sửa người dùng">
                 <form className="space-y-3" onSubmit={submitUpdate}>
                     <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                        Email không sửa trực tiếp ở màn hình này. Muốn đổi email, vui lòng dùng luồng đổi email bằng OTP.
+                        Email không sửa trực tiếp ở màn hình này. Muốn đổi email, vui lòng dùng
+                        luồng đổi email bằng OTP.
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="sm:col-span-2">
@@ -1080,7 +1120,9 @@ const UserManagement = () => {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-xs font-bold text-slate-500">Giới tính</label>
+                            <label className="mb-1 block text-xs font-bold text-slate-500">
+                                Giới tính
+                            </label>
                             <select
                                 {...editForm.register("sex")}
                                 className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/20"
@@ -1098,7 +1140,9 @@ const UserManagement = () => {
                             type="button"
                             onClick={() => setOpenEdit(false)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
@@ -1147,7 +1191,10 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => void requestOtpForChangeEmail()}
-                                    disabled={isRequestingChangeEmailOtp || changeEmailForm.formState.isSubmitting}
+                                    disabled={
+                                        isRequestingChangeEmailOtp ||
+                                        changeEmailForm.formState.isSubmitting
+                                    }
                                     className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {isRequestingChangeEmailOtp ? "Đang gửi OTP..." : "Gửi mã OTP"}
@@ -1157,7 +1204,8 @@ const UserManagement = () => {
                     ) : (
                         <>
                             <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                                Mã OTP đã được gửi về email mới. Vui lòng nhập OTP để xác nhận đổi email.
+                                Mã OTP đã được gửi về email mới. Vui lòng nhập OTP để xác nhận đổi
+                                email.
                             </div>
 
                             <div>
@@ -1204,10 +1252,15 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => void requestOtpForChangeEmail()}
-                                    disabled={isRequestingChangeEmailOtp || changeEmailForm.formState.isSubmitting}
+                                    disabled={
+                                        isRequestingChangeEmailOtp ||
+                                        changeEmailForm.formState.isSubmitting
+                                    }
                                     className="rounded-md border border-[var(--glx-blue)] px-4 py-2 text-sm font-semibold text-[var(--glx-blue)] transition hover:bg-[var(--glx-blue)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {isRequestingChangeEmailOtp ? "Đang gửi lại OTP..." : "Gửi lại OTP"}
+                                    {isRequestingChangeEmailOtp
+                                        ? "Đang gửi lại OTP..."
+                                        : "Gửi lại OTP"}
                                 </button>
                                 <button
                                     type="submit"
@@ -1237,12 +1290,16 @@ const UserManagement = () => {
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >Xóa</button>
+                        >
+                            Xóa
+                        </button>
                     </div>
                 </div>
             </ModalShell>
@@ -1251,6 +1308,3 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
-
-
-

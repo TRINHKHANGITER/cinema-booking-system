@@ -67,10 +67,11 @@ public class MovieTypeService {
     }
 
     public PagingDto<MovieTypeResponse> getAllMovieTypes(MovieTypeStatus status, Integer page, Integer size) {
-        return filterMovieTypes(null, status != null ? status.name() : null, page, size);
+        return filterMovieTypes(null, null, status != null ? status.name() : null, page, size);
     }
 
     public PagingDto<MovieTypeResponse> filterMovieTypes(
+            Integer movieTypeId,
             String name,
             String status,
             Integer page,
@@ -81,6 +82,10 @@ public class MovieTypeService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<MovieType> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (movieTypeId != null) {
+                predicates.add(builder.equal(root.get("movieTypeId"), movieTypeId));
+            }
 
             if (name != null && !name.isBlank()) {
                 String keyword = "%" + name.trim().toLowerCase(Locale.ROOT) + "%";
@@ -187,3 +192,6 @@ public class MovieTypeService {
         }
     }
 }
+
+
+

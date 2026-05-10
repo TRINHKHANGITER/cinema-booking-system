@@ -11,6 +11,7 @@ import type {
 export const seatTypeService = {
     filterSeatTypes: async (params: SeatTypeFilterParams) => {
         const query = new URLSearchParams();
+        if (params.seatTypeId) query.set("seatTypeId", String(params.seatTypeId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
@@ -33,7 +34,10 @@ export const seatTypeService = {
     },
 
     updateSeatType: async (seatTypeId: number, request: SeatTypeUpdateRequest) => {
-        const res = await api.patch<ApiResponse<SeatTypeResponse>>(`/seat-type/${seatTypeId}`, request);
+        const res = await api.patch<ApiResponse<SeatTypeResponse>>(
+            `/seat-type/${seatTypeId}`,
+            request
+        );
         return res.data;
     },
 

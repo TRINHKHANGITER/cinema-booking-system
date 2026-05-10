@@ -74,7 +74,10 @@ const Header = () => {
 
     const goToSearchByMovieType = (movieTypeId: number) => {
         const params = new URLSearchParams();
+        params.set("keyword", "");
+        params.set("provinceId", "");
         params.set("movieTypeId", String(movieTypeId));
+        params.set("day", "");
 
         navigate(`${routePath.search}?${params.toString()}`);
         setOpen(false);
@@ -920,7 +923,7 @@ scale-100 blur-0 grayscale-0)'
                                 <span
                                     className={`${openMenu === "starshop" ? "text-[#F58020]" : ""} mr-2`}
                                 >
-                                    Star Shop
+                                    {/* Star Shop */}
                                 </span>
 
                                 <div

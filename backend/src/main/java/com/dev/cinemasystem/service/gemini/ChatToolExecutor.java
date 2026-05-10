@@ -59,6 +59,7 @@ public class ChatToolExecutor {
                 null,
                 null,
                 null,
+                null,
                 keyword,
                 null,
                 ShowTimeStatus.SELLING,
@@ -90,6 +91,7 @@ public class ChatToolExecutor {
         }
 
         var result = showTimeService.getShowTimesByFilters(
+                null,
                 provinceId,
                 cinemaId,
                 movieTypeId,

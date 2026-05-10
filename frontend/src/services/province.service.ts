@@ -35,6 +35,7 @@ export const provinceService = {
 
     filterProvinces: async (params: ProvinceFilterParams) => {
         const query = new URLSearchParams();
+        if (params.provinceId) query.set("provinceId", String(params.provinceId));
         if (params.name?.trim()) query.set("name", params.name.trim());
         if (params.status) query.set("status", params.status);
         query.set("page", String(params.page ?? 1));
@@ -57,7 +58,10 @@ export const provinceService = {
     },
 
     updateProvince: async (provinceId: number, request: ProvinceUpdateRequest) => {
-        const res = await api.patch<ApiResponse<ProvinceResponse>>(`/province/${provinceId}`, request);
+        const res = await api.patch<ApiResponse<ProvinceResponse>>(
+            `/province/${provinceId}`,
+            request
+        );
         return res.data;
     },
 

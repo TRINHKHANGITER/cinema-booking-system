@@ -53,10 +53,7 @@ const resolveComboImageUrl = (image: string | null | undefined) => {
     if (!image) return null;
     if (image.startsWith("http://") || image.startsWith("https://")) return image;
 
-    const normalizedImageName = image
-        .split("/")
-        .filter(Boolean)
-        .at(-1) ?? image;
+    const normalizedImageName = image.split("/").filter(Boolean).at(-1) ?? image;
 
     const baseUrlRaw = String(import.meta.env.VITE_COMBO_IMAGE_API_URL ?? "");
     const normalizedBaseUrl = baseUrlRaw.replace(/\/+$/, "");
@@ -101,9 +98,11 @@ const ComboManagement = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const [nameInput, setNameInput] = useState("");
+    const [comboIdInput, setComboIdInput] = useState<number | "">("");
     const [statusInput, setStatusInput] = useState<ComboStatus | "">("");
 
     const [filters, setFilters] = useState({
+        comboId: undefined as number | undefined,
         name: "",
         status: "" as ComboStatus | "",
         page: 1,
@@ -157,6 +156,7 @@ const ComboManagement = () => {
         try {
             setIsLoading(true);
             const response = await comboService.filterCombos({
+                comboId: filters.comboId,
                 name: filters.name,
                 status: filters.status,
                 page: filters.page,
@@ -221,6 +221,7 @@ const ComboManagement = () => {
     const applyFilters = () => {
         setFilters((prev) => ({
             ...prev,
+            comboId: comboIdInput === "" ? undefined : comboIdInput,
             name: nameInput.trim(),
             status: statusInput,
             page: 1,
@@ -365,9 +366,7 @@ const ComboManagement = () => {
                         <p className="text-xs uppercase tracking-[0.16em] text-[var(--glx-blue)]">
                             Quản trị combo
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                            Quản lý combo
-                        </h2>
+                        <h2 className="mt-1 text-2xl font-bold text-slate-800">Quản lý combo</h2>
                         <p className="mt-2 text-sm text-[var(--glx-text-muted)]">
                             Lọc, tạo và cập nhật combo kèm tải ảnh lên.
                         </p>
@@ -382,7 +381,23 @@ const ComboManagement = () => {
                     </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[1.6fr_1fr_auto]">
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-[0.9fr_1.6fr_1fr_auto]">
+                    <input
+                        value={comboIdInput}
+                        onChange={(event) => {
+                            const value = event.target.value;
+                            setComboIdInput(value ? Number(value) : "");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                applyFilters();
+                            }
+                        }}
+                        type="number"
+                        min={1}
+                        placeholder="Tìm theo ID combo..."
+                        className="h-11 rounded-xl border border-[var(--glx-border)] bg-white px-4 text-sm text-slate-700 outline-none transition-all focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                    />
                     <input
                         value={nameInput}
                         onChange={(event) => setNameInput(event.target.value)}
@@ -457,7 +472,9 @@ const ComboManagement = () => {
                                 <th className="px-6 py-3 font-bold text-slate-600">Mô tả</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Giá</th>
                                 <th className="px-6 py-3 font-bold text-slate-600">Trạng thái</th>
-                                <th className="px-6 py-3 font-bold text-right text-slate-600">Thao tác</th>
+                                <th className="px-6 py-3 font-bold text-right text-slate-600">
+                                    Thao tác
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--glx-border)]">
@@ -483,8 +500,13 @@ const ComboManagement = () => {
                                 combos.map((combo) => {
                                     const imageUrl = resolveComboImageUrl(combo.image);
                                     return (
-                                        <tr key={combo.comboId} className="bg-white hover:bg-slate-50/80">
-                                            <td className="px-6 py-4 text-slate-600">{combo.comboId}</td>
+                                        <tr
+                                            key={combo.comboId}
+                                            className="bg-white hover:bg-slate-50/80"
+                                        >
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {combo.comboId}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 {imageUrl ? (
                                                     <img
@@ -493,14 +515,18 @@ const ComboManagement = () => {
                                                         className="h-12 w-16 rounded-md border border-slate-200 object-cover"
                                                     />
                                                 ) : (
-                                                    <span className="text-xs text-slate-400">Không có ảnh</span>
+                                                    <span className="text-xs text-slate-400">
+                                                        Không có ảnh
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-slate-700">
                                                 {combo.comboName}
                                             </td>
                                             <td className="max-w-[300px] px-6 py-4 text-slate-600">
-                                                <p className="line-clamp-2">{combo.description || "-"}</p>
+                                                <p className="line-clamp-2">
+                                                    {combo.description || "-"}
+                                                </p>
                                             </td>
                                             <td className="px-6 py-4 font-semibold text-slate-700">
                                                 {Number(combo.price ?? 0).toLocaleString("vi-VN")} d
@@ -524,12 +550,16 @@ const ComboManagement = () => {
                                                         type="button"
                                                         onClick={() => openEditModal(combo)}
                                                         className="rounded-md border border-[var(--glx-border)] px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-[var(--glx-blue)] hover:text-[var(--glx-blue)]"
-                                                    >Sửa</button>
+                                                    >
+                                                        Sửa
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeleteTarget(combo)}
                                                         className="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-all duration-300 hover:bg-rose-50"
-                                                    >Xóa</button>
+                                                    >
+                                                        Xóa
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -690,12 +720,16 @@ const ComboManagement = () => {
                             type="button"
                             onClick={closeCreateModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={createForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Tạo mới</button>
+                        >
+                            Tạo mới
+                        </button>
                     </div>
                 </form>
             </ModalShell>
@@ -776,7 +810,9 @@ const ComboManagement = () => {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-500">Hình ảnh</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-500">
+                            Hình ảnh
+                        </label>
                         <input
                             type="file"
                             accept="image/*"
@@ -803,21 +839,28 @@ const ComboManagement = () => {
                             type="button"
                             onClick={closeEditModal}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="submit"
                             disabled={editForm.formState.isSubmitting}
                             className="rounded-md bg-[var(--glx-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--glx-orange-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        >Lưu</button>
+                        >
+                            Lưu
+                        </button>
                     </div>
                 </form>
             </ModalShell>
 
-            <ModalShell open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Xóa combo">
+            <ModalShell
+                open={Boolean(deleteTarget)}
+                onClose={() => setDeleteTarget(null)}
+                title="Xóa combo"
+            >
                 <div className="space-y-4">
                     <p className="text-sm text-slate-600">
-                        Bạn có chắc muốn xóa combo{" "}
-                        <strong>{deleteTarget?.comboName ?? ""}</strong>?
+                        Bạn có chắc muốn xóa combo <strong>{deleteTarget?.comboName ?? ""}</strong>?
                     </p>
                     <p className="text-xs text-rose-500">
                         Không thể xóa nếu còn order combo ACTIVE đang dùng combo này.
@@ -827,12 +870,16 @@ const ComboManagement = () => {
                             type="button"
                             onClick={() => setDeleteTarget(null)}
                             className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--glx-orange)] hover:text-[var(--glx-orange)]"
-                        >Hủy</button>
+                        >
+                            Hủy
+                        </button>
                         <button
                             type="button"
                             onClick={() => void handleDelete()}
                             className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100"
-                        >Xóa</button>
+                        >
+                            Xóa
+                        </button>
                     </div>
                 </div>
             </ModalShell>
@@ -841,6 +888,3 @@ const ComboManagement = () => {
 };
 
 export default ComboManagement;
-
-
-

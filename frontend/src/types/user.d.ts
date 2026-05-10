@@ -64,6 +64,7 @@ export type AdminUserUpdateRequest = {
 };
 
 export type UserFilterParams = {
+    userId?: number;
     name?: string;
     role?: Role | "";
     status?: UserStatus | "";
@@ -73,4 +74,3 @@ export type UserFilterParams = {
 
 export type UserResponse = UserEntity;
 export type User = UserResponse;
-
