@@ -63,6 +63,7 @@ public class CheckoutService {
                 VnpayRequest.builder()
                         .orderId(order.getOrderId())
                         .amount(order.getNetAmount())
+                .holdExpiresAt(order.getExpiredAt())
                         .build(),
                 clientIp
         );

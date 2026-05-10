@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +33,7 @@ public class VnpayService {
     public String buildVnpayUrl(VnpayRequest vnpayRequest, String clientIp) {
         String infoTransactionOrder = PaymentService.buildTransferContent(vnpayRequest.getOrderId());
         ZonedDateTime now = ZonedDateTime.now(VIETNAM_ZONE);
-        ZonedDateTime expireAt = now.plusMinutes(bookingProperties.getHoldMinutes());
+        ZonedDateTime expireAt = resolveExpireAt(vnpayRequest, now);
         String transactionReference = buildTransactionReference(vnpayRequest.getOrderId(), now);
 
         Map<String, String> params = new LinkedHashMap<>();
@@ -55,6 +56,15 @@ public class VnpayService {
         String queryString = hashData + "&vnp_SecureHash=" + secureHas;
 
         return vnPayConfig.getPayUrl() + "?" + queryString;
+    }
+
+    private ZonedDateTime resolveExpireAt(VnpayRequest vnpayRequest, ZonedDateTime now) {
+        LocalDateTime holdExpiresAt = vnpayRequest.getHoldExpiresAt();
+        if (holdExpiresAt == null) {
+            return now.plusMinutes(bookingProperties.getHoldMinutes());
+        }
+
+        return holdExpiresAt.atZone(VIETNAM_ZONE);
     }
 
     private String buildTransactionReference(Integer orderId, ZonedDateTime now) {

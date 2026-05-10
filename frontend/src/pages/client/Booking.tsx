@@ -558,7 +558,7 @@ const Booking = () => {
                     <div className="col-span-1 xl:pl-4 xl:order-0 order-first py-4">
                         {orderExpiredAt && (
                             <div className="xl:mt-2 text-center text-xl font-semibold text-orange-500">
-                                Giữ ghế còn:{" "}
+                                Thời gian giữ ghế & thanh toán còn:{" "}
                                 {holdRemainingSeconds !== null
                                     ? formatCountdown(holdRemainingSeconds)
                                     : "--:--:--"}

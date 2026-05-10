@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -13,4 +14,5 @@ import java.math.BigDecimal;
 public class VnpayRequest {
     int orderId;
     BigDecimal amount;
+    LocalDateTime holdExpiresAt;
 }

@@ -71,7 +71,7 @@ storage:
 app:
     base-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev
     booking:
-        hold-minutes: 2
+        hold-minutes: 5
     auth:
         reset-password-otp-expire-minutes: ${RESET_PASSWORD_OTP_EXPIRE_MINUTES:5}
         verify-email-otp-expire-minutes: ${VERIFY_EMAIL_OTP_EXPIRE_MINUTES:5}
