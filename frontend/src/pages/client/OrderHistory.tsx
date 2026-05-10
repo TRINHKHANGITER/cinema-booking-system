@@ -7,20 +7,24 @@ import { useAppSelector } from "../../stores/hooks";
 import type { Order, OrderDetail, OrderStatus } from "../../types/order";
 import { formatTime } from "../../utils/utils";
 
-type TabKey = "all" | "paying";
+type OrderStatusFilter = OrderStatus | "ALL";
+type OrderHistoryTab = "PAYING" | "HISTORY";
 
 type OrderHistoryItem = {
     summary: Order;
     detail: OrderDetail | null;
 };
 
-const TABS: Array<{ key: TabKey; label: string }> = [
-    { key: "paying", label: "Đang chờ thanh toán" },
-    { key: "all", label: "Tất cả" },
+const DEFAULT_ORDER_STATUSES: OrderStatus[] = [
+    "PAYING",
+    "PAID",
+    "CANCELLED",
+    "REFUNDED",
+    "EXPIRED",
 ];
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
-    PAYING: "Đang chờ thanh toán",
+    PAYING: "Đã đặt (chờ thanh toán)",
     PAID: "Đã thanh toán",
     CANCELLED: "Đã hủy",
     REFUNDED: "Đã hoàn tiền",
@@ -57,9 +61,18 @@ const formatMoney = (value?: number | null) => {
     return `${Number(value ?? 0).toLocaleString("vi-VN")} đ`;
 };
 
-const parseTab = (value: string | null): TabKey => {
-    if (value === "paying") return "paying";
-    return "all";
+const isOrderStatus = (value: string): value is OrderStatus => {
+    return DEFAULT_ORDER_STATUSES.includes(value as OrderStatus);
+};
+
+const parseStatusFilter = (value: string | null): OrderStatusFilter => {
+    if (!value) return "ALL";
+    return isOrderStatus(value) ? value : "ALL";
+};
+
+const parseHistoryTab = (value: string | null): OrderHistoryTab => {
+    if (value === "paying") return "PAYING";
+    return "HISTORY";
 };
 
 const toMovieSlug = (movieName?: string | null, fallbackId?: number | null) => {
@@ -77,8 +90,9 @@ const toMovieSlug = (movieName?: string | null, fallbackId?: number | null) => {
 };
 
 const lineStatusLabel = (status?: string | null) => {
-    if (!status) return "ACTIVE";
-    return status;
+    if (!status || status === "ACTIVE") return "Đang hoạt động";
+    if (status === "CANCELLED") return "Đã hủy";
+    return status.toUpperCase();
 };
 
 const OrderHistoryPage = () => {
@@ -90,8 +104,27 @@ const OrderHistoryPage = () => {
     const [items, setItems] = useState<OrderHistoryItem[]>([]);
     const [runningOrderId, setRunningOrderId] = useState<number | null>(null);
     const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
+    const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>(DEFAULT_ORDER_STATUSES);
 
-    const activeTab = useMemo(() => parseTab(searchParams.get("tab")), [searchParams]);
+    const activeTab = useMemo(() => parseHistoryTab(searchParams.get("tab")), [searchParams]);
+    const statusFilter = useMemo(
+        () => parseStatusFilter(searchParams.get("status")),
+        [searchParams]
+    );
+    const historyOrderStatuses = useMemo(
+        () => orderStatuses.filter((status) => status !== "PAYING"),
+        [orderStatuses]
+    );
+
+    const fetchOrderStatuses = useCallback(async () => {
+        try {
+            const response = await orderService.getAllOrderStatuses();
+            const statuses = (response.result?.items ?? []).filter(isOrderStatus);
+            setOrderStatuses(statuses.length > 0 ? statuses : DEFAULT_ORDER_STATUSES);
+        } catch {
+            setOrderStatuses(DEFAULT_ORDER_STATUSES);
+        }
+    }, []);
 
     const fetchOrders = useCallback(async () => {
         if (!user?.userId) {
@@ -101,7 +134,12 @@ const OrderHistoryPage = () => {
 
         setLoading(true);
         try {
-            const status = activeTab === "paying" ? "PAYING" : undefined;
+            const status =
+                activeTab === "PAYING"
+                    ? "PAYING"
+                    : statusFilter === "ALL"
+                      ? undefined
+                      : statusFilter;
             const response = await orderService.getOrders(status);
             const orders = (response.result ?? [])
                 .filter((order) => order.userId === user.userId)
@@ -136,18 +174,33 @@ const OrderHistoryPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, user?.userId]);
+    }, [activeTab, statusFilter, user?.userId]);
+
+    useEffect(() => {
+        void fetchOrderStatuses();
+    }, [fetchOrderStatuses]);
 
     useEffect(() => {
         void fetchOrders();
     }, [fetchOrders]);
 
-    const handleChangeTab = (tab: TabKey) => {
+    const handleChangeTab = (tab: OrderHistoryTab) => {
         const next = new URLSearchParams(searchParams);
-        if (tab === "all") {
-            next.delete("tab");
+        if (tab === "PAYING") {
+            next.set("tab", "paying");
+            next.delete("status");
         } else {
-            next.set("tab", tab);
+            next.delete("tab");
+        }
+        setSearchParams(next);
+    };
+
+    const handleChangeStatus = (status: OrderStatusFilter) => {
+        const next = new URLSearchParams(searchParams);
+        if (status === "ALL") {
+            next.delete("status");
+        } else {
+            next.set("status", status);
         }
         setSearchParams(next);
     };
@@ -217,34 +270,72 @@ const OrderHistoryPage = () => {
                     </p>
                 </div>
 
-                <div className="mb-6 flex flex-wrap gap-3">
-                    {TABS.map((tab) => {
-                        const active = activeTab === tab.key;
-                        return (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                onClick={() => handleChangeTab(tab.key)}
-                                className={[
-                                    "rounded-full border px-4 py-2 text-sm font-semibold transition",
-                                    active
-                                        ? "border-[#034ea2] bg-[#034ea2] text-white"
-                                        : "border-slate-200 bg-white text-slate-700 hover:border-[#034ea2] hover:text-[#034ea2]",
-                                ].join(" ")}
+                <div className="mb-6 space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => handleChangeTab("PAYING")}
+                            className={[
+                                "rounded-full px-4 py-2 text-sm font-semibold transition",
+                                activeTab === "PAYING"
+                                    ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
+                            ].join(" ")}
+                        >
+                            Đơn chờ thanh toán
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleChangeTab("HISTORY")}
+                            className={[
+                                "rounded-full px-4 py-2 text-sm font-semibold transition",
+                                activeTab === "HISTORY"
+                                    ? "bg-[#e7effc] text-[#034ea2] ring-1 ring-[#b7ccf3]"
+                                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
+                            ].join(" ")}
+                        >
+                            Lịch sử đơn hàng
+                        </button>
+                    </div>
+
+                    {activeTab === "HISTORY" && (
+                        <div className="flex flex-col gap-2 sm:w-[300px]">
+                            <label
+                                htmlFor="order-status-filter"
+                                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
                             >
-                                {tab.label}
-                            </button>
-                        );
-                    })}
+                                Trạng thái đơn hàng
+                            </label>
+                            <select
+                                id="order-status-filter"
+                                value={statusFilter === "PAYING" ? "ALL" : statusFilter}
+                                onChange={(event) =>
+                                    handleChangeStatus(event.target.value as OrderStatusFilter)
+                                }
+                                className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-[#034ea2] focus:ring-2 focus:ring-[#034ea2]/15"
+                            >
+                                <option value="ALL">Tất cả</option>
+                                {historyOrderStatuses.map((status) => (
+                                    <option key={status} value={status}>
+                                        {STATUS_LABEL[status]}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
                     <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
-                        Đang tải lịch sử đơn hàng...
+                        {activeTab === "PAYING"
+                            ? "Đang tải danh sách đơn chờ thanh toán..."
+                            : "Đang tải lịch sử đơn hàng..."}
                     </div>
                 ) : items.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-                        Không có đơn hàng phù hợp với bộ lọc hiện tại.
+                        {activeTab === "PAYING"
+                            ? "Hiện tại bạn không có đơn chờ thanh toán."
+                            : "Không có đơn hàng phù hợp với bộ lọc hiện tại."}
                     </div>
                 ) : (
                     <div className="space-y-5">
@@ -309,10 +400,10 @@ const OrderHistoryPage = () => {
                                                     {formatTime(detail?.showTime.startTime ?? "") || "Đang cập nhật"}
                                                 </p>
                                                 <p>
-                                                    <strong>Số lượng vé active:</strong> {activeSeatCount}
+                                                    <strong>Số lượng vé đang hoạt động:</strong> {activeSeatCount}
                                                 </p>
                                                 <p>
-                                                    <strong>Số lượng combo active:</strong> {activeComboQuantity}
+                                                    <strong>Số lượng combo đang hoạt động:</strong> {activeComboQuantity}
                                                 </p>
                                             </div>
 

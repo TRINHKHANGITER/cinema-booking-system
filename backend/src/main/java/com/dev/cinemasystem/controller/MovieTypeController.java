@@ -38,7 +38,7 @@ public class MovieTypeController {
             @RequestParam(required = false) MovieTypeStatus status
     ) {
         return ApiResponse.<ItemListDto<MovieTypeResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách thể loại phim thành công")
                 .result(ItemListDto.<MovieTypeResponse>builder()
                         .items(movieTypeService.getMovieTypesForMovieDropdown(status))
                         .build())
@@ -48,7 +48,7 @@ public class MovieTypeController {
     @GetMapping("/{movieTypeId}")
     public ApiResponse<MovieTypeResponse> getMovieTypeById(@PathVariable Integer movieTypeId) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Láº¥y thÃ´ng tin thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Lấy thông tin thể loại phim thành công")
                 .result(movieTypeService.getMovieTypeById(movieTypeId))
                 .build();
     }
@@ -58,7 +58,7 @@ public class MovieTypeController {
             @RequestBody @Valid MovieTypeCreationRequest request
     ) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Táº¡o thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Tạo thể loại phim thành công")
                 .result(movieTypeService.createMovieType(request))
                 .build();
     }
@@ -70,7 +70,7 @@ public class MovieTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieTypeResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách thể loại phim thành công")
                 .result(movieTypeService.getAllMovieTypes(status, page, size))
                 .build();
     }
@@ -84,7 +84,7 @@ public class MovieTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieTypeResponse>>builder()
-                .message("Lá»c thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Lọc thể loại phim thành công")
                 .result(movieTypeService.filterMovieTypes(movieTypeId, name, status, page, size))
                 .build();
     }
@@ -93,7 +93,7 @@ public class MovieTypeController {
     public ApiResponse<ItemListDto<String>> getAllMovieTypeStatuses() {
         List<String> statuses = movieTypeService.getAllMovieTypeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái thể loại phim thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -104,7 +104,7 @@ public class MovieTypeController {
             @RequestBody @Valid MovieTypeUpdateRequest request
     ) {
         return ApiResponse.<MovieTypeResponse>builder()
-                .message("Cáº­p nháº­t thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Cập nhật thể loại phim thành công")
                 .result(movieTypeService.updateMovieType(movieTypeId, request))
                 .build();
     }
@@ -113,7 +113,7 @@ public class MovieTypeController {
     public ApiResponse<Boolean> deleteMovieType(@PathVariable Integer movieTypeId) {
         return ApiResponse.<Boolean>builder()
                 .result(movieTypeService.deleteMovieType(movieTypeId))
-                .message("XÃ³a thá»ƒ loáº¡i phim thÃ nh cÃ´ng")
+                .message("Xóa thể loại phim thành công")
                 .build();
     }
 }

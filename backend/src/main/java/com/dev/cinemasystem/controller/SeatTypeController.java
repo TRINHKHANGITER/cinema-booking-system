@@ -37,7 +37,7 @@ public class SeatTypeController {
     @GetMapping("/{seatTypeId}")
     public ApiResponse<SeatTypeResponse> getSeatTypeById(@PathVariable Integer seatTypeId) {
         return ApiResponse.<SeatTypeResponse>builder()
-                .message("Láº¥y thÃ´ng tin loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Lấy thông tin loại ghế thành công")
                 .result(seatTypeService.getSeatTypeById(seatTypeId))
                 .build();
     }
@@ -45,7 +45,7 @@ public class SeatTypeController {
     @PostMapping
     public ApiResponse<SeatTypeResponse> createSeatType(@RequestBody @Valid SeatTypeCreationRequest request) {
         return ApiResponse.<SeatTypeResponse>builder()
-                .message("Táº¡o loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Tạo loại ghế thành công")
                 .result(seatTypeService.createSeatType(request))
                 .build();
     }
@@ -57,7 +57,7 @@ public class SeatTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<SeatTypeResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Lấy danh sách loại ghế thành công")
                 .result(seatTypeService.getAllSeatTypes(status, page, size))
                 .build();
     }
@@ -71,7 +71,7 @@ public class SeatTypeController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<SeatTypeResponse>>builder()
-                .message("Lá»c loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Lọc loại ghế thành công")
                 .result(seatTypeService.filterSeatTypes(seatTypeId, name, status, page, size))
                 .build();
     }
@@ -80,7 +80,7 @@ public class SeatTypeController {
     public ApiResponse<ItemListDto<String>> getAllSeatTypeStatuses() {
         List<String> statuses = seatTypeService.getAllSeatTypeStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái loại ghế thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -91,7 +91,7 @@ public class SeatTypeController {
             @RequestBody @Valid SeatTypeUpdateRequest request
     ) {
         return ApiResponse.<SeatTypeResponse>builder()
-                .message("Cáº­p nháº­t loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Cập nhật loại ghế thành công")
                 .result(seatTypeService.updateSeatType(seatTypeId, request))
                 .build();
     }
@@ -100,7 +100,7 @@ public class SeatTypeController {
     public ApiResponse<Boolean> deleteSeatType(@PathVariable Integer seatTypeId) {
         return ApiResponse.<Boolean>builder()
                 .result(seatTypeService.deleteSeatType(seatTypeId))
-                .message("XÃ³a loáº¡i gháº¿ thÃ nh cÃ´ng")
+                .message("Xóa loại ghế thành công")
                 .build();
     }
 }

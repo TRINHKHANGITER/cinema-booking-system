@@ -67,5 +67,7 @@ public interface ShowTimeSeatRepository extends JpaRepository<ShowTimeSeat, Inte
             @Param("seatId") Integer seatId
     );
 
+    List<ShowTimeSeat> findAllBySeat_SeatIdAndShowTime_Room_RoomId(Integer seatId, Integer roomId);
+
     void deleteByShowTime_ShowTimeId(Integer showTimeId);
 }

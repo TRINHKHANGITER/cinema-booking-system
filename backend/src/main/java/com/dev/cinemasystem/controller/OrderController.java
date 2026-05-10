@@ -41,7 +41,7 @@ public class OrderController {
 //    public ApiResponse<String> cancelOrder(@PathVariable Integer orderId) {
 //        orderService.cancelOrder(orderId);
 //        return ApiResponse.<String>builder()
-//                .message("Há»§y Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng!")
+//                .message("Hủy đơn hàng thành công!")
 //                .build();
 //    }
 
@@ -85,7 +85,7 @@ public class OrderController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<OrderResponse>>builder()
-                .message("Lá»c Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
+                .message("Lọc đơn hàng thành công")
                 .result(orderService.filterOrders(orderId, customerName, email, phone, showTimeId, status, page, size))
                 .build();
     }
@@ -93,7 +93,7 @@ public class OrderController {
     @GetMapping("/statuses")
     public ApiResponse<ItemListDto<String>> getAllOrderStatuses() {
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái đơn hàng thành công")
                 .result(ItemListDto.<String>builder().items(orderService.getAllOrderStatuses()).build())
                 .build();
     }
@@ -104,7 +104,7 @@ public class OrderController {
             @RequestBody @Valid OrderStatusUpdateRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Cáº­p nháº­t tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng")
+                .message("Cập nhật trạng thái đơn hàng thành công")
                 .result(orderService.updateStatusOrder(orderId, request.getStatus()))
                 .build();
     }
@@ -114,7 +114,7 @@ public class OrderController {
         emailService.sendTicketWithCombo(orderId);
 
         return ApiResponse.<Void>builder()
-                .message("Gá»­i thÃ´ng tin vÃ© xem phim thÃ nh cÃ´ng!")
+                .message("Gửi thông tin vé xem phim thành công!")
                 .build();
     }
 

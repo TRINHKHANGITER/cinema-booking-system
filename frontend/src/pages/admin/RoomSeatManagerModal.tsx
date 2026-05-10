@@ -230,7 +230,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
 
     const selectedSeatLabel = selectedSeat
         ? `${selectedSeat.seatRow}${selectedSeat.seatColumn}`
-        : "None";
+        : "Chưa chọn";
 
     const openCreateModal = () => {
         createForm.reset({
@@ -398,7 +398,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                     type="button"
                     onClick={() => setSelectedSeatId(seat.seatId)}
                     className={`${baseClass} ${widthClass} ${visualClass}`}
-                    title={`${buttonLabel} - ${isBooked ? "Đã bán" : "Còn trống"}`}
+                    title={`${buttonLabel} - ${isBooked ? "Không khả dụng" : "Còn trống"}`}
                 >
                     {buttonLabel}
                 </button>
@@ -440,7 +440,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                                 onClick={() => void fetchSeats()}
                                 className="h-9 rounded-md border border-[var(--glx-blue)] bg-[var(--glx-blue)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--glx-blue-strong)]"
                             >
-                                Refresh
+                                Làm mới
                             </button>
                         </div>
 
@@ -450,7 +450,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                                 onClick={openCreateModal}
                                 className="h-9 rounded-md bg-[var(--glx-orange)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--glx-orange-soft)]"
                             >
-                                + Add
+                                + Thêm
                             </button>
                             <button
                                 type="button"
@@ -507,7 +507,7 @@ const RoomSeatManagerModal = ({ open, room, onClose }: RoomSeatManagerModalProps
                             <div className="flex flex-wrap items-center gap-4">
                                 <div className="flex items-center gap-1.5">
                                     <span className="inline-block h-5 w-5 rounded border border-gray-200 bg-gray-100" />
-                                    <span className="text-xs text-slate-500">Đã bán / Đang giữ</span>
+                                    <span className="text-xs text-slate-500">Không khả dụng / Đang giữ</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="inline-block h-5 w-5 rounded bg-[#034ea2]" />

@@ -2,11 +2,14 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.entity.Seat;
+import com.dev.cinemasystem.entity.ShowTime;
+import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.SeatMapper;
 import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
+import com.dev.cinemasystem.repository.ShowTimeRepository;
 import com.dev.cinemasystem.repository.TicketRepository;
 import com.dev.cinemasystem.repository.RoomRepository;
 import com.dev.cinemasystem.repository.SeatRepository;
@@ -23,10 +26,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +48,7 @@ public class SeatService {
     SeatTypeRepository seatTypeRepository;
     TicketRepository ticketRepository;
     ShowTimeSeatRepository showTimeSeatRepository;
+    ShowTimeRepository showTimeRepository;
 
 
 
@@ -54,7 +63,8 @@ public class SeatService {
         return seatMapper.toSeatResponse(seat);
     }
 
-    public  SeatResponse createSeat(SeatCreationResquest request){
+    @Transactional
+    public SeatResponse createSeat(SeatCreationResquest request){
         if(request == null){
             log.error("Seat creation request is null");
             throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -89,7 +99,9 @@ public class SeatService {
             seat.setSeatType(seatType);
             seat.setStatus(request.getStatus() != null ? request.getStatus() : SeatStatus.ACTIVE);
             log.info("Reactivating seat {}{} in room id {}", normalizedSeatRow, seatColumn, room.getRoomId());
-            return seatMapper.toSeatResponse(seatRepository.save(seat));
+            Seat savedSeat = seatRepository.save(seat);
+            syncSeatWithShowTimesInRoom(savedSeat);
+            return seatMapper.toSeatResponse(savedSeat);
         }
 
         var seat = seatMapper.toSeatFromSeatCreationRequest(request);
@@ -99,7 +111,9 @@ public class SeatService {
         seat.setSeatType(seatType);
         seat.setStatus(request.getStatus() != null ? request.getStatus() : SeatStatus.ACTIVE);
         log.info("Creating seat in room id: {} with seat type id: {}", room.getRoomId(), seatType.getSeatTypeId());
-        return seatMapper.toSeatResponse(seatRepository.save(seat));
+        Seat savedSeat = seatRepository.save(seat);
+        syncSeatWithShowTimesInRoom(savedSeat);
+        return seatMapper.toSeatResponse(savedSeat);
     }
 
     public List<SeatResponse> getSeatsByRoom(Integer roomId, SeatStatus status) {
@@ -153,6 +167,7 @@ public class SeatService {
                 .build();
     }
 
+    @Transactional
     public SeatResponse  updateSeat(Integer seatId, SeatCreationResquest request){
         String normalizedSeatRow = normalizeSeatRow(request.getSeatRow());
         request.setSeatRow(normalizedSeatRow);
@@ -182,9 +197,12 @@ public class SeatService {
         seat.setRoom(room);
         seat.setSeatType(seatType);
         log.info("Updating seat with id: {}", seatId);
-        return seatMapper.toSeatResponse(seatRepository.save(seat));
+        Seat savedSeat = seatRepository.save(seat);
+        syncSeatWithShowTimesInRoom(savedSeat);
+        return seatMapper.toSeatResponse(savedSeat);
     }
 
+    @Transactional
     public boolean deleteSeat(Integer seatId){
         var seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> {
@@ -203,7 +221,8 @@ public class SeatService {
         }
 
         seat.setStatus(SeatStatus.BLOCKED);
-        seatRepository.save(seat);
+        Seat savedSeat = seatRepository.save(seat);
+        syncSeatWithShowTimesInRoom(savedSeat);
         log.info("Deleted seat with id: {}", seatId);
         return true;
     }
@@ -219,6 +238,64 @@ public class SeatService {
             return null;
         }
         return seatRow.trim().toUpperCase();
+    }
+
+    private void syncSeatWithShowTimesInRoom(Seat seat) {
+        Integer roomId = seat.getRoom().getRoomId();
+        Integer seatId = seat.getSeatId();
+        ShowTimeSeatStatus targetStatus = toShowTimeSeatStatus(seat.getStatus());
+
+        List<ShowTime> showTimes = showTimeRepository.findAllByRoom_RoomId(roomId);
+        if (showTimes.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, ShowTimeSeat> existingByShowTimeId = showTimeSeatRepository
+                .findAllBySeat_SeatIdAndShowTime_Room_RoomId(seatId, roomId)
+                .stream()
+                .collect(Collectors.toMap(
+                        item -> item.getShowTime().getShowTimeId(),
+                        Function.identity(),
+                        (first, second) -> first
+                ));
+
+        List<ShowTimeSeat> changedSeats = new ArrayList<>();
+        for (ShowTime showTime : showTimes) {
+            ShowTimeSeat existing = existingByShowTimeId.get(showTime.getShowTimeId());
+            if (existing == null) {
+                changedSeats.add(ShowTimeSeat.builder()
+                        .showTime(showTime)
+                        .seat(seat)
+                        .status(targetStatus)
+                        .order(null)
+                        .holdExpiresAt(null)
+                        .build());
+                continue;
+            }
+
+            if (existing.getStatus() == ShowTimeSeatStatus.SOLD || existing.getStatus() == ShowTimeSeatStatus.HELD) {
+                continue;
+            }
+
+            if (existing.getStatus() != targetStatus) {
+                existing.setStatus(targetStatus);
+                if (targetStatus == ShowTimeSeatStatus.AVAILABLE || targetStatus == ShowTimeSeatStatus.BLOCKED) {
+                    existing.setOrder(null);
+                    existing.setHoldExpiresAt(null);
+                }
+                changedSeats.add(existing);
+            }
+        }
+
+        if (!changedSeats.isEmpty()) {
+            showTimeSeatRepository.saveAll(changedSeats);
+        }
+    }
+
+    private ShowTimeSeatStatus toShowTimeSeatStatus(SeatStatus seatStatus) {
+        return seatStatus == SeatStatus.ACTIVE
+                ? ShowTimeSeatStatus.AVAILABLE
+                : ShowTimeSeatStatus.BLOCKED;
     }
 
 

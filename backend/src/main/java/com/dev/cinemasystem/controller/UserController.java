@@ -42,7 +42,7 @@ public class UserController {
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("Táº¡o ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Tạo người dùng thành công")
                 .result(userService.createUser(request))
                 .build();
     }
@@ -50,7 +50,7 @@ public class UserController {
     @PostMapping("/admin")
     ApiResponse<UserResponse> createUserByAdmin(@RequestBody @Valid AdminUserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
-                .message("Táº¡o ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng, mÃ£ OTP Ä‘Ã£ Ä‘Æ°á»£c gá»­i Ä‘á»ƒ xÃ¡c thá»±c email")
+                .message("Tạo người dùng thành công, mã OTP đã được gửi để xác thực email")
                 .result(userService.createUserByAdmin(request))
                 .build();
     }
@@ -61,7 +61,7 @@ public class UserController {
     ) {
         userService.adminResendCreatedUserVerifyEmailOtp(request);
         return ApiResponse.<Void>builder()
-                .message("ÄÃ£ gá»­i láº¡i mÃ£ OTP xÃ¡c thá»±c email")
+                .message("Đã gửi lại mã OTP xác thực email")
                 .build();
     }
 
@@ -70,7 +70,7 @@ public class UserController {
             @RequestBody @Valid VerifyEmailRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("XÃ¡c thá»±c email ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Xác thực email người dùng thành công")
                 .result(userService.adminConfirmCreatedUserVerifyEmail(request))
                 .build();
     }
@@ -78,7 +78,7 @@ public class UserController {
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable Integer userId) {
         return ApiResponse.<UserResponse>builder()
-                .message("Láº¥y thÃ´ng tin ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserById(userId))
                 .build();
     }
@@ -86,7 +86,7 @@ public class UserController {
     @GetMapping("/email/{email}")
     ApiResponse<UserResponse> getUserByEmail(@PathVariable String email) {
         return ApiResponse.<UserResponse>builder()
-                .message("Láº¥y thÃ´ng tin ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Lấy thông tin người dùng thành công")
                 .result(userService.getUserByEmail(email))
                 .build();
     }
@@ -97,7 +97,7 @@ public class UserController {
             @RequestBody @Valid UserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("Cáº­p nháº­t ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Cập nhật người dùng thành công")
                 .result(userService.updateUserById(userId, request))
                 .build();
     }
@@ -108,7 +108,7 @@ public class UserController {
             @RequestBody @Valid AdminUserUpdateRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin cáº­p nháº­t ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Admin cập nhật người dùng thành công")
                 .result(userService.updateUserByAdmin(userId, request))
                 .build();
     }
@@ -117,7 +117,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserById(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("XÃ³a ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -126,7 +126,7 @@ public class UserController {
     ApiResponse<Boolean> deleteUserByAdmin(@PathVariable Integer userId) {
         userService.deleteUserById(userId);
         return ApiResponse.<Boolean>builder()
-                .message("Admin xÃ³a ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Admin xóa người dùng thành công")
                 .result(true)
                 .build();
     }
@@ -138,7 +138,7 @@ public class UserController {
             @RequestParam(required = false) String status
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Lấy danh sách người dùng thành công")
                 .result(userService.getAllUsers(pageNumber, pageSize, status))
                 .build();
     }
@@ -153,7 +153,7 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.<PagingDto<UserResponse>>builder()
-                .message("Lá»c ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Lọc người dùng thành công")
                 .result(userService.filterUsers(userId, name, role, status, page, size))
                 .build();
     }
@@ -162,7 +162,7 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllRoles() {
         List<String> roles = userService.getAllRoles();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch vai trÃ² thÃ nh cÃ´ng")
+                .message("Lấy danh sách vai trò thành công")
                 .result(ItemListDto.<String>builder().items(roles).build())
                 .build();
     }
@@ -171,7 +171,7 @@ public class UserController {
     ApiResponse<ItemListDto<String>> getAllUserStatuses() {
         List<String> statuses = userService.getAllUserStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i ngÆ°á»i dÃ¹ng thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái người dùng thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -180,14 +180,14 @@ public class UserController {
     ApiResponse<Void> requestChangeOwnEmail(@RequestBody @Valid ChangeEmailRequest request) {
         userService.requestChangeOwnEmail(request);
         return ApiResponse.<Void>builder()
-                .message("MÃ£ OTP Ä‘Ã£ Ä‘Æ°á»£c gá»­i Ä‘áº¿n email má»›i")
+                .message("Mã OTP đã được gửi đến email mới")
                 .build();
     }
 
     @PostMapping("/change-email/confirm")
     ApiResponse<LoginResponse> confirmChangeOwnEmail(@RequestBody @Valid ConfirmChangeEmailRequest request) {
         return ApiResponse.<LoginResponse>builder()
-                .message("Äá»•i email thÃ nh cÃ´ng")
+                .message("Đổi email thành công")
                 .result(userService.confirmChangeOwnEmail(request))
                 .build();
     }
@@ -199,7 +199,7 @@ public class UserController {
     ) {
         userService.adminRequestChangeUserEmail(userId, request);
         return ApiResponse.<Void>builder()
-                .message("MÃ£ OTP Ä‘Ã£ Ä‘Æ°á»£c gá»­i Ä‘áº¿n email má»›i cá»§a khÃ¡ch hÃ ng")
+                .message("Mã OTP đã được gửi đến email mới của khách hàng")
                 .build();
     }
 
@@ -209,7 +209,7 @@ public class UserController {
             @RequestBody @Valid ConfirmChangeEmailRequest request
     ) {
         return ApiResponse.<UserResponse>builder()
-                .message("Admin Ä‘á»•i email khÃ¡ch hÃ ng thÃ nh cÃ´ng")
+                .message("Admin đổi email khách hàng thành công")
                 .result(userService.adminConfirmChangeUserEmail(userId, request))
                 .build();
     }

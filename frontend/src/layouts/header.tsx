@@ -419,12 +419,12 @@ scale-100 blur-0 grayscale-0)'
                                 type="button"
                                 onClick={goToPayingTab}
                                 className="mr-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-all duration-300"
-                                title={"C\u00F3 \u0111\u01A1n \u0111ang ch\u1EDD thanh to\u00E1n"}
+                                title="Có đơn đang chờ thanh toán"
                             >
                                 <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f58020] px-1 text-[11px] text-white">
                                     {payingOrderCount}
                                 </span>
-                                <span>{"Th\u00F4ng b\u00E1o"}</span>
+                                <span>Đơn chờ thanh toán</span>
                             </button>
                         )}
                         {isSignedIn ? (
@@ -515,6 +515,31 @@ scale-100 blur-0 grayscale-0)'
                                             </li>
                                             <li>
                                                 <a
+                                                    onClick={goToPayingTab}
+                                                    className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"
+                                                >
+                                                    <svg
+                                                        aria-hidden="true"
+                                                        focusable="false"
+                                                        className="w-4 h-4"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 448 512"
+                                                    >
+                                                        <path
+                                                            fill="currentColor"
+                                                            d="M152 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 48 16 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-16 0 0 32.5c0 17.7-14.3 32-32 32s-32-14.3-32-32L152 176l-16 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l16 0 0-48zM48 192l48 0 0 64-48 0c-26.5 0-48 21.5-48 48l0 112c0 26.5 21.5 48 48 48l304 0c26.5 0 48-21.5 48-48l0-112c0-26.5-21.5-48-48-48l-48 0 0-64 48 0c61.9 0 112 50.1 112 112l0 112c0 61.9-50.1 112-112 112L48 528C-13.9 528-64 477.9-64 416l0-112c0-61.9 50.1-112 112-112z"
+                                                        />
+                                                    </svg>
+                                                    <span className="grow ml-4">Đơn chờ thanh toán</span>
+                                                    {payingOrderCount > 0 && (
+                                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                                                            {payingOrderCount}
+                                                        </span>
+                                                    )}
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a
                                                     onClick={() => navigate(routePath.lich_su_dat_ve)}
                                                     className="text-sm text-left text-black py-2 px-[18px] hover:text-[#f26b38] hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300 flex items-center capitalize cursor-pointer"
                                                 >
@@ -530,7 +555,7 @@ scale-100 blur-0 grayscale-0)'
                                                             d="M24 56c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24l0 120 16 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-80 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l16 0 0-96-8 0C34.7 80 24 69.3 24 56zM86.7 341.2c-6.5-7.4-18.3-6.9-24 1.2L51.5 357.9c-7.7 10.8-22.7 13.3-33.5 5.6s-13.3-22.7-5.6-33.5l11.1-15.6c23.7-33.2 72.3-35.6 99.2-4.9c21.3 24.4 20.8 60.9-1.1 84.7L86.8 432l33.2 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-88 0c-9.5 0-18.2-5.6-22-14.4s-2.1-18.9 4.3-25.9l72-78c5.3-5.8 5.4-14.6 .3-20.5zM224 64l256 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32s14.3-32 32-32zm0 160l256 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32s14.3-32 32-32zm0 160l256 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32s14.3-32 32-32z"
                                                         />
                                                     </svg>
-                                                    <span className="grow ml-4">Lịch sử</span>
+                                                    <span className="grow ml-4">Lịch sử đơn hàng</span>
                                                 </a>
                                             </li>
                                             <li>
@@ -711,9 +736,12 @@ scale-100 blur-0 grayscale-0)'
                             <button
                                 type="button"
                                 onClick={goToPayingTab}
-                                className="ml-2 rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-700"
+                                className="ml-2 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700"
                             >
-                                {payingOrderCount}
+                                <span className="rounded-full bg-[#f58020] px-1.5 py-0.5 text-[10px] text-white">
+                                    {payingOrderCount}
+                                </span>
+                                <span>Đơn chờ</span>
                             </button>
                         )}
                         <button

@@ -40,7 +40,7 @@ public class MovieController {
             @RequestParam(required = false) MovieStatus status
     ) {
         return ApiResponse.<MovieResponse>builder()
-                .message("Láº¥y thÃ´ng tin phim thÃ nh cÃ´ng")
+                .message("Lấy thông tin phim thành công")
                 .result(movieService.getMovieById(movieId, status))
                 .build();
     }
@@ -55,7 +55,7 @@ public class MovieController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách phim thành công")
                 .result(movieService.filterMovies(movieId, name, movieTypeId, status, page, size))
                 .build();
     }
@@ -64,7 +64,7 @@ public class MovieController {
     public ApiResponse<ItemListDto<String>> getAllMovieStatuses() {
         List<String> statuses = movieService.getAllMovieStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái phim thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -78,7 +78,7 @@ public class MovieController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<MovieResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch phim thÃ nh cÃ´ng")
+                .message("Lấy danh sách phim thành công")
                 .result(movieService.getAllmovies(movieTypeId, status, page, size))
                 .build();
     }
@@ -86,7 +86,7 @@ public class MovieController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<MovieResponse> createMovie(@Valid @ModelAttribute MovieCreationResquest request) {
         return ApiResponse.<MovieResponse>builder()
-                .message("Táº¡o phim thÃ nh cÃ´ng")
+                .message("Tạo phim thành công")
                 .result(movieService.createMovie(request))
                 .build();
     }
@@ -102,7 +102,7 @@ public class MovieController {
             @Valid @ModelAttribute MovieUpdateResquest request
     ) {
         return ApiResponse.<MovieResponse>builder()
-                .message("Cáº­p nháº­t phim thÃ nh cÃ´ng")
+                .message("Cập nhật phim thành công")
                 .result(movieService.updateMovie(movieId, request))
                 .build();
     }
@@ -111,7 +111,7 @@ public class MovieController {
     public ApiResponse<Boolean> deleteMovie(@PathVariable Integer movieId) {
         return ApiResponse.<Boolean>builder()
                 .result(movieService.deleteMovie(movieId))
-                .message("XÃ³a phim thÃ nh cÃ´ng")
+                .message("Xóa phim thành công")
                 .build();
     }
 }

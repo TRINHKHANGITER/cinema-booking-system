@@ -32,7 +32,7 @@ public class CinemaController {
             @RequestParam(required = false) CinemaStatus status
     ) {
         return ApiResponse.<List<CinemaResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch ráº¡p thÃ nh cÃ´ng")
+                .message("Lấy danh sách rạp thành công")
                 .result(cinemaService.getCinemas(provinceId, isShowing, status))
                 .build();
     }
@@ -43,7 +43,7 @@ public class CinemaController {
             @RequestParam(required = false) CinemaStatus status
     ) {
         return ApiResponse.<ItemListDto<CinemaResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch ráº¡p thÃ nh cÃ´ng")
+                .message("Lấy danh sách rạp thành công")
                 .result(ItemListDto.<CinemaResponse>builder()
                         .items(cinemaService.getCinemas(provinceId, false, status))
                         .build())
@@ -53,7 +53,7 @@ public class CinemaController {
     @GetMapping("/{cinemaId}")
     public ApiResponse<CinemaResponse> getCinemaById(@PathVariable Integer cinemaId) {
         return ApiResponse.<CinemaResponse>builder()
-                .message("Láº¥y thÃ´ng tin ráº¡p thÃ nh cÃ´ng")
+                .message("Lấy thông tin rạp thành công")
                 .result(cinemaService.getCinemaById(cinemaId))
                 .build();
     }
@@ -66,7 +66,7 @@ public class CinemaController {
             @RequestParam(required = false) CinemaStatus status
     ) {
         return ApiResponse.<PagingDto<CinemaResponse>>builder()
-                .message("Láº¥y danh sÃ¡ch ráº¡p thÃ nh cÃ´ng")
+                .message("Lấy danh sách rạp thành công")
                 .result(cinemaService.getAllCinemas(provinceId, status, page, size))
                 .build();
     }
@@ -81,7 +81,7 @@ public class CinemaController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return ApiResponse.<PagingDto<CinemaResponse>>builder()
-                .message("Lá»c ráº¡p thÃ nh cÃ´ng")
+                .message("Lọc rạp thành công")
                 .result(cinemaService.filterCinemas(cinemaId, name, provinceId, status, page, size))
                 .build();
     }
@@ -90,7 +90,7 @@ public class CinemaController {
     public ApiResponse<ItemListDto<String>> getAllCinemaStatuses() {
         List<String> statuses = cinemaService.getAllCinemaStatuses();
         return ApiResponse.<ItemListDto<String>>builder()
-                .message("Láº¥y danh sÃ¡ch tráº¡ng thÃ¡i ráº¡p thÃ nh cÃ´ng")
+                .message("Lấy danh sách trạng thái rạp thành công")
                 .result(ItemListDto.<String>builder().items(statuses).build())
                 .build();
     }
@@ -98,7 +98,7 @@ public class CinemaController {
     @PostMapping
     public ApiResponse<CinemaResponse> createCinema(@RequestBody @Valid CinemaCreationRequest request) {
         return ApiResponse.<CinemaResponse>builder()
-                .message("Táº¡o ráº¡p thÃ nh cÃ´ng")
+                .message("Tạo rạp thành công")
                 .result(cinemaService.createCinema(request))
                 .build();
     }
@@ -109,7 +109,7 @@ public class CinemaController {
             @RequestBody @Valid CinemaUpdateRequest request
     ) {
         return ApiResponse.<CinemaResponse>builder()
-                .message("Cáº­p nháº­t ráº¡p thÃ nh cÃ´ng")
+                .message("Cập nhật rạp thành công")
                 .result(cinemaService.updateCinema(cinemaId, request))
                 .build();
     }
@@ -117,7 +117,7 @@ public class CinemaController {
     @DeleteMapping("/{cinemaId}")
     public ApiResponse<Boolean> deleteCinemaById(@PathVariable Integer cinemaId) {
         return ApiResponse.<Boolean>builder()
-                .message("XÃ³a ráº¡p thÃ nh cÃ´ng")
+                .message("Xóa rạp thành công")
                 .result(cinemaService.deleteCinemaById(cinemaId))
                 .build();
     }
