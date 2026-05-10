@@ -63,10 +63,10 @@ storage:
     image-movie-imagePortrait-pattern: /image/movie/imagePortrait/**
     image-movie-imagePortrait-dir: data/image/movie/imagePortrait
 
-# gemini:
-#     api:
-#         key: ${GEMINI_API_KEY}
-#         url: ${GEMINI_API_URL}
+gemini:
+    api:
+        key: ${GEMINI_API_KEY}
+        url: ${GEMINI_API_URL}
 
 app:
     base-url: https://cytoarchitecturally-noncomplaisant-johana.ngrok-free.dev

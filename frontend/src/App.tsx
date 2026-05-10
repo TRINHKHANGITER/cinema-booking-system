@@ -36,6 +36,7 @@ import DefaultLayout from "./layouts/DefaultLayout";
 import { Toaster } from "sonner";
 import AuthInitializer from "./layouts/AuthInitializer";
 import AdminGuard from "./layouts/AdminGuard";
+import ChatBot from "./components/ChatBot";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import MovieManagement from "./pages/admin/MovieManagement";
@@ -56,6 +57,7 @@ function App() {
         <>
             <Router>
                 <Toaster position="top-right" richColors />
+                <ChatBot />
                 <AuthInitializer>
                     <Routes>
                         {cusPublicRoutes.map((route, index) => {

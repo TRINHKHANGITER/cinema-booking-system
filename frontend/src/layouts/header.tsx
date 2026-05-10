@@ -409,7 +409,7 @@ scale-100 blur-0 grayscale-0)'
 
                             {/* Call API để lấy các rạp */}
                             <div className="hover relative">
-                                <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
+                                {/* <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
                                     <a
                                         href=""
                                         className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group capitalize hover:text-orange-500 transition-all duration-300"
@@ -444,7 +444,7 @@ scale-100 blur-0 grayscale-0)'
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                             {/*  */}
                         </div>
