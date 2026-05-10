@@ -11,6 +11,8 @@ import { useAuthStore } from "../stores/slices/authSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { routePath } from "../route/route";
 import { orderService } from "../services/order.service";
+import { movieTypeService } from "../services/movieType.service";
+import type { MovieTypeResponse } from "../types/movie-type";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
@@ -23,6 +25,7 @@ const Header = () => {
     const [openSignIn, setOpenSignIn] = useState<boolean>(false);
     const [openRegister, setOpenRegister] = useState<boolean>(false);
     const [payingOrderCount, setPayingOrderCount] = useState<number>(0);
+    const [movieTypes, setMovieTypes] = useState<MovieTypeResponse[]>([]);
 
     const [openMenu, setOpenMenu] = useState<MenuType | null>(null);
 
@@ -68,6 +71,43 @@ const Header = () => {
     const goToPayingTab = () => {
         navigate(`${routePath.lich_su_dat_ve}?tab=paying`);
     };
+
+    const goToSearchByMovieType = (movieTypeId: number) => {
+        const params = new URLSearchParams();
+        params.set("movieTypeId", String(movieTypeId));
+
+        navigate(`${routePath.search}?${params.toString()}`);
+        setOpen(false);
+        setOpenMenu(null);
+    };
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        const fetchMovieTypes = async () => {
+            try {
+                const response = await movieTypeService.getMovieTypeItemList("ACTIVE");
+                if (isCancelled) return;
+
+                if (response.code === "SUCCESS") {
+                    setMovieTypes(response.result?.items ?? []);
+                    return;
+                }
+
+                setMovieTypes([]);
+            } catch {
+                if (!isCancelled) {
+                    setMovieTypes([]);
+                }
+            }
+        };
+
+        void fetchMovieTypes();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, []);
     return (
         <header className="pt-5 pb-2 lg:pt-3 min-h-20 block bg-white">
             {open && (
@@ -215,18 +255,18 @@ scale-100 blur-0 grayscale-0)'
                             {/*  */}
                             <div className="hover relative">
                                 <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
-                                    <a
-                                        href=""
+                                    <button
+                                        type="button"
                                         className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group capitalize hover:text-orange-500 transition-all duration-300"
                                     >
-                                        Góc điện ảnh{" "}
+                                        {"Lo\u1ea1i phim"}
                                         <span className="text-xs md:hidden inline text-[#777777]">
                                             <i className="chevron-down transition-all duration-300 ease-in-out"></i>
                                         </span>
                                         <span className="text-xs md:ml-2 md:block hidden group-hover:text-primary transition-all duration-300 ease-in-out text-[#777777]">
                                             <Arrow />
                                         </span>
-                                    </a>
+                                    </button>
                                     <div>
                                         <div className="absolute top-[65px] -left-[45px] hidden group-hover:md:block hover:md:block z-[800]">
                                             <div
@@ -237,46 +277,28 @@ scale-100 blur-0 grayscale-0)'
                                                 }}
                                             >
                                                 <ul>
-                                                    <li className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 capitalize hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300">
-                                                        <a
-                                                            className="block py-2"
-                                                            href="/product-category/galaxy-merch/"
-                                                        >
-                                                            Thể loại phim
-                                                        </a>
-                                                    </li>
-                                                    <li className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 capitalize hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300">
-                                                        <a
-                                                            className="block py-2"
-                                                            href="/product-category/movie-merch/"
-                                                        >
-                                                            Diễn viên
-                                                        </a>
-                                                    </li>
-                                                    <li className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 capitalize hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300">
-                                                        <a
-                                                            className="block py-2"
-                                                            href="/product-category/movie-merch/"
-                                                        >
-                                                            Đạo diễn
-                                                        </a>
-                                                    </li>
-                                                    <li className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 capitalize hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300">
-                                                        <a
-                                                            className="block py-2"
-                                                            href="/product-category/movie-merch/"
-                                                        >
-                                                            Bình luận phim
-                                                        </a>
-                                                    </li>
-                                                    <li className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 capitalize hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300">
-                                                        <a
-                                                            className="block py-2"
-                                                            href="/product-category/movie-merch/"
-                                                        >
-                                                            Blog điện ảnh
-                                                        </a>
-                                                    </li>
+                                                    {movieTypes.length === 0 ? (
+                                                        <li className="text-sm text-black py-2">
+                                                            {"\u0110ang c\u1eadp nh\u1eadt"}
+                                                        </li>
+                                                    ) : (
+                                                        movieTypes.map((movieType) => (
+                                                            <li
+                                                                key={movieType.movieTypeId}
+                                                                className="text-sm text-black hover:text-[#f26b38] hover:pl-0.5 hover:border-l-4 hover:border-[#fd841f] hover:bg-[#fb770b1a] transition-all duration-300"
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    className="block w-full py-2 text-left"
+                                                                    onClick={() =>
+                                                                        goToSearchByMovieType(movieType.movieTypeId)
+                                                                    }
+                                                                >
+                                                                    {movieType.movieTypeName}
+                                                                </button>
+                                                            </li>
+                                                        ))
+                                                    )}
                                                 </ul>
                                             </div>
                                         </div>
@@ -934,7 +956,7 @@ scale-100 blur-0 grayscale-0)'
                                 <span
                                     className={`${openMenu === "gocdienanh" ? "text-[#F58020]" : ""} mr-2`}
                                 >
-                                    Góc điện ảnh
+                                    {"Lo\u1ea1i phim"}
                                 </span>
 
                                 <div
@@ -952,17 +974,28 @@ scale-100 blur-0 grayscale-0)'
                                 }`}
                             >
                                 <ul className="pl-5">
-                                    <li className="text-sm py-1 hover:text-[#F58020]">
-                                        Thể loại phim
-                                    </li>
-                                    <li className="text-sm py-1 hover:text-[#F58020]">Diễn Viên</li>
-                                    <li className="text-sm py-1 hover:text-[#F58020]">Đạo Diễn</li>
-                                    <li className="text-sm py-1 hover:text-[#F58020]">
-                                        Bình Luận Phim
-                                    </li>
-                                    <li className="text-sm py-1 hover:text-[#F58020]">
-                                        Blog Điện Ảnh
-                                    </li>
+                                    {movieTypes.length === 0 ? (
+                                        <li className="text-sm py-1 text-[#555]">
+                                            {"\u0110ang c\u1eadp nh\u1eadt"}
+                                        </li>
+                                    ) : (
+                                        movieTypes.map((movieType) => (
+                                            <li
+                                                key={movieType.movieTypeId}
+                                                className="text-sm py-1 hover:text-[#F58020]"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="w-full text-left"
+                                                    onClick={() =>
+                                                        goToSearchByMovieType(movieType.movieTypeId)
+                                                    }
+                                                >
+                                                    {movieType.movieTypeName}
+                                                </button>
+                                            </li>
+                                        ))
+                                    )}
                                 </ul>
                             </section>
                         </div>

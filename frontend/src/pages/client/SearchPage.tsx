@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import CardShowtime from "../../components/ui/CardShowtime";
 import { movieTypeService } from "../../services/movieType.service";
 import { provinceService } from "../../services/province.service";
@@ -37,6 +38,37 @@ const normalizeDate = (value?: string | null) => {
     return value.length >= 10 ? value.slice(0, 10) : value;
 };
 
+const normalizeIdParam = (value: string | null) => {
+    if (!value) return "";
+    const trimmedValue = value.trim();
+    return /^\d+$/.test(trimmedValue) ? trimmedValue : "";
+};
+
+const normalizeKeywordParam = (value: string | null) => value?.trim() ?? "";
+
+const normalizeDayParam = (value: string | null) => {
+    if (!value) return "";
+    const trimmedValue = value.trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(trimmedValue) ? trimmedValue : "";
+};
+
+const buildSearchParams = (filters: SearchFilters) => {
+    const params = new URLSearchParams();
+    if (filters.keyword) {
+        params.set("keyword", filters.keyword);
+    }
+    if (filters.provinceId) {
+        params.set("provinceId", filters.provinceId);
+    }
+    if (filters.movieTypeId) {
+        params.set("movieTypeId", filters.movieTypeId);
+    }
+    if (filters.day) {
+        params.set("day", filters.day);
+    }
+    return params;
+};
+
 const resolveEarliestShowTime = (item: FullShowtimeMovieResponse) => {
     if (!item.showTimes || item.showTimes.length === 0) {
         return null;
@@ -55,10 +87,16 @@ const resolveEarliestShowTime = (item: FullShowtimeMovieResponse) => {
 };
 
 const SearchPage = () => {
-    const [keyword, setKeyword] = useState("");
-    const [provinceId, setProvinceId] = useState<string>("");
-    const [movieTypeId, setMovieTypeId] = useState<string>("");
-    const [day, setDay] = useState("");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const keywordFromQuery = normalizeKeywordParam(searchParams.get("keyword"));
+    const provinceIdFromQuery = normalizeIdParam(searchParams.get("provinceId"));
+    const movieTypeIdFromQuery = normalizeIdParam(searchParams.get("movieTypeId"));
+    const dayFromQuery = normalizeDayParam(searchParams.get("day"));
+
+    const [keyword, setKeyword] = useState(keywordFromQuery);
+    const [provinceId, setProvinceId] = useState<string>(provinceIdFromQuery);
+    const [movieTypeId, setMovieTypeId] = useState<string>(movieTypeIdFromQuery);
+    const [day, setDay] = useState(dayFromQuery);
 
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [movieTypes, setMovieTypes] = useState<MovieTypeResponse[]>([]);
@@ -69,13 +107,45 @@ const SearchPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({
-        keyword: "",
-        provinceId: "",
-        movieTypeId: "",
-        day: "",
+        keyword: keywordFromQuery,
+        provinceId: provinceIdFromQuery,
+        movieTypeId: movieTypeIdFromQuery,
+        day: dayFromQuery,
     });
 
     const today = useMemo(() => getTodayAsLocalDate(), []);
+
+    useEffect(() => {
+        setKeyword((currentValue) =>
+            currentValue === keywordFromQuery ? currentValue : keywordFromQuery
+        );
+        setProvinceId((currentValue) =>
+            currentValue === provinceIdFromQuery ? currentValue : provinceIdFromQuery
+        );
+        setMovieTypeId((currentValue) =>
+            currentValue === movieTypeIdFromQuery ? currentValue : movieTypeIdFromQuery
+        );
+        setDay((currentValue) => (currentValue === dayFromQuery ? currentValue : dayFromQuery));
+
+        setCurrentPage(1);
+        setAppliedFilters((currentFilters) => {
+            if (
+                currentFilters.keyword === keywordFromQuery &&
+                currentFilters.provinceId === provinceIdFromQuery &&
+                currentFilters.movieTypeId === movieTypeIdFromQuery &&
+                currentFilters.day === dayFromQuery
+            ) {
+                return currentFilters;
+            }
+
+            return {
+                keyword: keywordFromQuery,
+                provinceId: provinceIdFromQuery,
+                movieTypeId: movieTypeIdFromQuery,
+                day: dayFromQuery,
+            };
+        });
+    }, [dayFromQuery, keywordFromQuery, movieTypeIdFromQuery, provinceIdFromQuery]);
 
     useEffect(() => {
         let isUnmounted = false;
@@ -262,14 +332,18 @@ const SearchPage = () => {
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const normalizedDay = day && day < today ? today : day;
-        setDay(normalizedDay);
-        setCurrentPage(1);
-        setAppliedFilters({
-            keyword,
+        const normalizedFilters: SearchFilters = {
+            keyword: keyword.trim(),
             provinceId,
             movieTypeId,
             day: normalizedDay,
-        });
+        };
+
+        setKeyword(normalizedFilters.keyword);
+        setDay(normalizedDay);
+        setCurrentPage(1);
+        setAppliedFilters(normalizedFilters);
+        setSearchParams(buildSearchParams(normalizedFilters));
     };
 
     return (
