@@ -39,7 +39,7 @@ public class TicketController {
             @RequestBody @Valid TicketStatusUpdateRequest request
     ) {
         return ApiResponse.<TicketResponse>builder()
-                .message("Cap nhat trang thai ve thanh cong")
+                .message("Cập nhật trạng thái vé thành công")
                 .result(ticketService.updateTicketStatus(ticketId, request.getStatus()))
                 .build();
     }

@@ -718,28 +718,28 @@ const OrderManagement = () => {
 
     const cancelPayingOrder = async (targetOrder: Order) => {
         if (targetOrder.status !== "PAYING") {
-            toast.error("Chi co the huy don o trang thai PAYING.");
+            toast.error("Chỉ có thể hủy đơn ở trạng thái PAYING.");
             return;
         }
 
-        const confirmed = window.confirm(`Xac nhan huy don #${targetOrder.orderId}?`);
+        const confirmed = window.confirm(`Xác nhận hủy đơn #${targetOrder.orderId}?`);
         if (!confirmed) return;
 
         try {
             setCancellingOrderId(targetOrder.orderId);
             const response = await bookingService.cancelOrder(targetOrder.orderId);
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Khong the huy don.");
+                toast.error(response.message || "Không thể hủy đơn.");
                 return;
             }
 
-            toast.success("Huy don thanh cong.");
+            toast.success("Hủy đơn thành công.");
             await fetchOrders();
             if (detailTargetId && detailTargetId === targetOrder.orderId) {
                 await openOrderDetail(detailTargetId);
             }
         } catch (error) {
-            toast.error(resolveApiErrorMessage(error, "Khong the huy don."));
+            toast.error(resolveApiErrorMessage(error, "Không thể hủy đơn."));
         } finally {
             setCancellingOrderId(null);
         }
@@ -1062,17 +1062,17 @@ const OrderManagement = () => {
         currentStatus: "ACTIVE" | "CANCELLED" | null
     ) => {
         if (!detailOrder || detailOrder.status !== "PAID") {
-            toast.error("Chi don PAID moi duoc doi trang thai ve.");
+            toast.error("Chỉ đơn PAID mới được đổi trạng thái vé.");
             return;
         }
         if (!isOrderDetailShowtimeInFuture(detailOrder)) {
-            toast.error("Chi duoc doi trang thai ve/combo khi suat chieu chua bat dau.");
+            toast.error("Chỉ được đổi trạng thái vé/combo khi suất chiếu chưa bắt đầu.");
             return;
         }
 
         const nextStatus = currentStatus === "CANCELLED" ? "ACTIVE" : "CANCELLED";
-        const actionLabel = nextStatus === "ACTIVE" ? "khoi phuc" : "huy";
-        const confirmed = window.confirm(`Xac nhan ${actionLabel} ve #${ticketId}?`);
+        const actionLabel = nextStatus === "ACTIVE" ? "khôi phục" : "hủy";
+        const confirmed = window.confirm(`Xác nhận ${actionLabel} vé #${ticketId}?`);
         if (!confirmed) return;
 
         try {
@@ -1081,21 +1081,21 @@ const OrderManagement = () => {
                 status: nextStatus,
             });
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Khong the doi trang thai ve.");
+                toast.error(response.message || "Không thể đổi trạng thái vé.");
                 return;
             }
 
             toast.success(
-                nextStatus === "ACTIVE" ? "Da khoi phuc ve thanh cong." : "Da huy ve thanh cong."
+                nextStatus === "ACTIVE" ? "Đã khôi phục vé thành công." : "Đã hủy vé thành công."
             );
             await refreshOrderDetailAndList(detailOrder.orderId);
         } catch (error) {
             const errorCode = parseApiErrorCode(error);
             if (errorCode === "SHOWTIME_SEAT_NOT_AVAILABLE" && nextStatus === "ACTIVE") {
-                toast.error("Ve da het cho, khong the khoi phuc ve nay.");
+                toast.error("Vé đã hết chỗ, không thể khôi phục vé này.");
                 return;
             }
-            toast.error(resolveApiErrorMessage(error, "Khong the doi trang thai ve."));
+            toast.error(resolveApiErrorMessage(error, "Không thể đổi trạng thái vé."));
         } finally {
             setRunningTicketId(null);
         }
@@ -1106,17 +1106,17 @@ const OrderManagement = () => {
         currentStatus: "ACTIVE" | "CANCELLED" | null
     ) => {
         if (!detailOrder || detailOrder.status !== "PAID") {
-            toast.error("Chi don PAID moi duoc doi trang thai combo.");
+            toast.error("Chỉ đơn PAID mới được đổi trạng thái combo.");
             return;
         }
         if (!isOrderDetailShowtimeInFuture(detailOrder)) {
-            toast.error("Chi duoc doi trang thai ve/combo khi suat chieu chua bat dau.");
+            toast.error("Chỉ được đổi trạng thái vé/combo khi suất chiếu chưa bắt đầu.");
             return;
         }
 
         const nextStatus = currentStatus === "CANCELLED" ? "ACTIVE" : "CANCELLED";
-        const actionLabel = nextStatus === "ACTIVE" ? "khoi phuc" : "huy";
-        const confirmed = window.confirm(`Xac nhan ${actionLabel} combo #${orderComboId}?`);
+        const actionLabel = nextStatus === "ACTIVE" ? "khôi phục" : "hủy";
+        const confirmed = window.confirm(`Xác nhận ${actionLabel} combo #${orderComboId}?`);
         if (!confirmed) return;
 
         try {
@@ -1125,18 +1125,18 @@ const OrderManagement = () => {
                 status: nextStatus,
             });
             if (response.code !== "SUCCESS") {
-                toast.error(response.message || "Khong the doi trang thai combo.");
+                toast.error(response.message || "Không thể đổi trạng thái combo.");
                 return;
             }
 
             toast.success(
                 nextStatus === "ACTIVE"
-                    ? "Da khoi phuc combo thanh cong."
-                    : "Da huy combo thanh cong."
+                    ? "Đã khôi phục combo thành công."
+                    : "Đã hủy combo thành công."
             );
             await refreshOrderDetailAndList(detailOrder.orderId);
         } catch (error) {
-            toast.error(resolveApiErrorMessage(error, "Khong the doi trang thai combo."));
+            toast.error(resolveApiErrorMessage(error, "Không thể đổi trạng thái combo."));
         } finally {
             setRunningOrderComboId(null);
         }
@@ -1165,7 +1165,7 @@ const OrderManagement = () => {
         if (!statusTargetOrder || !nextStatus) return;
 
         const confirmed = window.confirm(
-            `Xac nhan doi trang thai don #${statusTargetOrder.orderId} sang ${nextStatus}?`
+            `Xác nhận đổi trạng thái đơn #${statusTargetOrder.orderId} sang ${nextStatus}?`
         );
         if (!confirmed) return;
 
@@ -1174,7 +1174,7 @@ const OrderManagement = () => {
 
             const detailResponse = await orderService.getOrderDetailByOrderId(statusTargetOrder.orderId);
             if (detailResponse.code !== "SUCCESS" || !detailResponse.result) {
-                toast.error(detailResponse.message || "Khong the tai chi tiet don hang.");
+                toast.error(detailResponse.message || "Không thể tải chi tiết đơn hàng.");
                 return;
             }
 
@@ -1184,12 +1184,12 @@ const OrderManagement = () => {
                     (nextStatus === "CANCELLED" || nextStatus === "REFUNDED")) ||
                 (currentStatus === "CANCELLED" && nextStatus === "REFUNDED");
             if (!isValidTransition) {
-                toast.error("Khong the doi trang thai don hang theo lua chon nay.");
+                toast.error("Không thể đổi trạng thái đơn hàng theo lựa chọn này.");
                 return;
             }
 
             if (!isOrderDetailShowtimeInFuture(detailResponse.result)) {
-                toast.error("Chi duoc doi trang thai don khi suat chieu chua bat dau.");
+                toast.error("Chỉ được đổi trạng thái đơn khi suất chiếu chưa bắt đầu.");
                 return;
             }
 
@@ -1428,8 +1428,8 @@ const OrderManagement = () => {
                                                             className="rounded-md border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
                                                             {cancellingOrderId === order.orderId
-                                                                ? "Dang huy..."
-                                                                : "Huy don"}
+                                                                ? "Đang hủy..."
+                                                                : "Hủy đơn"}
                                                         </button>
                                                         <button
                                                             type="button"
@@ -1440,8 +1440,8 @@ const OrderManagement = () => {
                                                             className="rounded-md border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
                                                             {resumingOrderId === order.orderId
-                                                                ? "Dang mo..."
-                                                                : "Tiep tuc thanh toan"}
+                                                                ? "Đang mở..."
+                                                                : "Tiếp tục thanh toán"}
                                                         </button>
                                                     </>
                                                 )}
@@ -2492,8 +2492,8 @@ const OrderManagement = () => {
                         {detailOrder.status === "PAID" && (
                             <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                 {canEditPaidOrderLines
-                                    ? "Don PAID nay co the doi trang thai ve/combo ACTIVE <-> CANCELLED truoc gio chieu."
-                                    : "Khong the doi trang thai ve/combo vi suat chieu da bat dau hoac da qua gio."}
+                                    ? "Đơn PAID này có thể đổi trạng thái vé/combo ACTIVE <-> CANCELLED trước giờ chiếu."
+                                    : "Không thể đổi trạng thái vé/combo vì suất chiếu đã bắt đầu hoặc đã quá giờ."}
                             </div>
                         )}
 
@@ -2503,7 +2503,7 @@ const OrderManagement = () => {
                                     Danh sách ghế đã đặt
                                 </h4>
                                 {detailOrder.seats.length === 0 ? (
-                                    <p className="mt-3 text-sm text-slate-500">Khong co ghe.</p>
+                                    <p className="mt-3 text-sm text-slate-500">Không có ghế.</p>
                                 ) : (
                                     <div className="mt-3 space-y-2">
                                         {detailOrder.seats.map((seat) => (
@@ -2539,10 +2539,10 @@ const OrderManagement = () => {
                                                                 className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                             >
                                                                 {runningTicketId === seat.ticketId
-                                                                    ? "Dang xu ly..."
+                                                                    ? "Đang xử lý..."
                                                                     : seat.ticketStatus === "CANCELLED"
-                                                                      ? "Khoi phuc ve"
-                                                                      : "Huy ve"}
+                                                                      ? "Khôi phục vé"
+                                                                      : "Hủy vé"}
                                                             </button>
                                                         )}
                                                 </div>
@@ -2557,7 +2557,7 @@ const OrderManagement = () => {
                                     Combo đã chọn
                                 </h4>
                                 {detailOrder.combos.length === 0 ? (
-                                    <p className="mt-3 text-sm text-slate-500">Khong co combo.</p>
+                                    <p className="mt-3 text-sm text-slate-500">Không có combo.</p>
                                 ) : (
                                     <div className="mt-3 space-y-2">
                                         {detailOrder.combos.map((combo) => (
@@ -2570,7 +2570,7 @@ const OrderManagement = () => {
                                                         {combo.quantity}x {combo.comboName}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        So luong: {combo.quantity}
+                                                        Số lượng: {combo.quantity}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
                                                         Status: {combo.status ?? "ACTIVE"}
@@ -2593,10 +2593,10 @@ const OrderManagement = () => {
                                                             className="rounded-md border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
                                                             {runningOrderComboId === combo.orderComboId
-                                                                ? "Dang xu ly..."
+                                                                ? "Đang xử lý..."
                                                                 : combo.status === "CANCELLED"
-                                                                  ? "Khoi phuc combo"
-                                                                  : "Huy combo"}
+                                                                  ? "Khôi phục combo"
+                                                                  : "Hủy combo"}
                                                         </button>
                                                     )}
                                                 </div>
@@ -2704,9 +2704,9 @@ const OrderManagement = () => {
                                     ))}
                                 </select>
                                 <p className="text-xs text-slate-500">
-                                    Don PAID chi duoc doi sang CANCELLED/REFUNDED, don CANCELLED chi duoc
-                                    doi sang REFUNDED. He thong khong tu dong doi status ve/combo khi doi
-                                    status don.
+                                    Đơn PAID chỉ được đổi sang CANCELLED/REFUNDED, đơn CANCELLED chỉ được
+                                    đổi sang REFUNDED. Hệ thống không tự động đổi status vé/combo khi đổi
+                                    status đơn.
                                 </p>
                             </>
                         )}

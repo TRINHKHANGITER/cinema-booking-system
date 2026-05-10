@@ -29,7 +29,7 @@ public class BookingController {
             @RequestBody @Valid UpdateOrderCombosRequest request
     ) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Cap nhat combo cua don hang thanh cong")
+                .message("Cập nhật combo của đơn hàng thành công")
                 .result(bookingService.updateOrderCombos(orderId, request))
                 .build();
     }
@@ -37,7 +37,7 @@ public class BookingController {
     @PostMapping("/order/{orderId}/cancel")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable Integer orderId) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Huy don hang thanh cong")
+                .message("Hủy đơn hàng thành công")
                 .result(bookingService.cancelOrder(orderId))
                 .build();
     }
@@ -45,7 +45,7 @@ public class BookingController {
     @PostMapping("/order/{orderId}/recalculate-total")
     public ApiResponse<OrderResponse> recalculateOrderTotal(@PathVariable Integer orderId) {
         return ApiResponse.<OrderResponse>builder()
-                .message("Cap nhat tong tien don hang thanh cong")
+                .message("Cập nhật tổng tiền đơn hàng thành công")
                 .result(bookingService.recalculateOrderTotalsForOrder(orderId))
                 .build();
     }

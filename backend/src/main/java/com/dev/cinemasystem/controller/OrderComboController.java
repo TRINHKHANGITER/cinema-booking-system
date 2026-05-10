@@ -39,7 +39,7 @@ public class OrderComboController {
             @RequestBody @Valid OrderComboStatusUpdateRequest request
     ) {
         return ApiResponse.<OrderComboResponse>builder()
-                .message("Cap nhat trang thai combo trong don hang thanh cong")
+                .message("Cập nhật trạng thái combo trong đơn hàng thành công")
                 .result(orderComboService.updateOrderComboStatus(orderComboId, request.getStatus()))
                 .build();
     }

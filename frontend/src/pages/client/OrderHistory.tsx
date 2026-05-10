@@ -15,16 +15,16 @@ type OrderHistoryItem = {
 };
 
 const TABS: Array<{ key: TabKey; label: string }> = [
-    { key: "paying", label: "Dang cho thanh toan" },
-    { key: "all", label: "Tat ca" },
+    { key: "paying", label: "Đang chờ thanh toán" },
+    { key: "all", label: "Tất cả" },
 ];
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
-    PAYING: "Dang cho thanh toan",
-    PAID: "Da thanh toan",
-    CANCELLED: "Da huy",
-    REFUNDED: "Da hoan tien",
-    EXPIRED: "Da het han",
+    PAYING: "Đang chờ thanh toán",
+    PAID: "Đã thanh toán",
+    CANCELLED: "Đã hủy",
+    REFUNDED: "Đã hoàn tiền",
+    EXPIRED: "Đã hết hạn",
 };
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
@@ -36,7 +36,7 @@ const STATUS_STYLE: Record<OrderStatus, string> = {
 };
 
 const toDateText = (value?: string | null) => {
-    if (!value) return "Dang cap nhat";
+    if (!value) return "Đang cập nhật";
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return value;
     return parsed.toLocaleDateString("vi-VN", {
@@ -47,14 +47,14 @@ const toDateText = (value?: string | null) => {
 };
 
 const toDateTimeText = (value?: string | null) => {
-    if (!value) return "Dang cap nhat";
+    if (!value) return "Đang cập nhật";
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return value;
     return parsed.toLocaleString("vi-VN");
 };
 
 const formatMoney = (value?: number | null) => {
-    return `${Number(value ?? 0).toLocaleString("vi-VN")} d`;
+    return `${Number(value ?? 0).toLocaleString("vi-VN")} đ`;
 };
 
 const parseTab = (value: string | null): TabKey => {
@@ -132,7 +132,7 @@ const OrderHistoryPage = () => {
             );
         } catch {
             setItems([]);
-            toast.error("Khong the tai lich su dat ve.");
+            toast.error("Không thể tải lịch sử đặt vé.");
         } finally {
             setLoading(false);
         }
@@ -159,16 +159,16 @@ const OrderHistoryPage = () => {
     };
 
     const handleCancelOrder = async (orderId: number) => {
-        const confirmed = window.confirm("Ban co chac muon huy don nay khong?");
+        const confirmed = window.confirm("Bạn có chắc muốn hủy đơn này không?");
         if (!confirmed) return;
 
         setRunningOrderId(orderId);
         try {
             await bookingService.cancelOrder(orderId);
-            toast.success("Da huy don thanh cong.");
+            toast.success("Đã hủy đơn thành công.");
             await fetchOrders();
         } catch {
-            toast.error("Khong the huy don. Vui long thu lai.");
+            toast.error("Không thể hủy đơn. Vui lòng thử lại.");
         } finally {
             setRunningOrderId(null);
         }
@@ -179,7 +179,7 @@ const OrderHistoryPage = () => {
         const movieId = item.detail?.showTime?.movieId ?? showTimeId;
         const movieSlug = toMovieSlug(item.detail?.showTime?.movieName, movieId);
         if (!showTimeId) {
-            toast.error("Khong tim thay thong tin suat chieu de tiep tuc.");
+            toast.error("Không tìm thấy thông tin suất chiếu để tiếp tục.");
             return;
         }
 
@@ -198,9 +198,9 @@ const OrderHistoryPage = () => {
         return (
             <div className="mx-auto w-full max-w-4xl px-4 py-12">
                 <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-                    <h1 className="text-2xl font-bold text-slate-800">Lich su dat ve</h1>
+                    <h1 className="text-2xl font-bold text-slate-800">Lịch sử đặt vé</h1>
                     <p className="mt-3 text-slate-500">
-                        Vui long dang nhap de xem lich su don hang cua ban.
+                        Vui lòng đăng nhập để xem lịch sử đơn hàng của bạn.
                     </p>
                 </div>
             </div>
@@ -211,9 +211,9 @@ const OrderHistoryPage = () => {
         <div className="bg-[#f7f8fb] py-8">
             <div className="mx-auto w-full max-w-6xl px-4">
                 <div className="mb-6 rounded-2xl bg-gradient-to-r from-[#034ea2] to-[#0f6dd3] p-6 text-white shadow-lg">
-                    <h1 className="text-2xl font-bold md:text-3xl">Lich su dat ve</h1>
+                    <h1 className="text-2xl font-bold md:text-3xl">Lịch sử đặt vé</h1>
                     <p className="mt-2 text-sm text-blue-100 md:text-base">
-                        Quan ly don hang, tiep tuc thanh toan hoac huy don cho.
+                        Quản lý đơn hàng, tiếp tục thanh toán hoặc hủy đơn chờ.
                     </p>
                 </div>
 
@@ -240,11 +240,11 @@ const OrderHistoryPage = () => {
 
                 {loading ? (
                     <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
-                        Dang tai lich su don hang...
+                        Đang tải lịch sử đơn hàng...
                     </div>
                 ) : items.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-                        Khong co don hang phu hop voi bo loc hien tai.
+                        Không có đơn hàng phù hợp với bộ lọc hiện tại.
                     </div>
                 ) : (
                     <div className="space-y-5">
@@ -272,7 +272,7 @@ const OrderHistoryPage = () => {
                                         <div className="p-5 md:p-6">
                                             <div className="mb-4 flex flex-wrap items-center gap-3">
                                                 <span className="text-sm font-semibold text-slate-500">
-                                                    Ma don #{order.orderId}
+                                                    Mã đơn #{order.orderId}
                                                 </span>
                                                 <span
                                                     className={[
@@ -283,7 +283,7 @@ const OrderHistoryPage = () => {
                                                     {STATUS_LABEL[order.status]}
                                                 </span>
                                                 <span className="text-xs text-slate-400">
-                                                    Tao luc: {toDateTimeText(order.createdAt)}
+                                                    Tạo lúc: {toDateTimeText(order.createdAt)}
                                                 </span>
                                             </div>
 
@@ -293,34 +293,34 @@ const OrderHistoryPage = () => {
 
                                             <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-slate-600 md:grid-cols-2">
                                                 <p>
-                                                    <strong>Rap:</strong>{" "}
-                                                    {detail?.showTime.cinemaName ?? "Dang cap nhat"}
+                                                    <strong>Rạp:</strong>{" "}
+                                                    {detail?.showTime.cinemaName ?? "Đang cập nhật"}
                                                 </p>
                                                 <p>
-                                                    <strong>Phong:</strong>{" "}
-                                                    {detail?.showTime.roomName ?? "Dang cap nhat"}
+                                                    <strong>Phòng:</strong>{" "}
+                                                    {detail?.showTime.roomName ?? "Đang cập nhật"}
                                                 </p>
                                                 <p>
-                                                    <strong>Ngay chieu:</strong>{" "}
+                                                    <strong>Ngày chiếu:</strong>{" "}
                                                     {toDateText(detail?.showTime.releaseDate)}
                                                 </p>
                                                 <p>
-                                                    <strong>Gio chieu:</strong>{" "}
-                                                    {formatTime(detail?.showTime.startTime ?? "") || "Dang cap nhat"}
+                                                    <strong>Giờ chiếu:</strong>{" "}
+                                                    {formatTime(detail?.showTime.startTime ?? "") || "Đang cập nhật"}
                                                 </p>
                                                 <p>
-                                                    <strong>So luong ve active:</strong> {activeSeatCount}
+                                                    <strong>Số lượng vé active:</strong> {activeSeatCount}
                                                 </p>
                                                 <p>
-                                                    <strong>So luong combo active:</strong> {activeComboQuantity}
+                                                    <strong>Số lượng combo active:</strong> {activeComboQuantity}
                                                 </p>
                                             </div>
 
                                             {isExpanded && (
                                                 <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                                                    <p className="font-semibold text-slate-700">Thong tin ve</p>
+                                                    <p className="font-semibold text-slate-700">Thông tin vé</p>
                                                     {seats.length === 0 ? (
-                                                        <p className="mt-1 text-slate-500">Khong co ve.</p>
+                                                        <p className="mt-1 text-slate-500">Không có vé.</p>
                                                     ) : (
                                                         <ul className="mt-2 space-y-1">
                                                             {seats.map((seat) => (
@@ -339,10 +339,10 @@ const OrderHistoryPage = () => {
                                                         </ul>
                                                     )}
                                                     <p className="mt-3 font-semibold text-slate-700">
-                                                        Thong tin combo
+                                                        Thông tin combo
                                                     </p>
                                                     {combos.length === 0 ? (
-                                                        <p className="mt-1 text-slate-500">Khong co combo.</p>
+                                                        <p className="mt-1 text-slate-500">Không có combo.</p>
                                                     ) : (
                                                         <ul className="mt-2 space-y-1">
                                                             {combos.map((combo) => (
@@ -367,15 +367,15 @@ const OrderHistoryPage = () => {
                                         <div className="border-t border-dashed border-slate-200 bg-[#fff9f3] p-5 md:border-l md:border-t-0 md:p-6">
                                             <div className="text-sm text-slate-500">
                                                 <p className="flex items-center justify-between">
-                                                    <span>Tien ve</span>
+                                                    <span>Tiền vé</span>
                                                     <strong>{formatMoney(detail?.ticketTotal ?? order.ticketTotal)}</strong>
                                                 </p>
                                                 <p className="mt-2 flex items-center justify-between">
-                                                    <span>Tien combo</span>
+                                                    <span>Tiền combo</span>
                                                     <strong>{formatMoney(detail?.comboTotal ?? order.comboTotal)}</strong>
                                                 </p>
                                                 <p className="mt-2 flex items-center justify-between">
-                                                    <span>Giam gia</span>
+                                                    <span>Giảm giá</span>
                                                     <strong>
                                                         {formatMoney(detail?.discountAmount ?? order.discountAmount)}
                                                     </strong>
@@ -385,7 +385,7 @@ const OrderHistoryPage = () => {
                                             <div className="my-4 border-t border-dashed border-slate-300" />
 
                                             <p className="flex items-end justify-between">
-                                                <span className="text-sm font-semibold text-slate-600">Tong tien</span>
+                                                <span className="text-sm font-semibold text-slate-600">Tổng tiền</span>
                                                 <span className="text-2xl font-extrabold text-[#f58020]">
                                                     {formatMoney(detail?.netAmount ?? order.netAmount)}
                                                 </span>
@@ -397,7 +397,7 @@ const OrderHistoryPage = () => {
                                                     onClick={() => toggleDetail(order.orderId)}
                                                     className="rounded-lg border border-[#034ea2] bg-white px-3 py-2 text-sm font-semibold text-[#034ea2] transition hover:bg-[#034ea2] hover:text-white"
                                                 >
-                                                    {isExpanded ? "An chi tiet" : "Xem chi tiet"}
+                                                    {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
                                                 </button>
 
                                                 {order.status === "PAYING" && (
@@ -408,7 +408,7 @@ const OrderHistoryPage = () => {
                                                             disabled={isRunning}
                                                             className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            Huy don
+                                                            Hủy đơn
                                                         </button>
                                                         <button
                                                             type="button"
@@ -416,10 +416,10 @@ const OrderHistoryPage = () => {
                                                             disabled={isRunning}
                                                             className="rounded-lg bg-[#f58020] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#de6f13] disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            Tiep tuc thanh toan
+                                                            Tiếp tục thanh toán
                                                         </button>
                                                         <p className="text-xs text-slate-500">
-                                                            Het han giu cho: {toDateTimeText(order.expiredAt)}
+                                                            Hết hạn giữ chỗ: {toDateTimeText(order.expiredAt)}
                                                         </p>
                                                     </>
                                                 )}

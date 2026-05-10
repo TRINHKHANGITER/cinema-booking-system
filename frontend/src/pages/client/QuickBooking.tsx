@@ -976,7 +976,7 @@ export default function QuickBookingPage() {
                             <div className="my-5 border-t border-dashed border-slate-300" />
 
                             <div className="flex items-center justify-between">
-                                <strong className="text-base text-slate-700">Tong cong</strong>
+                                <strong className="text-base text-slate-700">Tổng cộng</strong>
                                 <span className="font-bold text-[#f58220]">
                                     {formatMoney(0)}
                                 </span>
@@ -990,7 +990,7 @@ export default function QuickBookingPage() {
                             onClick={handleBack}
                             className="rounded px-4 py-3 text-[#f58220] transition hover:bg-orange-50"
                         >
-                            Quay lai
+                            Quay lại
                         </button>
 
                         <button
@@ -998,7 +998,7 @@ export default function QuickBookingPage() {
                             onClick={handleContinue}
                             className="rounded bg-[#f58220] px-4 py-3 font-semibold text-white transition hover:bg-[#e46f0d]"
                         >
-                            Tiep tuc
+                            Tiếp tục
                         </button>
                     </div>
                 </aside>
@@ -1007,7 +1007,7 @@ export default function QuickBookingPage() {
             <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-white px-4 py-3 shadow xl:hidden">
                 <div className="flex items-center justify-between gap-3">
                     <div>
-                        <span className="text-sm text-slate-500">Tong cong: </span>
+                        <span className="text-sm text-slate-500">Tổng cộng: </span>
                         <strong className="text-[#f58220]">{formatMoney(0)}</strong>
                     </div>
 
@@ -1017,7 +1017,7 @@ export default function QuickBookingPage() {
                             onClick={handleBack}
                             className="h-10 rounded px-3 text-sm text-[#f58220]"
                         >
-                            Quay lai
+                            Quay lại
                         </button>
 
                         <button
@@ -1025,7 +1025,7 @@ export default function QuickBookingPage() {
                             onClick={handleContinue}
                             className="h-10 rounded bg-[#f58220] px-4 text-sm font-semibold text-white"
                         >
-                            Tiep tuc
+                            Tiếp tục
                         </button>
                     </div>
                 </div>
