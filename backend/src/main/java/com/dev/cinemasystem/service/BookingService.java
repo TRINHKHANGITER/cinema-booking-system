@@ -251,11 +251,13 @@ public class BookingService {
                         .combo(combo)
                         .quantity(quantity)
                         .unitPrice(combo.getPrice())
+                        .netAmount(combo.getPrice())
                         .status(ComboDetailStatus.ACTIVE)
                         .build();
             } else {
                 row.setQuantity(quantity);
                 row.setUnitPrice(combo.getPrice());
+                row.setNetAmount(combo.getPrice());
                 row.setStatus(ComboDetailStatus.ACTIVE);
             }
             rowsToSave.add(row);
@@ -698,6 +700,7 @@ public class BookingService {
             ticket.setSeat(seat);
             ticket.setPriceTicket(priceTicket);
             ticket.setUnitPrice(priceTicket.getPrice());
+            ticket.setNetAmount(priceTicket.getPrice());
             ticket.setQrCode(buildTicketQr(order.getOrderId(), heldSeat.getShowTime().getShowTimeId(), seatId));
             ticket.setStatus(TicketStatus.ACTIVE);
 

@@ -52,6 +52,7 @@ public class OrderComboService {
         orderCombo.setOrder(order);
         orderCombo.setCombo(combo);
         orderCombo.setUnitPrice(combo.getPrice());
+        orderCombo.setNetAmount(combo.getPrice());
         orderCombo.setStatus(ComboDetailStatus.ACTIVE);
 
         return orderComboMapper.toComboResponse(orderComboRepository.save(orderCombo));

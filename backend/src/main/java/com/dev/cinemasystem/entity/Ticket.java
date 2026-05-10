@@ -47,6 +47,9 @@ public class Ticket {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal unitPrice;
 
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal netAmount;
+
     @Column(length = 255)
     String qrCode;
 
