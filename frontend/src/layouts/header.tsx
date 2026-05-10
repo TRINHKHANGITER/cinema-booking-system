@@ -102,7 +102,7 @@ scale-100 blur-0 grayscale-0)'
                             className='max-w-min w-[84px] h-[27px] lg:w-[112px] lg:h-[36px] inline-block object-cover duration-500 ease-in-out group-hover:opacity-100"
 scale-100 blur-0 grayscale-0)'
                             style={{ color: "transparent" }}
-                            src={"../../images/btn-ticket.webp"}
+                            src={"/images/btn-ticket.webp"}
                         />
                     </Link>
                     {/* phần center */}
@@ -110,7 +110,7 @@ scale-100 blur-0 grayscale-0)'
                         <div className="grow md:flex hidden items-center justify-center">
                             <Link to={routePath.dat_ve_quick} className="md:block hidden mr-4">
                                 <img
-                                    src={"../../images/btn-ticket.webp"}
+                                    src={"/images/btn-ticket.webp"}
                                     alt="Ticket"
                                     loading="lazy"
                                     width="112"

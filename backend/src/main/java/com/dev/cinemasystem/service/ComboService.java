@@ -12,6 +12,7 @@ import com.dev.cinemasystem.mapper.ComboMapper;
 import com.dev.cinemasystem.repository.ComboRepository;
 import com.dev.cinemasystem.repository.OrderComboRepository;
 import com.dev.cinemasystem.utils.FileStoreUtil;
+import com.dev.cinemasystem.utils.StoragePathResolver;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -187,7 +187,7 @@ public class ComboService {
 
     private String saveComboImage(Integer comboId, MultipartFile image) {
         try {
-            Path imageDir = Paths.get(imageComboDir).toAbsolutePath().normalize();
+            Path imageDir = StoragePathResolver.resolveToAbsolutePath(imageComboDir);
             return FileStoreUtil.saveWithBaseNameOverwrite(image, imageDir, String.valueOf(comboId));
         } catch (RuntimeException exception) {
             log.error("Failed to save image for combo id {}", comboId, exception);

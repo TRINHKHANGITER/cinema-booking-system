@@ -65,6 +65,11 @@ const resolveMovieStorageImage = (
     }
 
     if (normalized.startsWith("/")) {
+        if (baseUrl && normalized.startsWith("/data/image/")) {
+            const normalizedFileName = normalized.split("/").filter(Boolean).at(-1) ?? normalized;
+            return `${baseUrl}/${normalizedFileName}`;
+        }
+
         if (normalized.startsWith("/cinema/api/") && BACKEND_ORIGIN) {
             return `${BACKEND_ORIGIN}${normalized}`;
         }
