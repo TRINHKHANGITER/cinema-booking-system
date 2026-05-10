@@ -4,6 +4,7 @@ import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.orderDTO.*;
+import com.dev.cinemasystem.service.EmailService;
 import com.dev.cinemasystem.service.OrderService;
 import com.dev.cinemasystem.enums.OrderStatus;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderController {
     OrderService orderService;
+    EmailService emailService;
 
     @PostMapping
     public ApiResponse<OrderResponse> createOrder(@RequestBody OrderCreationRequest orderCreationRequest) {
@@ -103,6 +105,15 @@ public class OrderController {
         return ApiResponse.<OrderResponse>builder()
                 .message("Cập nhật trạng thái đơn hàng thành công")
                 .result(orderService.updateStatusOrder(orderId, request.getStatus()))
+                .build();
+    }
+
+    @PostMapping("/{orderId}/send-ticket")
+    ApiResponse<Void> verifyEmail(@PathVariable int orderId) {
+        emailService.sendTicketWithCombo(orderId);
+
+        return ApiResponse.<Void>builder()
+                .message("Gửi thông tin vé xem phim thành công!")
                 .build();
     }
 

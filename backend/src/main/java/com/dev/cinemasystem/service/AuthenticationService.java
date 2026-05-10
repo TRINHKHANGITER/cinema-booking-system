@@ -3,6 +3,7 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.dto.authDTO.*;
+import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.OtpToken;
 import com.dev.cinemasystem.entity.User;
 import com.dev.cinemasystem.enums.OtpPurpose;
@@ -11,6 +12,7 @@ import com.dev.cinemasystem.enums.UserStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.UserMapper;
+import com.dev.cinemasystem.repository.OrderRepository;
 import com.dev.cinemasystem.repository.OtpTokenRepository;
 import com.dev.cinemasystem.repository.UserRepository;
 import com.dev.cinemasystem.dto.userDto.UserResponse;
@@ -44,6 +46,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
+    private final OrderRepository orderRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -66,7 +69,6 @@ public class AuthenticationService {
     OtpTokenRepository otpTokenRepository;
     PasswordEncoder passwordEncoder;
 
-
     public boolean introspect (String token)
             throws JOSEException, ParseException {
 
@@ -79,8 +81,6 @@ public class AuthenticationService {
         return isValid;
 
     }
-
-
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
@@ -98,7 +98,6 @@ public class AuthenticationService {
         log.info("token verified for user: {}", signedJWT.getJWTClaimsSet().getSubject());
         return signedJWT;
     }
-
 
     public LoginResponse authenticate(LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase(Locale.ROOT))
@@ -150,8 +149,6 @@ public class AuthenticationService {
         createOtpToken(savedUser, email, OtpPurpose.VERIFY_EMAIL);
     }
 
-
-
     public String generateToken(User user, int hours){
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimSet = new JWTClaimsSet.Builder()
@@ -179,7 +176,6 @@ public class AuthenticationService {
             throw new RuntimeException(e);
         }
     }
-
 
     @Transactional
     public LoginResponse loginGoogle(GoogleLoginRequest request) {
@@ -221,9 +217,6 @@ public class AuthenticationService {
 
         return buildLoginResponse(user);
     }
-
-
-
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
@@ -289,7 +282,6 @@ public class AuthenticationService {
         otpToken.setUsed(true);
         otpTokenRepository.save(otpToken);
     }
-
 
     private String generateOtp() {
         SecureRandom random = new SecureRandom();
@@ -381,6 +373,5 @@ public class AuthenticationService {
         }
         return email;
     }
-
 
 }

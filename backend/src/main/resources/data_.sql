@@ -1370,6 +1370,7 @@ SELECT
     NOW()
 FROM show_time st
 JOIN seat s ON s.room_id = st.room_id;
+
 -- price_ticket
 INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
 -- 2D + Thường
@@ -1436,12 +1437,12 @@ INSERT INTO orders (
       (4, 9, 255000,      0, 80000, 175000, 175000, DATE_ADD(NOW(), INTERVAL 5 MINUTE), NOW(), NOW(), 'PAYING');
 
 -- orderCombo
-INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, status) VALUES
-(1, 1, 1, 125000, 'ACTIVE'),
-(2, 4, 1, 230000, 'ACTIVE'),
-(4, 1, 1, 125000, 'ACTIVE'),
-(5, 5, 1, 310000, 'ACTIVE'),
-(7, 3, 1, 175000, 'ACTIVE');
+INSERT INTO order_combo (order_id, combo_id, quantity, unit_price, net_amount, status) VALUES
+(1, 1, 1, 125000, 125000, 'ACTIVE'),
+(2, 4, 1, 230000, 230000, 'ACTIVE'),
+(4, 1, 1, 125000, 125000, 'ACTIVE'),
+(5, 5, 1, 310000, 310000, 'ACTIVE'),
+(7, 3, 1, 175000, 175000, 'ACTIVE');
 
 -- payment
 -- INSERT INTO payment (order_id, amount, method, transaction_id, provider_response, paid_at, created_at, updated_at, status) VALUES
@@ -1497,6 +1498,7 @@ INSERT INTO ticket (
     seat_id,
     price_ticket_id,
     unit_price,
+    net_amount,
     qr_code,
     checked_in_at,
     status,
@@ -1509,6 +1511,7 @@ SELECT
     src.seat_id,
     pt.price_ticket_id,
     pt.price AS unit_price,
+    pt.price AS net_amount,
     src.qr_code,
     src.checked_in_at,
     'ACTIVE' AS status,

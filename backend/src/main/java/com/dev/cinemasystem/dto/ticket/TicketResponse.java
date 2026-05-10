@@ -18,6 +18,7 @@ public class TicketResponse {
     Integer seatId;
     Integer priceTicketId;
     BigDecimal unitPrice;
+    BigDecimal netAmount;
     String qrCode;
     LocalDateTime checkedInAt;
     TicketStatus status;

@@ -5,14 +5,13 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.authDTO.*;
 import com.dev.cinemasystem.service.AuthenticationService;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
+import com.dev.cinemasystem.service.EmailService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController {
 
     AuthenticationService authenticationService;
+    EmailService emailService;
 
     @PostMapping("/login")
     ApiResponse<LoginResponse> authenticate(@RequestBody @Valid LoginRequest request){
@@ -84,5 +84,7 @@ public class AuthenticationController {
                 .message("Xác thực email thành công")
                 .build();
     }
+
+
 
 }
