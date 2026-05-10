@@ -2,7 +2,8 @@ import { isAxiosError } from "axios";
 import type { SelectedCombo } from "../types/combo";
 import type { ApiResponse } from "../types/api";
 import type { Seat } from "../types/seat";
-import type { Showtime } from "../types/showtime";
+import type { Showtime, ShowTimeResponse } from "../types/showtime";
+import type { PriceTicket } from "../types/price-ticket";
 
 const DEFAULT_SEAT_PRICE = 75000;
 const VIP_SEAT_PRICE = 90000;
@@ -120,21 +121,50 @@ export const resolveApiErrorMessage = (error: unknown, fallback: string) => {
     return fallback;
 };
 
-export const seatUnitPrice = (seat: Seat): number => {
-    const typeId = seat.seatTypeId ?? seat.seatType?.seatTypeId;
+export const seatUnitPrice = (
+    seat: Seat,
+    priceTickets: PriceTicket[] = [],
+    showTime: ShowTimeResponse
+): number => {
+    console.log("seat: ", seat);
+    if (showTime == null) return 0;
 
-    if (typeId === 3) return COUPLE_SEAT_PRICE;
-    if (typeId === 2) return VIP_SEAT_PRICE;
-    return DEFAULT_SEAT_PRICE;
+    const seatTypeId = seat.seatTypeId ?? seat.seatType?.seatTypeId;
+    console.log("showTime: ", showTime)
+    const roomTypeId = showTime.room?.roomTypeId;
+
+    // console.log("seatTypeId: ", seatTypeId);
+    // console.log("roomTypeId: ", roomTypeId);
+
+    const price = Number(
+        priceTickets.find(
+            (priceTicket) =>
+                priceTicket.seatTypeId == seatTypeId && priceTicket.roomTypeId == roomTypeId
+        )?.price || 0
+    );
+
+    // console.log("price: ", price);
+
+    return price;
+
+    // if (typeId === 3) return COUPLE_SEAT_PRICE;
+    // if (typeId === 2) return VIP_SEAT_PRICE;
+    // return DEFAULT_SEAT_PRICE;
 };
 
 export const calculateTotalPrice = (
+    showTime: ShowTimeResponse | null,
     selectedSeats: Seat[],
+    priceTickets: PriceTicket[] = [],
     selectedCombos: SelectedCombo[] = []
 ) => {
+    if (showTime == null) return 0;
+
+    console.log("showTime: ", showTime)
+
     const seatTotal = selectedSeats
         .filter((s) => s.isPrimary !== false)
-        .reduce((sum, s) => sum + seatUnitPrice(s), 0);
+        .reduce((sum, s) => sum + seatUnitPrice(s, priceTickets, showTime), 0);
 
     const comboTotal = selectedCombos.reduce((sum, c) => sum + Number(c.price) * c.quantity, 0);
 
@@ -173,7 +203,14 @@ export const parseActors = (actors: string | null | undefined): string[] => {
         .filter(Boolean);
 };
 
-export const groupSelectedSeats = (selectedSeats: Seat[]) => {
+// export const groupSelectedSeats = (selectedSeats: Seat[]) => {
+export const groupSelectedSeats = (
+    showTime: ShowTimeResponse | null,
+    selectedSeats: Seat[],
+    priceTickets: PriceTicket[] = []
+) => {
+    if (showTime == null) return [];
+
     const primary = selectedSeats.filter((s) => s.isPrimary !== false);
 
     const thuong = primary.filter((s) => s.seatTypeId === 1);
@@ -186,7 +223,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
         result.push({
             label: "Ghế thường",
             seatLabel: thuong.map((s) => `${s.seatRow}${s.seatColumn}`).join(", "),
-            price: thuong.reduce((sum, s) => sum + seatUnitPrice(s), 0),
+            price: thuong.reduce((sum, s) => sum + seatUnitPrice(s, priceTickets, showTime), 0),
             count: thuong.length,
         });
     }
@@ -195,7 +232,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
         result.push({
             label: "Ghế VIP",
             seatLabel: vip.map((s) => `${s.seatRow}${s.seatColumn}`).join(", "),
-            price: vip.reduce((sum, s) => sum + seatUnitPrice(s), 0),
+            price: vip.reduce((sum, s) => sum + seatUnitPrice(s, priceTickets, showTime), 0),
             count: vip.length,
         });
     }
@@ -216,7 +253,7 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
                     return `${s.seatRow}${s.seatColumn}-${s.seatRow}${partner?.seatColumn ?? "?"}`;
                 })
                 .join(", "),
-            price: doi.reduce((sum, s) => sum + seatUnitPrice(s), 0),
+            price: doi.reduce((sum, s) => sum + seatUnitPrice(s, priceTickets, showTime), 0),
             count: doi.length,
         });
     }
@@ -224,10 +261,14 @@ export const groupSelectedSeats = (selectedSeats: Seat[]) => {
     return result;
 };
 
-export const calculateTotalPriceOneRow = (selectedSeats: Seat[]) => {
+export const calculateTotalPriceOneRow = (
+    showTime: ShowTimeResponse,
+    selectedSeats: Seat[],
+    priceTickets: PriceTicket[] = []
+) => {
     return selectedSeats
         .filter((s) => s.isPrimary !== false)
-        .reduce((sum, s) => sum + seatUnitPrice(s), 0);
+        .reduce((sum, s) => sum + seatUnitPrice(s, priceTickets, showTime), 0);
 };
 
 export const groupSeatsByRow = (seats: Seat[]): Record<string, Seat[]> => {
@@ -293,4 +334,4 @@ export const calculateAgeFromDate = (dateStr: string | null) => {
     }
 
     return age;
-}
+};

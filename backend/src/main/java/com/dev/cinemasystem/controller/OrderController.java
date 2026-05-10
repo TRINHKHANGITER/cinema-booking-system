@@ -3,11 +3,7 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
-import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
-import com.dev.cinemasystem.dto.orderDTO.OrderDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderStatusUpdateRequest;
-import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
+import com.dev.cinemasystem.dto.orderDTO.*;
 import com.dev.cinemasystem.service.OrderService;
 import com.dev.cinemasystem.enums.OrderStatus;
 import jakarta.validation.Valid;
@@ -47,10 +43,17 @@ public class OrderController {
 //                .build();
 //    }
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/admin/{orderId}")
     public ApiResponse<OrderResponse> getOrderById(@PathVariable Integer orderId) {
         return ApiResponse.<OrderResponse>builder()
                 .result(orderService.getOrderById(orderId))
+                .build();
+    }
+
+    @GetMapping("/{orderId}")
+    public ApiResponse<OrderUserResponse> getOrderByIdForUser(@PathVariable Integer orderId) {
+        return ApiResponse.<OrderUserResponse>builder()
+                .result(orderService.getOrderByIdForUser(orderId))
                 .build();
     }
 

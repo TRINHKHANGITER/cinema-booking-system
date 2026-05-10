@@ -35,78 +35,39 @@ EXECUTE stmt_ticket_add_uq;
 DEALLOCATE PREPARE stmt_ticket_add_uq;
 
 
-
--- DROP TABLE IF EXISTS order_detail;
-
--- DROP TABLE IF EXISTS order_combo;
--- DROP TABLE IF EXISTS combo_detail;
--- DROP TABLE IF EXISTS combo;
-
--- DROP TABLE IF EXISTS ticket;
--- DROP TABLE IF EXISTS price_ticket;
--- DROP TABLE IF EXISTS show_time;
--- DROP TABLE IF EXISTS show_time_seat;
--- DROP TABLE IF EXISTS seat;
--- DROP TABLE IF EXISTS room;
--- DROP TABLE IF EXISTS cinema;
--- DROP TABLE IF EXISTS movie;
-
--- DROP TABLE IF EXISTS product;
--- DROP TABLE IF EXISTS product_type;
--- DROP TABLE IF EXISTS movie_type;
--- DROP TABLE IF EXISTS room_type;
--- DROP TABLE IF EXISTS seat_type;
--- DROP TABLE IF EXISTS province;
--- DROP TABLE IF EXISTS payment;
--- DROP TABLE IF EXISTS orders;
--- DROP TABLE IF EXISTS users;
-
 SET SQL_SAFE_UPDATES = 0;
-DELETE FROM order_combo;
-DELETE FROM payment;
-DELETE FROM ticket;
-DELETE FROM show_time_seat;
-DELETE FROM orders;
-DELETE FROM combo;
-DELETE FROM show_time;
-DELETE FROM seat;
-DELETE FROM room;
-DELETE FROM movie;
-DELETE FROM cinema;
-DELETE FROM price_ticket;
-DELETE FROM movie_type;
-DELETE FROM room_type;
-DELETE FROM seat_type;
-DELETE FROM province;
-
-DELETE FROM otp_token;
-DELETE FROM users;
 
 SET FOREIGN_KEY_CHECKS = 0;
-
 
 TRUNCATE TABLE order_combo;
 -- TRUNCATE TABLE combo_detail;
 TRUNCATE TABLE combo;
+
 TRUNCATE TABLE ticket;
 TRUNCATE TABLE price_ticket;
 TRUNCATE TABLE show_time_seat;
+
+TRUNCATE TABLE payment;
+TRUNCATE TABLE orders;
+
 TRUNCATE TABLE show_time;
 TRUNCATE TABLE seat;
 TRUNCATE TABLE room;
 TRUNCATE TABLE cinema;
 TRUNCATE TABLE movie;
+
 -- TRUNCATE TABLE product;
 -- TRUNCATE TABLE product_type;
+
 TRUNCATE TABLE movie_type;
 TRUNCATE TABLE room_type;
 TRUNCATE TABLE seat_type;
 TRUNCATE TABLE province;
-TRUNCATE TABLE payment;
-TRUNCATE TABLE orders;
 TRUNCATE TABLE users;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
 -- movie_type
 INSERT INTO movie_type (movie_type_name, description, status) VALUES
 ('Hành động',           'Phim hành động, võ thuật, bắn súng',      'ACTIVE'),
@@ -1426,7 +1387,9 @@ INSERT INTO price_ticket (room_type_id, seat_type_id, price, status) VALUES
 -- IMAX + Thường
 (3, 1, 150000, 'ACTIVE'),
 -- IMAX + VIP
-(3, 2, 200000, 'ACTIVE');
+(3, 2, 200000, 'ACTIVE'),
+-- IMAX + Đôi
+(3, 3, 280000, 'ACTIVE');
 -- combo
 INSERT INTO combo (combo_name, image, description, price, status) VALUES
 ('Combo 1',        '1.png', 'Bắp vừa + Pepsi lớn',                           125000, 'AVAILABLE'),
@@ -1539,7 +1502,7 @@ INSERT INTO ticket (
     status,
     created_at,
     updated_at
-) 
+)
 SELECT
     src.order_id,
     src.show_id,

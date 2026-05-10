@@ -2,14 +2,7 @@ package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
-import com.dev.cinemasystem.dto.orderDTO.OrderComboDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
-import com.dev.cinemasystem.dto.orderDTO.OrderDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderPaymentDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderSeatDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderShowTimeDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
+import com.dev.cinemasystem.dto.orderDTO.*;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.entity.OrderCombo;
 import com.dev.cinemasystem.entity.Payment;
@@ -18,11 +11,9 @@ import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
-import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.enums.Role;
-import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
@@ -90,8 +81,8 @@ public class OrderService {
         order.setShowTime(showTime);
         order.setTicketTotal(BigDecimal.ZERO);
         order.setComboTotal(BigDecimal.ZERO);
-        order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
+        order.setDiscountAmount(BigDecimal.ZERO);
         order.setNetAmount(BigDecimal.ZERO);
         order.setExpiredAt(LocalDateTime.now().plusMinutes(bookingProperties.getHoldMinutes()));
         order.setStatus(OrderStatus.PAYING);
@@ -118,6 +109,12 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Integer orderId) {
         return orderMapper.toOrderResponse(orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND)));
+    }
+
+    @Transactional(readOnly = true)
+    public OrderUserResponse getOrderByIdForUser(Integer orderId) {
+        return orderMapper.tOrderUserResponse(orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND)));
     }
 

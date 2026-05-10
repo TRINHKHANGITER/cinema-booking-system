@@ -51,7 +51,6 @@ import java.util.Map;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ShowTimeService {
-
     ShowTimeRepository showTimeRepository;
     RoomRepository roomRepository;
     MovieRepository movieRepository;
@@ -195,6 +194,13 @@ public class ShowTimeService {
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(showTime.getMovie().getMovieId());
         log.info("Retrieving showTime with id: {}", showTimeId);
         return toShowtimeMovieResponse(showTime.getMovie(), movieShowTimes);
+    }
+
+    public ShowTimeResponse getShowTimeById_tdv(Integer showTimeId) {
+        var showTime = showTimeRepository.findById(showTimeId)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+
+        return showTimeMapper.toShowTimeResponse(showTime);
     }
 
     public FullShowtimeMovieResponse createShowTime(ShowTimeCreationResquest request) {

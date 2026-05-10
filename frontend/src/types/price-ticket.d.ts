@@ -40,6 +40,11 @@ export type PriceTicketResponse = PriceTicketEntity & {
     seatType?: SeatTypeResponse;
 };
 
+export type PriceTicketResquest = {
+    roomTypeId: number;
+    seatTypeId: number;
+};
+
 export type PriceTicketCreationRequest = PriceTicketCreationResquest;
 export type PriceTicketUpdateRequest = PriceTicketUpdateResquest;
 export type PriceTicket = PriceTicketResponse;

@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { orderService } from "../../services/order.service";
 import { checkoutService } from "../../services/checkout.service";
 import type { Order } from "../../types/order";
+import { showTimeService } from "../../services/showtimeService";
+import type { User } from "../../types/user";
+import type { Showtime } from "../../types/showtime";
 
 type CheckoutContext = {
     source?: "ADMIN" | "CLIENT";
@@ -20,7 +23,6 @@ export default function VnpayReturn() {
         if (!txnRef) return null;
         const matched = txnRef.match(/^\d+/);
         if (!matched) return null;
-
         const parsedOrderId = Number.parseInt(matched[0], 10);
         return Number.isNaN(parsedOrderId) ? null : parsedOrderId;
     }, [txnRef]);
@@ -52,7 +54,6 @@ export default function VnpayReturn() {
                 const orderData = await getOrder();
                 if (!isMounted) return;
                 setOrder(orderData);
-
                 if (orderData?.status === "PAYING") {
                     timeoutId = setTimeout(pollOrder, 3000);
                 }
@@ -66,10 +67,7 @@ export default function VnpayReturn() {
         const syncReturnThenPoll = async () => {
             try {
                 await checkoutService.handleReturn(location.search);
-            } catch {
-                // Fallback to polling order status.
-            }
-
+            } catch {}
             await pollOrder();
         };
 
@@ -88,7 +86,6 @@ export default function VnpayReturn() {
 
     const orderParams = useMemo(() => {
         if (!order) return [];
-
         return Object.entries(order).map(([key, value]) => ({
             key,
             value: String(value),
@@ -97,9 +94,9 @@ export default function VnpayReturn() {
 
     if (!order) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="rounded-2xl bg-white px-8 py-6 shadow-lg border border-gray-200">
-                    <p className="text-lg font-medium text-gray-700 animate-pulse">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="rounded-xl bg-white px-8 py-6 border border-gray-200 shadow-sm">
+                    <p className="text-sm font-medium text-gray-500 animate-pulse">
                         Đang tải thông tin đơn hàng...
                     </p>
                 </div>
@@ -110,22 +107,28 @@ export default function VnpayReturn() {
     const isPaid = order.status === "PAID";
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 py-10 px-4">
+        <div className="min-h-screen bg-gray-50 py-10 px-4">
             <div className="mx-auto max-w-4xl">
-                <div className="overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-200">
-                    <div className="bg-slate-900 px-8 py-6 text-white">
-                        <h1 className="text-2xl font-bold">Kết quả thanh toán VNPAY</h1>
-                        <p className="mt-2 text-sm text-slate-300">
+                <div className="overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-sm">
+
+                    {/* Header */}
+                    <div className="bg-gray-50 border-b border-gray-200 px-8 py-5">
+                        <h1 className="text-lg font-medium text-gray-900">
+                            Kết quả thanh toán VNPAY
+                        </h1>
+                        <p className="mt-1 text-sm text-gray-500">
                             Thông tin chi tiết đơn hàng sau khi thanh toán
                         </p>
                     </div>
 
                     <div className="px-8 py-6">
+
+                        {/* Status badge */}
                         <div
-                            className={`mb-6 rounded-2xl px-4 py-3 text-sm font-medium ${
+                            className={`mb-6 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium ${
                                 isPaid
-                                    ? "bg-green-100 text-green-700 border border-green-200"
-                                    : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                                    ? "bg-green-50 text-green-700 border border-green-200"
+                                    : "bg-yellow-50 text-yellow-700 border border-yellow-200"
                             }`}
                         >
                             {isPaid
@@ -133,7 +136,8 @@ export default function VnpayReturn() {
                                 : "Giao dịch thất bại hoặc đã hết hạn."}
                         </div>
 
-                        <div className="overflow-hidden rounded-2xl border border-gray-200">
+                        {/* Order detail table */}
+                        <div className="overflow-hidden rounded-xl border border-gray-200 mb-8">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <tbody className="divide-y divide-gray-100 bg-white">
                                     {orderParams.map((item, index) => (
@@ -141,10 +145,10 @@ export default function VnpayReturn() {
                                             key={item.key}
                                             className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
                                         >
-                                            <td className="w-1/3 px-5 py-4 text-sm font-semibold text-gray-700">
+                                            <td className="w-1/3 px-5 py-3 text-sm font-medium text-gray-500">
                                                 {item.key}
                                             </td>
-                                            <td className="px-5 py-4 text-sm text-gray-900 break-all">
+                                            <td className="px-5 py-3 text-sm text-gray-900 break-all">
                                                 {item.value}
                                             </td>
                                         </tr>
@@ -153,25 +157,26 @@ export default function VnpayReturn() {
                             </table>
                         </div>
 
-                        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                        {/* Action buttons */}
+                        <div className="flex flex-col gap-3 sm:flex-row">
                             <Link
                                 to="/"
-                                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
                             >
                                 Về trang chủ
                             </Link>
 
                             <Link
                                 to="/phim-dang-chieu"
-                                className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                             >
-                                Tao giao dich moi
+                                Tạo giao dịch mới
                             </Link>
 
                             {isAdminCheckout && (
                                 <Link
                                     to="/admin/orders"
-                                    className="inline-flex items-center justify-center rounded-xl border border-[var(--glx-orange)] bg-white px-5 py-3 text-sm font-semibold text-[var(--glx-orange)] transition hover:bg-[var(--glx-orange)] hover:text-white"
+                                    className="inline-flex items-center justify-center rounded-xl border border-orange-400 bg-white px-5 py-2.5 text-sm font-medium text-orange-500 transition hover:bg-orange-500 hover:text-white hover:border-orange-500"
                                 >
                                     Về quản lý đơn hàng
                                 </Link>

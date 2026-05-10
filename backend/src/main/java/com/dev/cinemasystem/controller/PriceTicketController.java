@@ -4,6 +4,7 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.apiDTO.ItemListDto;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.priceTicketDTO.PriceTickerRequest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketUpdateResquest;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -105,4 +107,12 @@ public class PriceTicketController {
                 .message("Xóa giá vé thành công")
                 .build();
     }
+
+    @GetMapping()
+    public ApiResponse<List<PriceTicketResponse>> getPriceTickets() {
+        return ApiResponse.<List<PriceTicketResponse>>builder()
+                .result(priceTicketService.getPriceTickets())
+                .build();
+    }
+
 }

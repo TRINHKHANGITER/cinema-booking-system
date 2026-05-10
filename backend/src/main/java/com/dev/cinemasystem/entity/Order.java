@@ -30,25 +30,20 @@ public class Order {
     @JoinColumn(name = "show_time_id", nullable = false)
     ShowTime showTime;
 
-    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal ticketTotal = BigDecimal.ZERO;
+    BigDecimal ticketTotal;
 
-    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal comboTotal = BigDecimal.ZERO;
+    BigDecimal comboTotal;
 
-    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal discountAmount = BigDecimal.ZERO;
+    BigDecimal totalAmount;
 
-    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal totalAmount = BigDecimal.ZERO;
+    BigDecimal discountAmount;
 
-    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal netAmount = BigDecimal.ZERO;
+    BigDecimal netAmount;
 
     @Column(nullable = false)
     LocalDateTime expiredAt;
@@ -61,8 +56,7 @@ public class Order {
     @Column(nullable = false)
     LocalDateTime updatedAt;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    OrderStatus status = OrderStatus.PAYING;
+    OrderStatus status;
 }

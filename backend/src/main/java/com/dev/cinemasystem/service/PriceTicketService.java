@@ -2,6 +2,7 @@ package com.dev.cinemasystem.service;
 
 
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.priceTicketDTO.PriceTickerRequest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketCreationResquest;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketResponse;
 import com.dev.cinemasystem.dto.priceTicketDTO.PriceTicketUpdateResquest;
@@ -194,11 +195,15 @@ public class PriceTicketService {
                 .toList();
     }
 
-    public BigDecimal getPriceByRoomTypeIdAndSeatTypeId(int roomTypeId, int seatTypeId) {
-        PriceTicket ticket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seatTypeId);
+    public BigDecimal getPriceByRoomTypeIdAndSeatTypeId(PriceTickerRequest request) {
+        PriceTicket ticket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+                request.getRoomTypeId(), request.getSeatTypeId()
+        );
+
         if (ticket == null) {
             throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
         }
+
         return ticket.getPrice();
     }
 
@@ -218,5 +223,10 @@ public class PriceTicketService {
         if (size == null || size < 1 || size > 100) {
             throw new AppException(ErrorCode.INVALID_PAGE_SIZE);
         }
+    }
+
+    public List<PriceTicketResponse> getPriceTickets() {
+        return priceTicketRepository.findAll().stream().map(
+                priceTicketMapper::toPriceTicketResponse).toList();
     }
 }
