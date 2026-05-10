@@ -1,6 +1,7 @@
 package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.entity.*;
+import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.repository.*;
@@ -349,8 +350,14 @@ public class EmailService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        Payment payment = paymentRepository.findByOrder_OrderId(orderId)
+        Payment payment = paymentRepository
+                .findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(orderId, PaymentStatus.SUCCESS)
+                .or(() -> paymentRepository.findTopByOrder_OrderIdOrderByPaymentIdDesc(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        if (order.getUser() == null || order.getUser().getUserId() == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
 
         User user = userRepository.findById(order.getUser().getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -700,7 +707,7 @@ public class EmailService {
                     index++,
                     "Ghế " + ticket.getSeat().getSeatRow() + ticket.getSeat().getSeatColumn(),
                     1,
-                    formatCurrency(ticket.getPriceTicket().getPrice()),
+                    formatCurrency(ticket.getUnitPrice()),
                     formatCurrency(ticket.getNetAmount())
             ));
         }

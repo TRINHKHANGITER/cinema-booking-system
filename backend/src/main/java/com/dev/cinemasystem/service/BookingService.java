@@ -47,6 +47,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class BookingService {
+    static final int COUPLE_SEAT_TYPE_ID = 3;
 
     BookingProperties bookingProperties;
     ShowTimeSeatRepository showTimeSeatRepository;
@@ -699,8 +701,9 @@ public class BookingService {
             ticket.setShow(heldSeat.getShowTime());
             ticket.setSeat(seat);
             ticket.setPriceTicket(priceTicket);
-            ticket.setUnitPrice(priceTicket.getPrice());
-            ticket.setNetAmount(priceTicket.getPrice());
+            BigDecimal ticketUnitPrice = resolveTicketUnitPrice(priceTicket, seat);
+            ticket.setUnitPrice(ticketUnitPrice);
+            ticket.setNetAmount(ticketUnitPrice);
             ticket.setQrCode(buildTicketQr(order.getOrderId(), heldSeat.getShowTime().getShowTimeId(), seatId));
             ticket.setStatus(TicketStatus.ACTIVE);
 
@@ -720,6 +723,23 @@ public class BookingService {
         if (!pendingPayments.isEmpty()) {
             paymentRepository.saveAll(pendingPayments);
         }
+    }
+
+    private BigDecimal resolveTicketUnitPrice(PriceTicket priceTicket, Seat seat) {
+        BigDecimal basePrice = priceTicket.getPrice() == null ? BigDecimal.ZERO : priceTicket.getPrice();
+        if (!isCoupleSeat(seat)) {
+            return basePrice;
+        }
+
+        // Bảng giá vé đôi đã là giá cho 1 cặp ghế, nên mỗi ghế trong cặp chỉ tính 1/2.
+        return basePrice.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+    }
+
+    private boolean isCoupleSeat(Seat seat) {
+        return seat != null
+                && seat.getSeatType() != null
+                && seat.getSeatType().getSeatTypeId() != null
+                && seat.getSeatType().getSeatTypeId() == COUPLE_SEAT_TYPE_ID;
     }
 
     private String buildTicketQr(Integer orderId, Integer showTimeId, Integer seatId) {

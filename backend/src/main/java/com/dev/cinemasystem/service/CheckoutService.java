@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class CheckoutService {
 
     OrderRepository orderRepository;
@@ -36,6 +38,7 @@ public class CheckoutService {
     PaymentService paymentService;
     VnpayService vnpayService;
     BookingService bookingService;
+    EmailService emailService;
     VnPayConfig vnPayConfig;
 
     @Transactional
@@ -107,6 +110,7 @@ public class CheckoutService {
                 paymentRepository.save(payment);
 
                 bookingService.markOrderPaid(orderId);
+                sendTicketSafely(orderId);
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
                 paymentRepository.save(payment);
@@ -163,10 +167,19 @@ public class CheckoutService {
             paymentRepository.save(payment);
 
             bookingService.markOrderPaid(orderId);
+            sendTicketSafely(orderId);
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             bookingService.markOrderFailed(orderId, OrderStatus.EXPIRED);
+        }
+    }
+
+    private void sendTicketSafely(Integer orderId) {
+        try {
+            emailService.sendTicketWithCombo(orderId);
+        } catch (RuntimeException exception) {
+            log.error("Không thể gửi email vé cho đơn hàng {}", orderId, exception);
         }
     }
 

@@ -2,7 +2,9 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import Arrow from "../components/icon/arrow";
-import { useEffect, useMemo, useState } from "react";
+import ArrowLeft from "../components/icon/arrowLeft";
+import ArrowRight from "../components/icon/arrowRight";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { provinceService } from "../services/province.service";
 import { showTimeService } from "../services/showtimeService";
@@ -110,6 +112,7 @@ const getDateOptions = (showtimes: ShowTimeResponse[]): string[] => {
 
 const HeroSlider = () => {
     const navigate = useNavigate();
+    const heroSliderRef = useRef<Slider | null>(null);
 
     const [open, setOpen] = useState<OpenDropdown>("");
 
@@ -165,12 +168,13 @@ const HeroSlider = () => {
     const settings = {
         dots: false,
         infinite: true,
-        speed: 4500,
+        speed: 650,
         slidesToShow: 1,
         centerMode: true,
         centerPadding: "190px",
-        autoplay: true,
-        autoplaySpeed: 800,
+        arrows: false,
+        autoplay: false,
+        rtl: false,
 
         responsive: [
             {
@@ -203,6 +207,17 @@ const HeroSlider = () => {
         "/images/banner/cam-on-nguoi-da-thuc-cung-toi.jpg",
         "/images/banner/chuyen-kinh-di.jpg",
     ];
+
+    useEffect(() => {
+        const timerId = window.setInterval(() => {
+            // Mặc định chạy sang phải.
+            heroSliderRef.current?.slickPrev();
+        }, 4000);
+
+        return () => {
+            window.clearInterval(timerId);
+        };
+    }, []);
 
     useEffect(() => {
         let isUnmounted = false;
@@ -563,7 +578,7 @@ const HeroSlider = () => {
 
     return (
         <div className="relative h-auto overflow-hidden pb-10">
-            <Slider {...settings}>
+            <Slider ref={heroSliderRef} {...settings}>
                 {heroSlides.length > 0
                     ? heroSlides.map((slide) => (
                           <div key={slide.movieId} className="xl:px-6 lg:px-0">
@@ -589,6 +604,22 @@ const HeroSlider = () => {
                     </div>
                 )}
             </Slider>
+            <button
+                type="button"
+                onClick={() => heroSliderRef.current?.slickNext()}
+                className="absolute left-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-700 shadow-lg transition hover:bg-white xl:flex"
+                aria-label="Xem ảnh trước"
+            >
+                <ArrowLeft />
+            </button>
+            <button
+                type="button"
+                onClick={() => heroSliderRef.current?.slickPrev()}
+                className="absolute right-4 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-slate-700 shadow-lg transition hover:bg-white xl:flex"
+                aria-label="Xem ảnh tiếp theo"
+            >
+                <ArrowRight />
+            </button>
 
             {/* QUICK BUY */}
             <div className="quick-buy hidden xl:grid absolute z-50 grid-cols-[2fr_3fr_2fr_2fr_2fr_2fr] max-w-6xl h-14 w-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] bg-white rounded left-2/4 bottom-14 translate-y-1/2 -translate-x-2/4">

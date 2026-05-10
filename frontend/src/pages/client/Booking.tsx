@@ -83,6 +83,8 @@ const Booking = () => {
     const [holdRemainingSeconds, setHoldRemainingSeconds] = useState<number | null>(null);
     const [resumeOrderDetail, setResumeOrderDetail] = useState<OrderDetail | null>(null);
     const [step, setStep] = useState<1 | 2 | 3>(1);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
 
     const parseNumberValue = (value?: number | string | null) => {
         if (typeof value === "number") return value;
@@ -132,6 +134,8 @@ const Booking = () => {
         setHoldRemainingSeconds(null);
         setResumeOrderDetail(null);
         setStep(1);
+        setIsConfirmModalOpen(false);
+        setIsConfirmingBooking(false);
         clearOrderSession();
     }, [clearOrderSession]);
 
@@ -149,13 +153,11 @@ const Booking = () => {
 
             const fetchShowTime = async () => {
                 const res = await showTimeService.getShowTimeById_tdv(showTimeId);
-                console.log("res.fetchShowTime: ", res.result)
-                setShowTime(res.result || null)
-            }
+                setShowTime(res.result || null);
+            };
 
             const fetchPrices = async () => {
                 const res = await priceTicketService.getPriceTickets();
-                console.log("res.fetchPrices: ", res.result)
                 setPriceTickets(res.result || []);
             };
 
@@ -322,10 +324,18 @@ const Booking = () => {
         );
     }, [showDetail, showTimeId]);
 
-    const groupedSelected = useMemo(() => groupSelectedSeats(
-    showTime,
-    selectedSeats,
-    priceTickets), [selectedSeats]);
+    const groupedSelected = useMemo(
+        () => groupSelectedSeats(showTime, selectedSeats, priceTickets),
+        [showTime, selectedSeats, priceTickets]
+    );
+    const activeCombos = useMemo(
+        () => selectedCombos.filter((combo) => combo.quantity > 0),
+        [selectedCombos]
+    );
+    const totalPrice = useMemo(
+        () => calculateTotalPrice(showTime, selectedSeats, priceTickets, selectedCombos),
+        [showTime, selectedSeats, priceTickets, selectedCombos]
+    );
 
     const handleOrderChange = useCallback(
         (id: number, expiredAt?: string) => {
@@ -391,9 +401,10 @@ const Booking = () => {
 
         try {
             await bookingService.updateOrderCombos(orderId, {
-                combos: selectedCombos
-                    .filter((combo) => combo.quantity > 0)
-                    .map((combo) => ({ comboId: combo.comboId, quantity: combo.quantity })),
+                combos: activeCombos.map((combo) => ({
+                    comboId: combo.comboId,
+                    quantity: combo.quantity,
+                })),
             });
             return true;
         } catch (error) {
@@ -433,7 +444,21 @@ const Booking = () => {
             return null;
         }
     };
-    
+
+    const handleConfirmGoToPayment = async () => {
+        if (isConfirmingBooking) return;
+        setIsConfirmingBooking(true);
+
+        try {
+            const synced = await syncCombosToOrder();
+            if (!synced) return;
+            setIsConfirmModalOpen(false);
+            setStep(3);
+        } finally {
+            setIsConfirmingBooking(false);
+        }
+    };
+
     const handleNext = async () => {
         if (step === 1) {
             if (selectedSeats.length === 0 || !orderId) return;
@@ -442,9 +467,7 @@ const Booking = () => {
         }
 
         if (step === 2) {
-            const synced = await syncCombosToOrder();
-            if (!synced) return;
-            setStep(3);
+            setIsConfirmModalOpen(true);
             return;
         }
 
@@ -460,6 +483,7 @@ const Booking = () => {
     };
 
     const handleBack = () => {
+        setIsConfirmModalOpen(false);
         if (step > 1) {
             setStep((current) => (current - 1) as 1 | 2 | 3);
         }
@@ -610,10 +634,10 @@ const Booking = () => {
                                         </>
                                     )}
 
-                                    {selectedCombos.length > 0 && (
+                                    {activeCombos.length > 0 && (
                                         <>
                                             <div className="my-4 border-t border-dashed border-gray-200" />
-                                            {selectedCombos.map((combo) => (
+                                            {activeCombos.map((combo) => (
                                                 <div
                                                     key={combo.comboId}
                                                     className="flex justify-between text-sm mt-2"
@@ -637,12 +661,7 @@ const Booking = () => {
                                 <div className="xl:flex hidden justify-between col-span-3">
                                     <strong className="text-base">Tổng cộng</strong>
                                     <span className="font-bold text-[rgb(245,128,32)]">
-                                        {calculateTotalPrice(
-                                            showTime,
-                                            selectedSeats,
-                                            priceTickets,
-                                            selectedCombos
-                                        ).toLocaleString("vi-VN")}{" "}
+                                        {totalPrice.toLocaleString("vi-VN")}{" "}
                                         d
                                     </span>
                                 </div>
@@ -670,12 +689,7 @@ const Booking = () => {
                             <div className="flex items-center gap-1">
                                 <span className="text-sm text-gray-500">Tổng cộng:</span>
                                 <span className="font-bold text-[rgb(245,128,32)]">
-                                    {calculateTotalPrice(
-                                        showTime,
-                                        selectedSeats,
-                                        priceTickets,
-                                        selectedCombos
-                                    ).toLocaleString("vi-VN")}{" "}
+                                    {totalPrice.toLocaleString("vi-VN")}{" "}
                                     d
                                 </span>
                             </div>
@@ -699,6 +713,97 @@ const Booking = () => {
                     </div>
                 </div>
             </main>
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+                        <div className="border-b border-slate-200 px-5 py-4">
+                            <h3 className="text-lg font-bold text-slate-800">Xác nhận đặt vé</h3>
+                        </div>
+
+                        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
+                            <div>
+                                <h4 className="text-sm font-semibold text-slate-700">Chỗ đã giữ</h4>
+                                {groupedSelected.length === 0 ? (
+                                    <p className="mt-1 text-sm text-slate-500">Chưa có chỗ giữ.</p>
+                                ) : (
+                                    groupedSelected.map((group) => (
+                                        <div
+                                            key={`confirm-seat-${group.label}`}
+                                            className="mt-2 flex justify-between gap-3 text-sm"
+                                        >
+                                            <div>
+                                                <div className="font-semibold text-slate-700">
+                                                    {group.count}x {group.label}
+                                                </div>
+                                                <div className="text-slate-500">
+                                                    Ghế: {group.seatLabel}
+                                                </div>
+                                            </div>
+                                            <div className="font-semibold text-slate-700">
+                                                {group.price.toLocaleString("vi-VN")} đ
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="border-t border-dashed border-slate-200 pt-4">
+                                <h4 className="text-sm font-semibold text-slate-700">Combo đã chọn</h4>
+                                {activeCombos.length === 0 ? (
+                                    <p className="mt-1 text-sm text-slate-500">Không chọn combo.</p>
+                                ) : (
+                                    activeCombos.map((combo) => (
+                                        <div
+                                            key={`confirm-combo-${combo.comboId}`}
+                                            className="mt-2 flex justify-between gap-3 text-sm"
+                                        >
+                                            <div className="text-slate-700">
+                                                {combo.quantity}x {combo.comboName}
+                                            </div>
+                                            <div className="font-semibold text-slate-700">
+                                                {(Number(combo.price) * combo.quantity).toLocaleString("vi-VN")} đ
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="border-t border-slate-200 pt-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-base font-semibold text-slate-700">
+                                        Tổng tiền
+                                    </span>
+                                    <span className="text-lg font-bold text-[rgb(245,128,32)]">
+                                        {totalPrice.toLocaleString("vi-VN")} đ
+                                    </span>
+                                </div>
+                                <p className="mt-3 text-sm font-medium text-slate-700">
+                                    Bạn có chắc chắn đặt không?
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+                            <button
+                                type="button"
+                                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                onClick={() => setIsConfirmModalOpen(false)}
+                                disabled={isConfirmingBooking}
+                            >
+                                Không, ở lại
+                            </button>
+                            <button
+                                type="button"
+                                className="rounded-md bg-[rgb(245,128,32)] px-4 py-2 text-sm font-semibold text-white hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                onClick={handleConfirmGoToPayment}
+                                disabled={isConfirmingBooking}
+                            >
+                                {isConfirmingBooking ? "Đang xử lý..." : "Có, qua thanh toán"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
