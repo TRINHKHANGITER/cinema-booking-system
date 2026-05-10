@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import CardShowtime from "../../components/ui/CardShowtime";
+import { movieTypeService } from "../../services/movieType.service";
 import { provinceService } from "../../services/province.service";
 import { showTimeService } from "../../services/showtimeService";
+import type { MovieTypeResponse } from "../../types/movie-type";
 import type { Province } from "../../types/province";
 import type { FullShowtimeMovieResponse } from "../../types/showtime";
 import { formatTime } from "../../utils/utils";
@@ -10,6 +12,7 @@ import { formatTime } from "../../utils/utils";
 type SearchFilters = {
     keyword: string;
     provinceId: string;
+    movieTypeId: string;
     day: string;
 };
 
@@ -54,9 +57,11 @@ const resolveEarliestShowTime = (item: FullShowtimeMovieResponse) => {
 const SearchPage = () => {
     const [keyword, setKeyword] = useState("");
     const [provinceId, setProvinceId] = useState<string>("");
+    const [movieTypeId, setMovieTypeId] = useState<string>("");
     const [day, setDay] = useState("");
 
     const [provinces, setProvinces] = useState<Province[]>([]);
+    const [movieTypes, setMovieTypes] = useState<MovieTypeResponse[]>([]);
     const [results, setResults] = useState<FullShowtimeMovieResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -66,6 +71,7 @@ const SearchPage = () => {
     const [appliedFilters, setAppliedFilters] = useState<SearchFilters>({
         keyword: "",
         provinceId: "",
+        movieTypeId: "",
         day: "",
     });
 
@@ -74,33 +80,55 @@ const SearchPage = () => {
     useEffect(() => {
         let isUnmounted = false;
 
-        const fetchProvinceOptions = async () => {
-            try {
-                const response = await provinceService.getProvinceItemList("ACTIVE");
-                if (isUnmounted) return;
+        const fetchFilterOptions = async () => {
+            const fetchProvinceOptions = async () => {
+                try {
+                    const response = await provinceService.getProvinceItemList("ACTIVE");
+                    if (isUnmounted) return;
 
-                if (response.code === "SUCCESS") {
-                    setProvinces(response.result?.items ?? []);
-                    return;
-                }
+                    if (response.code === "SUCCESS") {
+                        setProvinces(response.result?.items ?? []);
+                        return;
+                    }
 
-                const fallback = await provinceService.getProvinces("ACTIVE");
-                if (isUnmounted) return;
+                    const fallback = await provinceService.getProvinces("ACTIVE");
+                    if (isUnmounted) return;
 
-                if (fallback.code === "SUCCESS") {
-                    setProvinces(fallback.result ?? []);
-                    return;
-                }
+                    if (fallback.code === "SUCCESS") {
+                        setProvinces(fallback.result ?? []);
+                        return;
+                    }
 
-                setProvinces([]);
-            } catch {
-                if (!isUnmounted) {
                     setProvinces([]);
+                } catch {
+                    if (!isUnmounted) {
+                        setProvinces([]);
+                    }
                 }
-            }
+            };
+
+            const fetchMovieTypeOptions = async () => {
+                try {
+                    const response = await movieTypeService.getMovieTypeItemList("ACTIVE");
+                    if (isUnmounted) return;
+
+                    if (response.code === "SUCCESS") {
+                        setMovieTypes(response.result?.items ?? []);
+                        return;
+                    }
+
+                    setMovieTypes([]);
+                } catch {
+                    if (!isUnmounted) {
+                        setMovieTypes([]);
+                    }
+                }
+            };
+
+            await Promise.all([fetchProvinceOptions(), fetchMovieTypeOptions()]);
         };
 
-        void fetchProvinceOptions();
+        void fetchFilterOptions();
 
         return () => {
             isUnmounted = true;
@@ -110,6 +138,7 @@ const SearchPage = () => {
     const fetchResults = async () => {
         const trimmedKeyword = appliedFilters.keyword.trim();
         const hasProvince = Boolean(appliedFilters.provinceId);
+        const hasMovieType = Boolean(appliedFilters.movieTypeId);
         const safeDay =
             appliedFilters.day && appliedFilters.day >= today ? appliedFilters.day : "";
         const hasDay = Boolean(safeDay);
@@ -123,6 +152,7 @@ const SearchPage = () => {
             const response = await showTimeService.getGroupedShowTimesByFilters({
                 movieName: trimmedKeyword || undefined,
                 provinceId: hasProvince ? Number(appliedFilters.provinceId) : undefined,
+                movieTypeId: hasMovieType ? Number(appliedFilters.movieTypeId) : undefined,
                 releaseFromDate: effectiveDay,
                 releaseToDate: hasDay ? effectiveDay : undefined,
                 startTime: startTimeFilter,
@@ -176,21 +206,37 @@ const SearchPage = () => {
         });
     }, [results]);
 
+    const selectedProvinceName = useMemo(() => {
+        if (!appliedFilters.provinceId) return null;
+
+        return (
+            provinces.find((province) => String(province.provinceId) === appliedFilters.provinceId)
+                ?.provinceName ?? null
+        );
+    }, [appliedFilters.provinceId, provinces]);
+
+    const selectedMovieTypeName = useMemo(() => {
+        if (!appliedFilters.movieTypeId) return null;
+
+        return (
+            movieTypes.find((type) => String(type.movieTypeId) === appliedFilters.movieTypeId)
+                ?.movieTypeName ?? null
+        );
+    }, [appliedFilters.movieTypeId, movieTypes]);
+
     const filterMessage = useMemo(() => {
-        if (!appliedFilters.day && appliedFilters.provinceId) {
-            return `Đang áp dụng: khu vực đã chọn, ngày >= ${today}`;
-        }
+        const provinceLabel = selectedProvinceName
+            ? `Khu vực: ${selectedProvinceName}`
+            : "Khu vực: Tất cả";
+        const movieTypeLabel = selectedMovieTypeName
+            ? `Thể loại: ${selectedMovieTypeName}`
+            : "Thể loại: Tất cả";
+        const dayLabel = appliedFilters.day
+            ? `Ngày chiếu: ${appliedFilters.day}`
+            : `Ngày chiếu từ: ${today}`;
 
-        if (appliedFilters.day && !appliedFilters.provinceId) {
-            return `Đang áp dụng: ngày ${appliedFilters.day}, tất cả khu vực`;
-        }
-
-        if (appliedFilters.day && appliedFilters.provinceId) {
-            return "Đang áp dụng: khu vực + ngày cụ thể";
-        }
-
-        return `Đang áp dụng: tất cả khu vực, ngày >= ${today}`;
-    }, [appliedFilters, today]);
+        return `Đang áp dụng: ${provinceLabel}, ${movieTypeLabel}, ${dayLabel}`;
+    }, [appliedFilters.day, selectedProvinceName, selectedMovieTypeName, today]);
 
     const visiblePageButtons = useMemo(() => {
         const maxButtons = 5;
@@ -221,13 +267,14 @@ const SearchPage = () => {
         setAppliedFilters({
             keyword,
             provinceId,
+            movieTypeId,
             day: normalizedDay,
         });
     };
 
     return (
         <div>
-            <main className="home-main min-h[100vh]">
+            <main className="home-main min-h-[100vh]">
                 <div className="pb-12 pt-6 my-0 mx-auto xl:max-w-screen-xl lg:max-w-4xl md:max-w-4xl md:px-4 sm:px-[45px] px-[16px]">
                     <div className="flex w-full md:justify-start justify-between gap-5 items-center mb-8">
                         <div className="hidden md:block">
@@ -244,20 +291,20 @@ const SearchPage = () => {
                         onSubmit={handleSubmit}
                     >
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                            <div className="md:col-span-6">
+                            <div className="md:col-span-4">
                                 <label className="block text-sm font-semibold text-[#333333] mb-1">
-                                    Ten phim
+                                    Tên phim
                                 </label>
                                 <input
                                     type="text"
                                     value={keyword}
                                     onChange={(event) => setKeyword(event.target.value)}
-                                    placeholder="Nhap ten phim"
+                                    placeholder="Nhập tên phim"
                                     className="w-full h-10 border border-[#D0D0D0] rounded px-3 outline-none focus:border-[#034EA2]"
                                 />
                             </div>
 
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-[#333333] mb-1">
                                     Khu vực
                                 </label>
@@ -270,6 +317,24 @@ const SearchPage = () => {
                                     {provinces.map((province) => (
                                         <option key={province.provinceId} value={province.provinceId}>
                                             {province.provinceName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-3">
+                                <label className="block text-sm font-semibold text-[#333333] mb-1">
+                                    Thể loại phim
+                                </label>
+                                <select
+                                    value={movieTypeId}
+                                    onChange={(event) => setMovieTypeId(event.target.value)}
+                                    className="w-full h-10 border border-[#D0D0D0] rounded px-3 outline-none focus:border-[#034EA2]"
+                                >
+                                    <option value="">Tất cả thể loại</option>
+                                    {movieTypes.map((movieType) => (
+                                        <option key={movieType.movieTypeId} value={movieType.movieTypeId}>
+                                            {movieType.movieTypeName}
                                         </option>
                                     ))}
                                 </select>
@@ -304,9 +369,9 @@ const SearchPage = () => {
 
                     <p className="text-sm text-gray-500 mb-4">{filterMessage}</p>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-gray-500">Tong: {totalItems}</span>
+                        <span className="text-xs text-gray-500">Tổng: {totalItems}</span>
                         <label className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>Moi trang</span>
+                            <span>Mỗi trang</span>
                             <select
                                 value={pageSize}
                                 onChange={(event) => {
@@ -358,7 +423,7 @@ const SearchPage = () => {
                             onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                             disabled={currentPage === 1 || isLoading}
                         >
-                            Truoc
+                            Trước
                         </button>
 
                         {visiblePageButtons.map((page) => (
