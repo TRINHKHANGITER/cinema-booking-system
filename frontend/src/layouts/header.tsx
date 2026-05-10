@@ -13,6 +13,8 @@ import { routePath } from "../route/route";
 import { orderService } from "../services/order.service";
 import { movieTypeService } from "../services/movieType.service";
 import type { MovieTypeResponse } from "../types/movie-type";
+import { movieService } from "../services/movie.service";
+import type { Movie } from "../types/movie";
 
 type MenuType = "starshop" | "gocdienanh" | "sukien" | "rap" | "phim";
 const Header = () => {
@@ -26,6 +28,7 @@ const Header = () => {
     const [openRegister, setOpenRegister] = useState<boolean>(false);
     const [payingOrderCount, setPayingOrderCount] = useState<number>(0);
     const [movieTypes, setMovieTypes] = useState<MovieTypeResponse[]>([]);
+    const [nowShowingMovies, setNowShowingMovies] = useState<Movie[]>([]);
 
     const [openMenu, setOpenMenu] = useState<MenuType | null>(null);
 
@@ -105,7 +108,30 @@ const Header = () => {
             }
         };
 
+        const fetchNowShowingMovies = async () => {
+            try {
+                const response = await movieService.filterMovies({
+                    status: "ACTIVE",
+                    page: 1,
+                    size: 10,
+                });
+                if (isCancelled) return;
+
+                if (response.code === "SUCCESS") {
+                    setNowShowingMovies(response.result?.items ?? []);
+                    return;
+                }
+
+                setNowShowingMovies([]);
+            } catch {
+                if (!isCancelled) {
+                    setNowShowingMovies([]);
+                }
+            }
+        };
+
         void fetchMovieTypes();
+        void fetchNowShowingMovies();
 
         return () => {
             isCancelled = true;
@@ -166,9 +192,8 @@ scale-100 blur-0 grayscale-0)'
                             </Link>
                             <div className="hover relative">
                                 <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
-                                    <a
-                                        href=""
-                                        className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group hover:text-orange-500 transition-all duration-300 ease-in-out not-italic"
+                                    <span
+                                        className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group hover:text-orange-500 transition-all duration-300 ease-in-out not-italic cursor-default select-none"
                                     >
                                         Phim
                                         <span className="text-xs md:hidden inline text-[#777777]">
@@ -177,40 +202,63 @@ scale-100 blur-0 grayscale-0)'
                                         <span className="text-xs md:ml-2 md:block hidden group-hover:text-primary transition-all duration-300 ease-in-out text-[#777777]">
                                             <Arrow />
                                         </span>
-                                    </a>
+                                    </span>
                                     <div className="absolute top-[65px] -left-[45px] hidden group-hover:md:block hover:md:block z-[800] transition-all duration-300 ease-in-out">
                                         <div
-                                            className="bg-white min-w-[250px] border border-white border-solid rounded px-6 py-4"
+                                            className="bg-white border border-white border-solid rounded px-6 py-4"
                                             style={{
                                                 boxShadow:
                                                     "0 6px 16px 0 rgba(0,0,0,.08), 0 3px 6px -4px rgba(0,0,0,.12), 0 9px 28px 8px rgba(0,0,0,.05)",
+                                                minWidth: "520px",
+                                                maxWidth: "600px",
                                             }}
                                         >
-                                            {/* movie show */}
-                                            <div className="movie_show">
-                                                <div>
-                                                    <span className="border-l-4 border-solid border-[#034ea2]"></span>
-                                                    <Link
-                                                        type="button"
-                                                        className="text-base font-normal text-[#333333] pl-2 inline cursor-pointer uppercase hover:text-orange-500  transition-all duration-300 ease-in-out"
-                                                        to="/phim-dang-chieu"
-                                                    >
-                                                        Phim đang chiếu
-                                                    </Link>
-                                                </div>
-                                                <ul>
-                                                    <li className="text-sm text-black py-2 transition-all duration-300">
-                                                        {/* <Card img={img}/> */}
-                                                    </li>
-                                                </ul>
+                                            {/* Tiêu đề */}
+                                            <div className="mb-3">
+                                                <span className="border-l-4 border-solid border-[#034ea2] mr-2"></span>
+                                                <Link
+                                                    className="text-base font-semibold text-[#333333] uppercase hover:text-orange-500 transition-all duration-300 ease-in-out"
+                                                    to="/phim-dang-chieu"
+                                                >
+                                                    Phim đang chiếu
+                                                </Link>
                                             </div>
+                                            {/* Danh sách phim */}
+                                            {nowShowingMovies.length === 0 ? (
+                                                <p className="text-sm text-gray-400 py-2">Đang cập nhật...</p>
+                                            ) : (
+                                                <div className="grid grid-cols-5 gap-2">
+                                                    {nowShowingMovies.map((movie) => (
+                                                        <Link
+                                                            key={movie.movieId}
+                                                            to={`/xuat-chieu/${movie.slug ?? movie.movieId}`}
+                                                            className="flex flex-col items-center gap-1 group/movieitem cursor-pointer"
+                                                            onClick={() => setOpenMenu(null)}
+                                                        >
+                                                            <div className="w-full aspect-[2/3] rounded overflow-hidden border border-gray-100">
+                                                                <img
+                                                                    src={movie.imagePortrait ?? movie.imageLandscape ?? "/images/no-poster.png"}
+                                                                    alt={movie.movieName}
+                                                                    className="w-full h-full object-cover group-hover/movieitem:scale-105 transition-transform duration-300"
+                                                                    onError={(e) => {
+                                                                        (e.currentTarget as HTMLImageElement).src = "/images/no-poster.png";
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <p className="text-[11px] text-center text-[#333] group-hover/movieitem:text-orange-500 transition-colors duration-200 line-clamp-2 leading-tight w-full">
+                                                                {movie.movieName}
+                                                            </p>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             {/*  */}
                             <div className="hover relative">
-                                <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
+                                {/* <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
                                     <a
                                         href=""
                                         className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group capitalize hover:text-orange-500 transition-all duration-300"
@@ -253,7 +301,7 @@ scale-100 blur-0 grayscale-0)'
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                             {/*  */}
                             <div className="hover relative">
@@ -312,7 +360,7 @@ scale-100 blur-0 grayscale-0)'
 
                             {/*  */}
                             <div className="hover relative">
-                                <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
+                                {/* <div className="px-3 text-left md:cursor-pointer group hover:text-orange-500 transition-all duration-300">
                                     <a
                                         href=""
                                         className="py-7 flex text-sm justify-between items-center md:pr-0 pr-5 group capitalize hover:text-orange-500 transition-all duration-300"
@@ -355,7 +403,7 @@ scale-100 blur-0 grayscale-0)'
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                             {/*  */}
 

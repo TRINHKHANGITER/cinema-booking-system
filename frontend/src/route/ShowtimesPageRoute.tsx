@@ -8,7 +8,7 @@ const ShowtimesPageRoute = () => {
         day?: string;
     }>();
 
-    return <ShowtimesPage slug={slug} province={province} day={day} />;
+    return <ShowtimesPage key={slug} slug={slug} province={province} day={day} />;
 };
 
 export default ShowtimesPageRoute;
