@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -53,6 +55,8 @@ public class TicketService {
                         showTime.getRoom().getRoomType().getRoomTypeId(),
                         seat.getSeatType().getSeatTypeId()
                 );
+
+        System.out.println("priceTicket: " + priceTicket);
         if (priceTicket == null) {
             throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
         }
@@ -62,6 +66,7 @@ public class TicketService {
         ticket.setSeat(seat);
         ticket.setOrder(order);
         ticket.setPriceTicket(priceTicket);
+        ticket.setNetAmount(priceTicket.getPrice());
         ticket.setUnitPrice(priceTicket.getPrice());
         ticket.setQrCode(buildQr(order.getOrderId(), showTime.getShowTimeId(), seat.getSeatId()));
         ticket.setStatus(TicketStatus.ACTIVE);
@@ -87,7 +92,7 @@ public class TicketService {
             if (priceTicket == null) {
                 throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
             }
-
+            log.info("giá vé {}", priceTicket);
             Ticket ticket = Ticket.builder()
                     .order(order)
                     .show(soldSeat.getShowTime())
@@ -208,6 +213,21 @@ public class TicketService {
 
         showTimeSeat.setStatus(ShowTimeSeatStatus.SOLD);
         showTimeSeat.setOrder(order);
+        showTimeSeat.setHoldExpiresAt(null);
+        showTimeSeatRepository.save(showTimeSeat);
+    }
+
+    private void releaseSeatForCancelledTicket(ShowTimeSeat showTimeSeat, Integer orderId) {
+        Integer currentOrderId = showTimeSeat.getOrder() != null ? showTimeSeat.getOrder().getOrderId() : null;
+        if (!Objects.equals(currentOrderId, orderId)) {
+            return;
+        }
+        if (showTimeSeat.getStatus() != ShowTimeSeatStatus.SOLD && showTimeSeat.getStatus() != ShowTimeSeatStatus.HELD) {
+            return;
+        }
+
+        showTimeSeat.setStatus(ShowTimeSeatStatus.AVAILABLE);
+        showTimeSeat.setOrder(null);
         showTimeSeat.setHoldExpiresAt(null);
         showTimeSeatRepository.save(showTimeSeat);
     }

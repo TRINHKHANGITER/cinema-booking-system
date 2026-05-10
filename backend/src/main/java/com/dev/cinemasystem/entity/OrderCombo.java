@@ -33,6 +33,9 @@ public class OrderCombo {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal unitPrice;
 
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal netAmount;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
