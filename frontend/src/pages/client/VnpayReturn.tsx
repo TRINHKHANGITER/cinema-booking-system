@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { orderService } from "../../services/order.service";
 import { checkoutService } from "../../services/checkout.service";
 import type { Order } from "../../types/order";
-import { showTimeService } from "../../services/showtimeService";
-import type { User } from "../../types/user";
-import type { Showtime } from "../../types/showtime";
+import { bookingService } from "../../services/booking.service";
 
 type CheckoutContext = {
     source?: "ADMIN" | "CLIENT";
@@ -19,6 +17,7 @@ export default function VnpayReturn() {
 
     const params = new URLSearchParams(location.search);
     const txnRef = params.get("vnp_TxnRef");
+    const responseCode = params.get("vnp_ResponseCode");
     const orderId = useMemo(() => {
         if (!txnRef) return null;
         const matched = txnRef.match(/^\d+/);
@@ -26,6 +25,7 @@ export default function VnpayReturn() {
         const parsedOrderId = Number.parseInt(matched[0], 10);
         return Number.isNaN(parsedOrderId) ? null : parsedOrderId;
     }, [txnRef]);
+    const cancelledByUser = responseCode === "24";
 
     const isAdminCheckout = useMemo(() => {
         try {
@@ -68,6 +68,14 @@ export default function VnpayReturn() {
             try {
                 await checkoutService.handleReturn(location.search);
             } catch {}
+
+            if (cancelledByUser) {
+                try {
+                    await bookingService.cancelOrder(orderId);
+                } catch {
+                    // Bỏ qua lỗi khi đơn đã được xử lý bởi callback/IPN trước đó.
+                }
+            }
             await pollOrder();
         };
 
@@ -77,7 +85,7 @@ export default function VnpayReturn() {
             isMounted = false;
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [location.search, orderId]);
+    }, [cancelledByUser, location.search, orderId]);
 
     useEffect(() => {
         if (!order) return;
@@ -105,6 +113,7 @@ export default function VnpayReturn() {
     }
 
     const isPaid = order.status === "PAID";
+    const isCancelled = order.status === "CANCELLED";
 
     return (
         <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -128,12 +137,16 @@ export default function VnpayReturn() {
                             className={`mb-6 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium ${
                                 isPaid
                                     ? "bg-green-50 text-green-700 border border-green-200"
-                                    : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                    : isCancelled
+                                      ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                      : "bg-yellow-50 text-yellow-700 border border-yellow-200"
                             }`}
                         >
                             {isPaid
                                 ? "Đơn hàng đã được thanh toán thành công."
-                                : "Giao dịch thất bại hoặc đã hết hạn."}
+                                : isCancelled
+                                  ? "Bạn đã huỷ thanh toán. Đơn hàng đã được huỷ và ghế đã được trả lại."
+                                  : "Giao dịch thất bại hoặc đã hết hạn."}
                         </div>
 
                         {/* Order detail table */}
