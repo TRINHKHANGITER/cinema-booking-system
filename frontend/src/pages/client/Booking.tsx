@@ -42,6 +42,7 @@ type BookingLocationState = {
     resumeOrderId?: number | string;
     resumeOrderExpiredAt?: string;
     resumeFromHistory?: boolean;
+    resumeStep?: number | string;
     orderDetail?: OrderDetail;
 };
 
@@ -59,6 +60,25 @@ const toSelectedCombosFromOrderDetail = (orderDetail: OrderDetail | null): Selec
             status: "AVAILABLE",
             quantity: combo.quantity,
         }));
+};
+
+const toSelectedSeatsFromOrderDetail = (orderDetail: OrderDetail | null): Seat[] => {
+    if (!orderDetail) return [];
+
+    return [...orderDetail.seats]
+        .filter((seat) => seat.ticketStatus === null || seat.ticketStatus === "ACTIVE")
+        .sort((first, second) => {
+            if (first.seatRow === second.seatRow) return first.seatColumn - second.seatColumn;
+            return first.seatRow.localeCompare(second.seatRow);
+        })
+        .map((seat) => ({
+            seatId: seat.seatId,
+            seatRow: seat.seatRow,
+            seatColumn: seat.seatColumn,
+            seatTypeId: seat.seatTypeId,
+            status: "ACTIVE",
+            isPrimary: seat.seatTypeId === 3 ? seat.seatColumn % 2 !== 0 : true,
+        }) as Seat);
 };
 
 const Booking = () => {
@@ -107,6 +127,17 @@ const Booking = () => {
         () => Boolean(locationState?.resumeFromHistory || resumeOrderIdFromState),
         [locationState?.resumeFromHistory, resumeOrderIdFromState]
     );
+    const resumeStepFromState = useMemo(() => {
+        const parsedStep = parseNumberValue(locationState?.resumeStep);
+        if (parsedStep === 1 || parsedStep === 2 || parsedStep === 3) {
+            return parsedStep as 1 | 2 | 3;
+        }
+        return null;
+    }, [locationState?.resumeStep]);
+    const initialStep = useMemo<1 | 2 | 3>(() => {
+        if (resumeStepFromState) return resumeStepFromState;
+        return resumeFromHistory ? 3 : 1;
+    }, [resumeFromHistory, resumeStepFromState]);
 
     const showTimeId = useMemo(() => {
         if (showtimeId && /^[0-9]+$/.test(showtimeId)) {
@@ -166,10 +197,10 @@ const Booking = () => {
             fetchPrices();
         }
 
-        setSelectedSeats([]);
+        setSelectedSeats(toSelectedSeatsFromOrderDetail(locationState?.orderDetail ?? null));
         setSelectedCombos(toSelectedCombosFromOrderDetail(locationState?.orderDetail ?? null));
         setResumeOrderDetail(locationState?.orderDetail ?? null);
-        setStep(1);
+        setStep(initialStep);
 
         const clearPersistedOrder = () => {
             if (orderStorageKey) {
@@ -180,6 +211,7 @@ const Booking = () => {
                 setOrderId(null);
                 setOrderExpiredAt(null);
                 setHoldRemainingSeconds(null);
+                setStep(1);
                 if (!resumeFromHistory) {
                     setResumeOrderDetail(null);
                 }
@@ -277,6 +309,7 @@ const Booking = () => {
         };
     }, [
         dispatch,
+        initialStep,
         locationState?.orderDetail,
         orderStorageKey,
         resumeFromHistory,
@@ -301,9 +334,8 @@ const Booking = () => {
                 if (isCancelled) return;
                 const nextDetail = response.result ?? null;
                 setResumeOrderDetail(nextDetail);
-                if (nextDetail) {
-                    setSelectedCombos(toSelectedCombosFromOrderDetail(nextDetail));
-                }
+                setSelectedSeats(toSelectedSeatsFromOrderDetail(nextDetail));
+                setSelectedCombos(toSelectedCombosFromOrderDetail(nextDetail));
             } catch {}
         };
 

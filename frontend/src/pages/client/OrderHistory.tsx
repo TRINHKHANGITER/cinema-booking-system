@@ -243,6 +243,7 @@ const OrderHistoryPage = () => {
                 resumeOrderExpiredAt: item.summary.expiredAt,
                 orderDetail: item.detail,
                 resumeFromHistory: true,
+                resumeStep: 3,
             },
         });
     };
