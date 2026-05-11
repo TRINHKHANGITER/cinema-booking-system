@@ -4,10 +4,14 @@ import com.dev.cinemasystem.dto.dashboardDTO.CinemaRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.ComboRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieTypeRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticItemResponse;
 import com.dev.cinemasystem.entity.Order;
 import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,6 +51,70 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
             @Param("status") OrderStatus status,
             @Param("startAt") LocalDateTime startAt,
             @Param("endAt") LocalDateTime endAt
+    );
+
+    @Query("""
+        select count(o.orderId)
+        from Order o
+        where o.createdAt >= :startAt
+          and o.createdAt <= :endAt
+    """)
+    Long countOrdersByCreatedAtRange(
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
+
+    @Query("""
+        select coalesce(sum(o.totalAmount), 0)
+        from Order o
+        where o.createdAt >= :startAt
+          and o.createdAt <= :endAt
+          and (:status is null or o.status = :status)
+    """)
+    BigDecimal sumTotalAmountByCreatedAtRangeAndStatus(
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt,
+            @Param("status") OrderStatus status
+    );
+
+    @Query(
+            value = """
+        select new com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticItemResponse(
+            o.orderId,
+            coalesce(u.fullName, 'Khách lẻ'),
+            m.movieName,
+            st.releaseDate,
+            st.startTime,
+            count(t.ticketId),
+            coalesce(o.totalAmount, 0),
+            o.status,
+            o.createdAt
+        )
+        from Order o
+        left join o.user u
+        join o.showTime st
+        join st.movie m
+        left join Ticket t on t.order = o and t.status = :ticketStatus
+        where o.createdAt >= :startAt
+          and o.createdAt <= :endAt
+          and (:status is null or o.status = :status)
+        group by o.orderId, u.fullName, m.movieName, st.releaseDate, st.startTime, o.totalAmount, o.status, o.createdAt
+        order by o.createdAt desc, o.orderId desc
+    """,
+            countQuery = """
+        select count(o.orderId)
+        from Order o
+        where o.createdAt >= :startAt
+          and o.createdAt <= :endAt
+          and (:status is null or o.status = :status)
+    """
+    )
+    Page<OrderStatisticItemResponse> findOrderStatistics(
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt,
+            @Param("status") OrderStatus status,
+            @Param("ticketStatus") TicketStatus ticketStatus,
+            Pageable pageable
     );
 
     @Query("""

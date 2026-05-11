@@ -1,11 +1,13 @@
 import type { ComboStatus } from "./combo";
 import type { MovieStatus } from "./movie";
 import type { MovieTypeStatus } from "./movie-type";
+import type { OrderStatus } from "./order";
 
 export type DashboardOverview = {
     startDate: string;
     endDate: string;
     totalRevenue: number;
+    totalOrderCount: number;
     customerCount: number;
     movieCount: number;
     cinemaCount: number;
@@ -67,6 +69,30 @@ export type ComboRevenueItem = {
     paidOrderCount: number;
 };
 
+export type OrderStatisticItem = {
+    orderId: number;
+    customerName: string;
+    movieName: string;
+    showDate: string;
+    showTime: string;
+    ticketQuantity: number;
+    totalAmount: number;
+    status: OrderStatus;
+    orderCreatedAt: string;
+};
+
+export type DashboardOrderStatistics = {
+    fromDate: string;
+    toDate: string;
+    status: OrderStatus | null;
+    totalAmount: number;
+    items: OrderStatisticItem[];
+    totalItems: number;
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+};
+
 export type DashboardDateFilter = {
     startDate: string;
     endDate: string;
@@ -101,6 +127,14 @@ export type DashboardComboRevenueFilter = DashboardDateFilter & {
     comboId?: number;
     n?: number;
     sort?: "ASC" | "DESC";
+    page?: number;
+    size?: number;
+};
+
+export type DashboardOrderStatisticsFilter = {
+    fromDate: string;
+    toDate: string;
+    status?: OrderStatus;
     page?: number;
     size?: number;
 };

@@ -6,6 +6,7 @@ import com.dev.cinemasystem.dto.dashboardDTO.ComboRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.DashboardOverviewResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieTypeRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticsResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.RevenueRankingResponse;
 import com.dev.cinemasystem.service.DashboardService;
 import lombok.AccessLevel;
@@ -156,6 +157,20 @@ public class DashboardController {
                         page,
                         size
                 ))
+                .build();
+    }
+
+    @GetMapping("/orders/statistics")
+    public ApiResponse<OrderStatisticsResponse> getOrderStatistics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return ApiResponse.<OrderStatisticsResponse>builder()
+                .message("Lấy thống kê đơn hàng thành công")
+                .result(dashboardService.getOrderStatistics(fromDate, toDate, status, page, size))
                 .build();
     }
 }

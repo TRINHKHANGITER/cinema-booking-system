@@ -5,10 +5,13 @@ import com.dev.cinemasystem.dto.dashboardDTO.ComboRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.DashboardOverviewResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieRevenueResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.MovieTypeRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticItemResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticsResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.RevenueRankingResponse;
 import com.dev.cinemasystem.dto.dashboardDTO.RevenueValue;
 import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.repository.CinemaRepository;
@@ -18,6 +21,9 @@ import com.dev.cinemasystem.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,11 +57,13 @@ public class DashboardService {
                 startAt,
                 endAt
         );
+        Long totalOrderCount = orderRepository.countOrdersByCreatedAtRange(startAt, endAt);
 
         return DashboardOverviewResponse.builder()
                 .startDate(startDate)
                 .endDate(endDate)
                 .totalRevenue(totalRevenue == null ? BigDecimal.ZERO : totalRevenue)
+                .totalOrderCount(totalOrderCount == null ? 0L : totalOrderCount)
                 .customerCount(userRepository.count())
                 .movieCount(movieRepository.count())
                 .cinemaCount(cinemaRepository.count())
@@ -185,6 +193,49 @@ public class DashboardService {
         return buildRankingResponse(startDate, endDate, rows, topN, normalizedSortDirection, page, size);
     }
 
+    @Transactional(readOnly = true)
+    public OrderStatisticsResponse getOrderStatistics(
+            LocalDate fromDate,
+            LocalDate toDate,
+            String status,
+            Integer page,
+            Integer size
+    ) {
+        validateDateRange(fromDate, toDate);
+        validatePageAndSize(page, size);
+        OrderStatus parsedStatus = parseOrderStatusNullable(status);
+
+        LocalDateTime startAt = fromDate.atStartOfDay();
+        LocalDateTime endAt = toEndOfDay(toDate);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<OrderStatisticItemResponse> orderPage = orderRepository.findOrderStatistics(
+                startAt,
+                endAt,
+                parsedStatus,
+                TicketStatus.ACTIVE,
+                pageable
+        );
+
+        BigDecimal totalAmount = orderRepository.sumTotalAmountByCreatedAtRangeAndStatus(
+                startAt,
+                endAt,
+                parsedStatus
+        );
+
+        return OrderStatisticsResponse.builder()
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .status(parsedStatus)
+                .totalAmount(totalAmount == null ? BigDecimal.ZERO : totalAmount)
+                .items(orderPage.getContent())
+                .totalItems(orderPage.getTotalElements())
+                .currentPage(orderPage.getNumber() + 1)
+                .pageSize(orderPage.getSize())
+                .totalPages(Math.max(1, orderPage.getTotalPages()))
+                .build();
+    }
+
     private <T extends RevenueValue> RevenueRankingResponse<T> buildRankingResponse(
             LocalDate startDate,
             LocalDate endDate,
@@ -271,6 +322,18 @@ public class DashboardService {
         }
 
         return normalized;
+    }
+
+    private OrderStatus parseOrderStatusNullable(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        try {
+            return OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
     }
 
     private void validatePageAndSize(int page, int size) {

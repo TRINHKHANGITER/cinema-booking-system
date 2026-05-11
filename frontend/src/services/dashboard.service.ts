@@ -8,6 +8,8 @@ import type {
     DashboardDateFilter,
     DashboardMovieRevenueFilter,
     DashboardMovieTypeRevenueFilter,
+    DashboardOrderStatistics,
+    DashboardOrderStatisticsFilter,
     DashboardOverview,
     MovieRevenueItem,
     MovieTypeRevenueItem,
@@ -74,5 +76,11 @@ export const dashboardService = {
         );
         return res.data;
     },
-};
 
+    getOrderStatistics: async (params: DashboardOrderStatisticsFilter) => {
+        const res = await api.get<ApiResponse<DashboardOrderStatistics>>("/dashboard/orders/statistics", {
+            params,
+        });
+        return res.data;
+    },
+};

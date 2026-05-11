@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { cinemaService } from "../../services/cinema.service";
@@ -12,16 +12,19 @@ import type { ComboResponse } from "../../types/combo";
 import type {
     CinemaRevenueItem,
     ComboRevenueItem,
+    DashboardOrderStatistics,
     DashboardOverview,
     MovieRevenueItem,
     MovieTypeRevenueItem,
+    OrderStatisticItem,
     RevenueRankingResponse,
 } from "../../types/dashboard";
 import type { Movie } from "../../types/movie";
 import type { MovieTypeResponse } from "../../types/movie-type";
+import type { OrderStatus } from "../../types/order";
 import type { ProvinceResponse } from "../../types/province";
 
-type DashboardTabKey = "overview" | "cinema" | "movie" | "movieType" | "combo";
+type DashboardTabKey = "overview" | "cinema" | "movie" | "movieType" | "combo" | "order";
 
 type DateRange = {
     startDate: string;
@@ -61,6 +64,14 @@ type ComboTabFilters = DateRange & {
     size: number;
 };
 
+type OrderTabFilters = {
+    fromDate: string;
+    toDate: string;
+    status: OrderStatus | "";
+    page: number;
+    size: number;
+};
+
 type ChartDatum = {
     key: string;
     label: string;
@@ -73,9 +84,11 @@ const TAB_ITEMS: Array<{ key: DashboardTabKey; label: string }> = [
     { key: "movie", label: "Doanh thu theo phim" },
     { key: "movieType", label: "Doanh thu theo loại phim" },
     { key: "combo", label: "Doanh thu theo combo" },
+    { key: "order", label: "Thống kê đơn hàng" },
 ];
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const ORDER_STATUS_OPTIONS: OrderStatus[] = ["PAYING", "PAID", "CANCELLED", "REFUNDED", "EXPIRED"];
 
 const resolveApiErrorMessage = (error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
@@ -112,8 +125,24 @@ const formatDateCell = (value: string | null | undefined) => {
     return value;
 };
 
+const formatDateTimeCell = (value: string | null | undefined) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString("vi-VN");
+};
+
+const formatShowtimeCell = (showDate?: string | null, showTime?: string | null) => {
+    if (!showDate || !showTime) return "-";
+    const trimmedTime = showTime.length >= 5 ? showTime.slice(0, 5) : showTime;
+    return `${showDate} ${trimmedTime}`;
+};
+
 const validateDateRange = (range: DateRange) =>
     Boolean(range.startDate && range.endDate && range.startDate <= range.endDate);
+
+const validateOrderDateRange = (range: Pick<OrderTabFilters, "fromDate" | "toDate">) =>
+    Boolean(range.fromDate && range.toDate && range.fromDate <= range.toDate);
 
 const parseOptionalPositiveInteger = (raw: string) => {
     const normalized = raw.trim();
@@ -162,6 +191,20 @@ const buildEmptyRanking = <T,>(page = 1, size = 10): RevenueRankingResponse<T> =
     totalPages: 1,
 });
 
+const buildEmptyOrderStatistics = (
+    filters: Pick<OrderTabFilters, "fromDate" | "toDate" | "status" | "page" | "size">
+): DashboardOrderStatistics => ({
+    fromDate: filters.fromDate,
+    toDate: filters.toDate,
+    status: filters.status === "" ? null : filters.status,
+    totalAmount: 0,
+    items: [],
+    totalItems: 0,
+    currentPage: filters.page,
+    pageSize: filters.size,
+    totalPages: 1,
+});
+
 const resolveStatusBadge = (status: string) => {
     if (status === "ACTIVE" || status === "AVAILABLE" || status === "PAID") {
         return "bg-emerald-100 text-emerald-700";
@@ -173,6 +216,23 @@ const resolveStatusBadge = (status: string) => {
         return "bg-slate-200 text-slate-700";
     }
     return "bg-sky-100 text-sky-700";
+};
+
+const formatOrderStatusLabel = (status: OrderStatus) => {
+    switch (status) {
+        case "PAYING":
+            return "Đang thanh toán";
+        case "PAID":
+            return "Đã thanh toán";
+        case "CANCELLED":
+            return "Đã hủy";
+        case "REFUNDED":
+            return "Đã hoàn tiền";
+        case "EXPIRED":
+            return "Hết hạn";
+        default:
+            return status;
+    }
 };
 
 const RevenueBarChart = ({
@@ -339,6 +399,17 @@ const Dashboard = () => {
     const [comboData, setComboData] = useState<RevenueRankingResponse<ComboRevenueItem> | null>(null);
     const [comboLoading, setComboLoading] = useState(false);
     const [comboLoaded, setComboLoaded] = useState(false);
+
+    const [orderFilters, setOrderFilters] = useState<OrderTabFilters>({
+        fromDate: defaultDateRange.startDate,
+        toDate: defaultDateRange.endDate,
+        status: "",
+        page: 1,
+        size: 10,
+    });
+    const [orderData, setOrderData] = useState<DashboardOrderStatistics | null>(null);
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [orderLoaded, setOrderLoaded] = useState(false);
 
     const fetchOverview = useCallback(async (filters: DateRange) => {
         if (!validateDateRange(filters)) {
@@ -516,6 +587,36 @@ const Dashboard = () => {
         }
     }, []);
 
+    const fetchOrderStatistics = useCallback(async (filters: OrderTabFilters) => {
+        if (!validateOrderDateRange(filters)) {
+            toast.error("Khoảng ngày không hợp lệ");
+            return;
+        }
+
+        try {
+            setOrderLoading(true);
+            const response = await dashboardService.getOrderStatistics({
+                fromDate: filters.fromDate,
+                toDate: filters.toDate,
+                status: filters.status === "" ? undefined : filters.status,
+                page: filters.page,
+                size: filters.size,
+            });
+
+            if (response.code !== "SUCCESS") {
+                toast.error(response.message || "Không thể tải thống kê đơn hàng");
+                return;
+            }
+
+            setOrderData(response.result ?? buildEmptyOrderStatistics(filters));
+        } catch (error) {
+            toast.error(resolveApiErrorMessage(error, "Không thể tải thống kê đơn hàng"));
+        } finally {
+            setOrderLoading(false);
+            setOrderLoaded(true);
+        }
+    }, []);
+
     const fetchFilterOptions = useCallback(async () => {
         const [provinceResponse, movieResponse, movieTypeResponse, comboResponse] = await Promise.all([
             provinceService.filterProvinces({ page: 1, size: 100 }),
@@ -575,6 +676,10 @@ const Dashboard = () => {
         }
         if (activeTab === "combo" && !comboLoaded) {
             void fetchComboRevenue(comboFilters);
+            return;
+        }
+        if (activeTab === "order" && !orderLoaded) {
+            void fetchOrderStatistics(orderFilters);
         }
     }, [
         activeTab,
@@ -583,16 +688,19 @@ const Dashboard = () => {
         movieLoaded,
         movieTypeLoaded,
         comboLoaded,
+        orderLoaded,
         fetchOverview,
         fetchCinemaRevenue,
         fetchMovieRevenue,
         fetchMovieTypeRevenue,
         fetchComboRevenue,
+        fetchOrderStatistics,
         overviewFilters,
         cinemaFilters,
         movieFilters,
         movieTypeFilters,
         comboFilters,
+        orderFilters,
     ]);
 
     const overviewCards = useMemo(
@@ -601,6 +709,11 @@ const Dashboard = () => {
                 title: "Tổng doanh thu",
                 value: formatCurrency(overviewData?.totalRevenue),
                 accent: "bg-[var(--glx-orange)]",
+            },
+            {
+                title: "Tổng số đơn hàng",
+                value: formatNumber(overviewData?.totalOrderCount),
+                accent: "bg-violet-500",
             },
             {
                 title: "Số khách hàng",
@@ -626,6 +739,7 @@ const Dashboard = () => {
     const movieTypeResult =
         movieTypeData ?? buildEmptyRanking<MovieTypeRevenueItem>(movieTypeFilters.page, movieTypeFilters.size);
     const comboResult = comboData ?? buildEmptyRanking<ComboRevenueItem>(comboFilters.page, comboFilters.size);
+    const orderResult = orderData ?? buildEmptyOrderStatistics(orderFilters);
 
     const cinemaChart = cinemaResult.chartItems.map((item) => ({
         key: `cinema-${item.cinemaId}`,
@@ -724,7 +838,7 @@ const Dashboard = () => {
                             </button>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                             {overviewCards.map((card) => (
                                 <article
                                     key={card.title}
@@ -1531,9 +1645,181 @@ const Dashboard = () => {
                         </section>
                     </div>
                 )}
+
+                {activeTab === "order" && (
+                    <div className="space-y-5 pt-5">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
+                            <input
+                                type="date"
+                                value={orderFilters.fromDate}
+                                onChange={(event) =>
+                                    setOrderFilters((prev) => ({ ...prev, fromDate: event.target.value }))
+                                }
+                                className="h-11 rounded-xl border border-[var(--glx-border)] px-4 text-sm outline-none focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                            />
+                            <input
+                                type="date"
+                                value={orderFilters.toDate}
+                                onChange={(event) =>
+                                    setOrderFilters((prev) => ({ ...prev, toDate: event.target.value }))
+                                }
+                                className="h-11 rounded-xl border border-[var(--glx-border)] px-4 text-sm outline-none focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                            />
+                            <select
+                                value={orderFilters.status}
+                                onChange={(event) =>
+                                    setOrderFilters((prev) => ({
+                                        ...prev,
+                                        status: event.target.value as OrderStatus | "",
+                                    }))
+                                }
+                                className="h-11 rounded-xl border border-[var(--glx-border)] px-4 text-sm outline-none focus:border-[var(--glx-blue)] focus:ring-2 focus:ring-[var(--glx-blue)]/15"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                {ORDER_STATUS_OPTIONS.map((status) => (
+                                    <option key={status} value={status}>
+                                        {formatOrderStatusLabel(status)}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const next = { ...orderFilters, page: 1 };
+                                    setOrderFilters(next);
+                                    void fetchOrderStatistics(next);
+                                }}
+                                disabled={orderLoading}
+                                className="h-11 rounded-xl bg-[var(--glx-blue)] px-4 text-sm font-semibold text-white hover:bg-[var(--glx-blue-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {orderLoading ? "Đang tải..." : "Áp dụng"}
+                            </button>
+                        </div>
+
+                        <section className="rounded-2xl border border-[var(--glx-border)]">
+                            <div className="flex flex-col gap-3 border-b border-[var(--glx-border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-800">Bảng thống kê đơn hàng</h3>
+                                    <p className="text-xs text-slate-500">
+                                        Tổng số đơn: <strong>{formatNumber(orderResult.totalItems)}</strong>
+                                    </p>
+                                </div>
+                                <label className="flex items-center gap-2 text-sm text-slate-600">
+                                    <span>Kích thước</span>
+                                    <select
+                                        value={orderFilters.size}
+                                        onChange={(event) => {
+                                            const next = {
+                                                ...orderFilters,
+                                                size: Number(event.target.value),
+                                                page: 1,
+                                            };
+                                            setOrderFilters(next);
+                                            void fetchOrderStatistics(next);
+                                        }}
+                                        className="rounded-md border border-[var(--glx-border)] px-2 py-1 text-sm"
+                                    >
+                                        {PAGE_SIZE_OPTIONS.map((size) => (
+                                            <option key={`order-size-${size}`} value={size}>
+                                                {size}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-[var(--glx-border)] text-sm">
+                                    <thead className="bg-slate-50 text-left">
+                                        <tr>
+                                            <th className="px-6 py-3 font-bold text-slate-600">ID đơn hàng</th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">Tên khách hàng</th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">Tên phim</th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">Suất chiếu</th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">Số lượng vé</th>
+                                            <th className="px-6 py-3 text-right font-bold text-slate-600">
+                                                Tổng tiền
+                                            </th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">
+                                                Trạng thái đơn hàng
+                                            </th>
+                                            <th className="px-6 py-3 font-bold text-slate-600">Ngày đặt hàng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--glx-border)] bg-white">
+                                        {orderLoading ? (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                                                    Đang tải dữ liệu...
+                                                </td>
+                                            </tr>
+                                        ) : orderResult.items.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                                                    Không có dữ liệu
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            orderResult.items.map((item: OrderStatisticItem) => (
+                                                <tr key={item.orderId}>
+                                                    <td className="px-6 py-4 font-semibold text-slate-700">
+                                                        #{item.orderId}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-600">
+                                                        {item.customerName || "Khách lẻ"}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-600">{item.movieName}</td>
+                                                    <td className="px-6 py-4 text-slate-600">
+                                                        {formatShowtimeCell(item.showDate, item.showTime)}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-600">
+                                                        {formatNumber(item.ticketQuantity)}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-semibold text-[var(--glx-orange)]">
+                                                        {formatCurrency(item.totalAmount)}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span
+                                                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${resolveStatusBadge(item.status)}`}
+                                                        >
+                                                            {formatOrderStatusLabel(item.status)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-slate-600">
+                                                        {formatDateTimeCell(item.orderCreatedAt)}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="border-t border-[var(--glx-border)] px-6 py-4 text-sm text-slate-600">
+                                Tổng số tiền theo bộ lọc ({orderFilters.fromDate} - {orderFilters.toDate},{" "}
+                                {orderFilters.status
+                                    ? formatOrderStatusLabel(orderFilters.status)
+                                    : "tất cả trạng thái"}
+                                ): <strong className="text-[var(--glx-orange)]">{formatCurrency(orderResult.totalAmount)}</strong>
+                            </div>
+
+                            <Pagination
+                                currentPage={orderFilters.page}
+                                totalPages={Math.max(1, orderResult.totalPages)}
+                                disabled={orderLoading}
+                                onPageChange={(page) => {
+                                    const next = { ...orderFilters, page };
+                                    setOrderFilters(next);
+                                    void fetchOrderStatistics(next);
+                                }}
+                            />
+                        </section>
+                    </div>
+                )}
             </section>
         </div>
     );
 };
 
 export default Dashboard;
+
