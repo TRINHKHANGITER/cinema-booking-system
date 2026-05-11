@@ -85,6 +85,7 @@ const Booking = () => {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
+    const [isCancellingOrder, setIsCancellingOrder] = useState(false);
 
     const parseNumberValue = (value?: number | string | null) => {
         if (typeof value === "number") return value;
@@ -489,6 +490,47 @@ const Booking = () => {
         }
     };
 
+    const handleCancelBooking = async () => {
+        if (!orderId || isCancellingOrder) return;
+
+        const confirmed = window.confirm("Bạn có chắc chắn muốn huỷ đơn giữ chỗ này không?");
+        if (!confirmed) return;
+
+        setIsConfirmModalOpen(false);
+        setIsCancellingOrder(true);
+
+        let shouldResetBookingState = false;
+
+        try {
+            await bookingService.cancelOrder(orderId);
+            toast.success("Đã huỷ đơn thành công, ghế đã được trả lại.");
+            shouldResetBookingState = true;
+        } catch (error) {
+            const { code, message } = extractApiError(error);
+            if (
+                code === "ORDER_EXPIRED" ||
+                code === "ORDER_STATUS_INVALID" ||
+                code === "ORDER_NOT_FOUND"
+            ) {
+                toast.error("Đơn giữ ghế không còn hợp lệ. Hệ thống sẽ làm mới phiên đặt vé.");
+                shouldResetBookingState = true;
+            } else {
+                toast.error(message || "Không thể huỷ đơn. Vui lòng thử lại.");
+            }
+        } finally {
+            if (shouldResetBookingState) {
+                resetBookingState();
+                if (showTimeId) {
+                    dispatch(fetchShowTimeByIdThunk(showTimeId));
+                }
+            }
+            setIsCancellingOrder(false);
+        }
+    };
+
+    const hasActiveBookingOrder = orderId !== null;
+    const actionButtonWidthClass = hasActiveBookingOrder ? "w-1/3" : "w-1/2";
+
     return (
         <div>
             <div
@@ -668,24 +710,33 @@ const Booking = () => {
                             </div>
 
                             <div className="mt-8 xl:flex hidden gap-2">
+                                {hasActiveBookingOrder && (
+                                    <button
+                                        className={`${actionButtonWidthClass} py-2 border border-rose-500 text-rose-600 rounded-md hover:bg-rose-50 disabled:opacity-40 disabled:cursor-not-allowed`}
+                                        onClick={handleCancelBooking}
+                                        disabled={isCancellingOrder}
+                                    >
+                                        {isCancellingOrder ? "Đang huỷ..." : "Huỷ đặt "}
+                                    </button>
+                                )}
                                 <button
-                                    className="w-1/2 py-2 text-[rgb(245,128,32)]"
+                                    className={`${actionButtonWidthClass} py-2 text-[rgb(245,128,32)] disabled:opacity-40 disabled:cursor-not-allowed`}
                                     onClick={handleBack}
-                                    disabled={step === 1}
+                                    disabled={step === 1 || isCancellingOrder}
                                 >
                                     Quay lại
                                 </button>
                                 <button
-                                    disabled={selectedSeats.length === 0 && step === 1}
+                                    disabled={(selectedSeats.length === 0 && step === 1) || isCancellingOrder}
                                     onClick={handleNext}
-                                    className="w-1/2 py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className={`${actionButtonWidthClass} py-2 bg-[rgb(245,128,32)] text-white border rounded-md hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed`}
                                 >
                                     {step === 3 ? "Thanh toán" : "Tiếp tục"}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="fixed bottom-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 border-t border-gray-100 xl:hidden">
+                        <div className="fixed bottom-0 left-0 right-0 min-h-14 bg-white flex items-center justify-between px-4 py-2 border-t border-gray-100 xl:hidden">
                             <div className="flex items-center gap-1">
                                 <span className="text-sm text-gray-500">Tổng cộng:</span>
                                 <span className="font-bold text-[rgb(245,128,32)]">
@@ -694,15 +745,24 @@ const Booking = () => {
                                 </span>
                             </div>
                             <div className="flex gap-2">
+                                {hasActiveBookingOrder && (
+                                    <button
+                                        className="px-3 h-10 border border-rose-500 text-rose-600 text-sm rounded-md disabled:opacity-40"
+                                        onClick={handleCancelBooking}
+                                        disabled={isCancellingOrder}
+                                    >
+                                        {isCancellingOrder ? "Đang huỷ..." : "Huỷ đăng ký"}
+                                    </button>
+                                )}
                                 <button
                                     className="px-4 h-10 text-[rgb(245,128,32)] text-sm"
                                     onClick={handleBack}
-                                    disabled={step === 1}
+                                    disabled={step === 1 || isCancellingOrder}
                                 >
                                     Quay lại
                                 </button>
                                 <button
-                                    disabled={selectedSeats.length === 0 && step === 1}
+                                    disabled={(selectedSeats.length === 0 && step === 1) || isCancellingOrder}
                                     onClick={handleNext}
                                     className="px-4 h-10 bg-[rgb(245,128,32)] text-white text-sm rounded-md disabled:opacity-40"
                                 >

@@ -32,6 +32,8 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class CheckoutService {
+    static final String VNPAY_SUCCESS_CODE = "00";
+    static final String VNPAY_CANCELLED_BY_USER_CODE = "24";
 
     OrderRepository orderRepository;
     PaymentRepository paymentRepository;
@@ -95,8 +97,10 @@ public class CheckoutService {
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
         payment.setInfoTransaction(params.get(VnpayParamsResponse.ORDER_INFO));
 
-        boolean success = "00".equals(params.get(VnpayParamsResponse.RESPONSE_CODE))
-                && "00".equals(params.get(VnpayParamsResponse.TRANSACTION_STATUS));
+        String responseCode = params.get(VnpayParamsResponse.RESPONSE_CODE);
+        String transactionStatus = params.get(VnpayParamsResponse.TRANSACTION_STATUS);
+        boolean success = isSuccess(responseCode, transactionStatus);
+        boolean cancelledByUser = isCancelledByUser(responseCode);
 
         // Fallback: nếu IPN không về được backend, return callback vẫn có thể chốt đơn.
         if (order.getStatus() == OrderStatus.PAYING) {
@@ -112,6 +116,10 @@ public class CheckoutService {
 
                 bookingService.markOrderPaid(orderId);
                 sendTicketSafely(orderId);
+            } else if (cancelledByUser) {
+                payment.setStatus(PaymentStatus.CANCELLED);
+                paymentRepository.save(payment);
+                bookingService.cancelOrder(orderId);
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
                 paymentRepository.save(payment);
@@ -159,8 +167,10 @@ public class CheckoutService {
         payment.setTransactionId(params.get(VnpayParamsResponse.TRANSACTION_NO));
         payment.setInfoTransaction(params.get(VnpayParamsResponse.ORDER_INFO));
 
-        boolean success = "00".equals(params.get(VnpayParamsResponse.RESPONSE_CODE))
-                && "00".equals(params.get(VnpayParamsResponse.TRANSACTION_STATUS));
+        String responseCode = params.get(VnpayParamsResponse.RESPONSE_CODE);
+        String transactionStatus = params.get(VnpayParamsResponse.TRANSACTION_STATUS);
+        boolean success = isSuccess(responseCode, transactionStatus);
+        boolean cancelledByUser = isCancelledByUser(responseCode);
 
         if (success) {
             payment.setPaidAt(LocalDateTime.now());
@@ -169,11 +179,24 @@ public class CheckoutService {
 
             bookingService.markOrderPaid(orderId);
             sendTicketSafely(orderId);
+        } else if (cancelledByUser) {
+            payment.setStatus(PaymentStatus.CANCELLED);
+            paymentRepository.save(payment);
+            bookingService.cancelOrder(orderId);
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             bookingService.markOrderFailed(orderId, OrderStatus.EXPIRED);
         }
+    }
+
+    private boolean isSuccess(String responseCode, String transactionStatus) {
+        return VNPAY_SUCCESS_CODE.equals(responseCode)
+                && VNPAY_SUCCESS_CODE.equals(transactionStatus);
+    }
+
+    private boolean isCancelledByUser(String responseCode) {
+        return VNPAY_CANCELLED_BY_USER_CODE.equals(responseCode);
     }
 
     private void sendTicketSafely(Integer orderId) {
