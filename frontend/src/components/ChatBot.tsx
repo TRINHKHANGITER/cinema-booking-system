@@ -1,583 +1,335 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { geminiService } from "../services/gemini.service";
+import "./ChatBot.css";
 
-/* ─────────────────────────── Types ─────────────────────────── */
-type Mode = "ask" | "agent";
-type Role = "user" | "bot";
+type ChatMode = "agent" | "ask";
+type ChatRole = "user" | "bot";
 
-interface Message {
+interface ChatMessage {
     id: string;
-    role: Role;
-    text: string;
-    timestamp: number;
-    mode: Mode;
+    role: ChatRole;
+    content: string;
+    createdAt: number;
+    mode: ChatMode;
     isError?: boolean;
 }
 
-/* ─────────────────────────── Constants ─────────────────────── */
-const LS_KEY = "CINEMA_CHATBOT_HISTORY";
+const STORAGE_KEY = "CINEMA_CHATBOT_MESSAGES_V1";
 const MAX_MESSAGES = 20;
 
-const WELCOME_MESSAGE: Message = {
-    id: "welcome",
+const WELCOME_MESSAGE: ChatMessage = {
+    id: "welcome-message",
     role: "bot",
-    text: "Xin chào! 👋 Tôi là trợ lý AI của CinemaSystem.\n\n🎬 **Chế độ Hệ thống**: Hỏi tôi về phim đang chiếu, lịch chiếu, rạp, giá vé...\n🌐 **Chế độ Tự do**: Hỏi bất kỳ câu hỏi nào khác.\n\nBạn muốn biết gì hôm nay?",
-    timestamp: Date.now(),
+    content:
+        "Xin chào! Tôi là trợ lý Gemini của hệ thống đặt vé.\n\n" +
+        "Bạn có thể chọn:\n" +
+        "- Trong hệ thống: hỏi thông tin liên quan tới web bán vé.\n" +
+        "- Ngoài hệ thống: hỏi các thông tin chung không liên quan web bán vé.",
+    createdAt: Date.now(),
     mode: "agent",
 };
 
-/* ─────────────────────────── Helpers ───────────────────────── */
-function loadHistory(): Message[] {
-    try {
-        const raw = localStorage.getItem(LS_KEY);
-        if (!raw) return [];
-        return JSON.parse(raw) as Message[];
-    } catch {
-        return [];
-    }
+function createMessageId() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function saveHistory(msgs: Message[]) {
-    const trimmed = msgs.slice(-MAX_MESSAGES);
-    localStorage.setItem(LS_KEY, JSON.stringify(trimmed));
-}
-
-function genId() {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function formatTime(ts: number) {
-    return new Date(ts).toLocaleTimeString("vi-VN", {
+function formatTime(timestamp: number) {
+    return new Date(timestamp).toLocaleTimeString("vi-VN", {
         hour: "2-digit",
         minute: "2-digit",
     });
 }
 
-/** Render markdown đơn giản: **bold**, *italic*, xuống dòng */
-function renderMarkdown(text: string): React.ReactNode {
-    const lines = text.split("\n");
-    return lines.map((line, i) => {
-        const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-        return (
-            <React.Fragment key={i}>
-                {parts.map((part, j) => {
-                    if (part.startsWith("**") && part.endsWith("**")) {
-                        return <strong key={j}>{part.slice(2, -2)}</strong>;
-                    }
-                    if (part.startsWith("*") && part.endsWith("*")) {
-                        return <em key={j}>{part.slice(1, -1)}</em>;
-                    }
-                    return <span key={j}>{part}</span>;
-                })}
-                {i < lines.length - 1 && <br />}
-            </React.Fragment>
-        );
-    });
+function normalizeSavedMessages(raw: unknown): ChatMessage[] {
+    if (!Array.isArray(raw)) return [];
+
+    return raw
+        .filter((item) => typeof item === "object" && item !== null)
+        .map((item) => item as Partial<ChatMessage>)
+        .filter(
+            (item) =>
+                typeof item.id === "string" &&
+                (item.role === "user" || item.role === "bot") &&
+                typeof item.content === "string" &&
+                typeof item.createdAt === "number" &&
+                (item.mode === "agent" || item.mode === "ask")
+        )
+        .map((item) => ({
+            id: item.id as string,
+            role: item.role as ChatRole,
+            content: item.content as string,
+            createdAt: item.createdAt as number,
+            mode: item.mode as ChatMode,
+            isError: item.isError === true,
+        }))
+        .slice(-MAX_MESSAGES);
 }
 
-/* ─────────────────────────── Component ─────────────────────── */
+function readLocalHistory(): ChatMessage[] {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        return normalizeSavedMessages(JSON.parse(raw));
+    } catch {
+        return [];
+    }
+}
+
+function extractAskAnswer(result: unknown): string {
+    if (typeof result === "object" && result !== null) {
+        const answer = (result as { answer?: unknown }).answer;
+        if (typeof answer === "string" && answer.trim()) {
+            return answer.trim();
+        }
+    }
+    return "Tôi chưa nhận được câu trả lời phù hợp từ Gemini.";
+}
+
+function extractAgentAnswer(result: unknown): string {
+    if (typeof result === "object" && result !== null) {
+        const reply = (result as { reply?: unknown }).reply;
+        if (typeof reply === "string" && reply.trim()) {
+            return reply.trim();
+        }
+    }
+    return "Tôi chưa nhận được câu trả lời phù hợp từ Gemini Agent.";
+}
+
 export default function ChatBot() {
-    const [open, setOpen] = useState(false);
-    const [mode, setMode] = useState<Mode>("agent");
+    const [isOpen, setIsOpen] = useState(false);
+    const [mode, setMode] = useState<ChatMode>("agent");
     const [input, setInput] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const hist = loadHistory();
-        return hist.length > 0 ? hist : [WELCOME_MESSAGE];
+    const [isSending, setIsSending] = useState(false);
+    const [messages, setMessages] = useState<ChatMessage[]>(() => {
+        const localHistory = readLocalHistory();
+        return localHistory.length > 0 ? localHistory : [WELCOME_MESSAGE];
     });
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    /* Lưu lịch sử khi messages thay đổi */
+    const modeDescription = useMemo(
+        () =>
+            mode === "agent"
+                ? "Hỏi thông tin trong hệ thống bán vé"
+                : "Hỏi thông tin chung ngoài hệ thống",
+        [mode]
+    );
+
     useEffect(() => {
-        const real = messages.filter((m) => m.id !== "welcome");
-        if (real.length > 0) saveHistory(real);
+        const savedMessages = messages
+            .filter((message) => message.id !== WELCOME_MESSAGE.id)
+            .slice(-MAX_MESSAGES);
+
+        if (savedMessages.length === 0) {
+            localStorage.removeItem(STORAGE_KEY);
+            return;
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedMessages));
     }, [messages]);
 
-    /* Cuộn xuống cuối khi có tin nhắn mới */
     useEffect(() => {
+        if (!isOpen) return;
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, open]);
+    }, [messages, isOpen]);
 
-    /* Focus input khi mở chat */
     useEffect(() => {
-        if (open) setTimeout(() => inputRef.current?.focus(), 150);
-    }, [open]);
+        if (!isOpen) return;
+        const timer = window.setTimeout(() => textareaRef.current?.focus(), 120);
+        return () => window.clearTimeout(timer);
+    }, [isOpen]);
 
     const clearHistory = () => {
-        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(STORAGE_KEY);
         setMessages([WELCOME_MESSAGE]);
     };
 
-    const sendMessage = useCallback(async () => {
-        const text = input.trim();
-        if (!text || loading) return;
+    const resetTextareaHeight = () => {
+        if (!textareaRef.current) return;
+        textareaRef.current.style.height = "auto";
+    };
 
-        const userMsg: Message = {
-            id: genId(),
+    const handleInputResize = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = "auto";
+        textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    };
+
+    const sendMessage = async () => {
+        const question = input.trim();
+        if (!question || isSending) return;
+
+        const userMessage: ChatMessage = {
+            id: createMessageId(),
             role: "user",
-            text,
-            timestamp: Date.now(),
+            content: question,
+            createdAt: Date.now(),
             mode,
         };
 
-        setMessages((prev) => {
-            const next = [...prev, userMsg].slice(-MAX_MESSAGES);
-            return next;
-        });
+        setMessages((prev) => [...prev, userMessage].slice(-MAX_MESSAGES));
         setInput("");
-        setLoading(true);
+        resetTextareaHeight();
+        setIsSending(true);
 
         try {
-            let botText = "";
-            if (mode === "ask") {
-                const res = await geminiService.ask(text);
-                botText = res.result?.answer ?? "Không có phản hồi.";
-            } else {
-                const res = await geminiService.agent(text);
-                botText = res.result?.reply ?? "Không có phản hồi.";
-            }
+            const answer =
+                mode === "ask"
+                    ? extractAskAnswer((await geminiService.ask(question)).result)
+                    : extractAgentAnswer((await geminiService.agent(question)).result);
 
-            const botMsg: Message = {
-                id: genId(),
+            const botMessage: ChatMessage = {
+                id: createMessageId(),
                 role: "bot",
-                text: botText,
-                timestamp: Date.now(),
+                content: answer,
+                createdAt: Date.now(),
                 mode,
             };
 
-            setMessages((prev) => [...prev, botMsg].slice(-MAX_MESSAGES));
+            setMessages((prev) => [...prev, botMessage].slice(-MAX_MESSAGES));
         } catch {
-            const errMsg: Message = {
-                id: genId(),
+            const errorMessage: ChatMessage = {
+                id: createMessageId(),
                 role: "bot",
-                text: "⚠️ Xin lỗi, đã xảy ra lỗi khi kết nối. Vui lòng thử lại sau.",
-                timestamp: Date.now(),
+                content:
+                    "Không thể kết nối tới Gemini lúc này. Vui lòng thử lại sau ít phút.",
+                createdAt: Date.now(),
                 mode,
                 isError: true,
             };
-            setMessages((prev) => [...prev, errMsg].slice(-MAX_MESSAGES));
-        } finally {
-            setLoading(false);
-        }
-    }, [input, loading, mode]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
+            setMessages((prev) => [...prev, errorMessage].slice(-MAX_MESSAGES));
+        } finally {
+            setIsSending(false);
         }
     };
 
-    /* ─── Render ─── */
+    const handleTextareaKeyDown = (
+        event: React.KeyboardEvent<HTMLTextAreaElement>
+    ) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            void sendMessage();
+        }
+    };
+
     return (
         <>
-            {/* ── Nút mở chatbot ── */}
             <button
-                id="chatbot-toggle-btn"
-                onClick={() => setOpen((v) => !v)}
-                title="Trợ lý AI"
-                style={{
-                    position: "fixed",
-                    bottom: "28px",
-                    right: "28px",
-                    zIndex: 9999,
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #034ea2 0%, #0a6dd6 100%)",
-                    border: "none",
-                    boxShadow: "0 4px 20px rgba(3,78,162,0.45)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1)";
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                        "0 6px 28px rgba(3,78,162,0.6)";
-                }}
-                onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                        "0 4px 20px rgba(3,78,162,0.45)";
-                }}
+                type="button"
+                className={`gemini-chatbot__toggle ${isOpen ? "is-open" : ""}`}
+                onClick={() => setIsOpen((prev) => !prev)}
+                title={isOpen ? "Đóng chat Gemini" : "Mở chat Gemini"}
+                aria-label={isOpen ? "Đóng chat Gemini" : "Mở chat Gemini"}
             >
-                {open ? (
-                    /* Icon X */
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
+                {isOpen ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7a1 1 0 1 0-1.4 1.4L10.6 12l-4.9 4.9a1 1 0 0 0 1.4 1.4L12 13.4l4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 12l4.9-4.9a1 1 0 0 0 0-1.4Z" />
                     </svg>
                 ) : (
-                    /* Icon chat */
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-                        <path d="M12 2C6.477 2 2 6.105 2 11.184c0 2.836 1.357 5.373 3.5 7.1L4.5 22l4.25-2.13A11.3 11.3 0 0 0 12 20.367c5.523 0 10-4.104 10-9.183S17.523 2 12 2Z" />
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2C6.5 2 2 5.9 2 10.8c0 2.8 1.4 5.3 3.8 7l-1 4.2 4.7-2.4c.8.2 1.7.3 2.5.3 5.5 0 10-3.9 10-8.8S17.5 2 12 2Z" />
                     </svg>
-                )}
-
-                {/* Badge chấm xanh lá */}
-                {!open && (
-                    <span style={{
-                        position: "absolute",
-                        top: "6px",
-                        right: "6px",
-                        width: "12px",
-                        height: "12px",
-                        borderRadius: "50%",
-                        background: "#22c55e",
-                        border: "2px solid white",
-                    }} />
                 )}
             </button>
 
-            {/* ── Khung chat ── */}
-            {open && (
-                <div
-                    id="chatbot-window"
-                    style={{
-                        position: "fixed",
-                        bottom: "100px",
-                        right: "28px",
-                        zIndex: 9998,
-                        width: "390px",
-                        maxWidth: "calc(100vw - 40px)",
-                        height: "580px",
-                        maxHeight: "calc(100vh - 140px)",
-                        background: "#ffffff",
-                        borderRadius: "20px",
-                        boxShadow: "0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        animation: "chatSlideUp 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-                    }}
-                >
-                    {/* ── Header ── */}
-                    <div style={{
-                        background: "linear-gradient(135deg, #034ea2 0%, #0a6dd6 100%)",
-                        padding: "16px 18px 12px",
-                        flexShrink: 0,
-                    }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                            {/* Avatar bot */}
-                            <div style={{
-                                width: "38px",
-                                height: "38px",
-                                borderRadius: "50%",
-                                background: "rgba(255,255,255,0.2)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0,
-                            }}>
-                                <span style={{ fontSize: "20px" }}>🎬</span>
+            {!isOpen ? null : (
+                <section className="gemini-chatbot__panel" aria-label="Khung chat Gemini">
+                    <header className="gemini-chatbot__header">
+                        <div className="gemini-chatbot__header-top">
+                            <div>
+                                <h3>Trợ lý Gemini</h3>
+                                <p>Trả lời tự động theo chế độ bạn chọn</p>
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ color: "white", fontWeight: 700, fontSize: "15px" }}>
-                                    Trợ lý CinemaSystem
-                                </div>
-                                <div style={{ color: "rgba(255,255,255,0.75)", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px" }}>
-                                    <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
-                                    Trực tuyến
-                                </div>
-                            </div>
-                            {/* Nút xoá lịch sử */}
+
                             <button
-                                id="chatbot-clear-btn"
+                                type="button"
+                                className="gemini-chatbot__clear-button"
                                 onClick={clearHistory}
-                                title="Xoá lịch sử"
-                                style={{
-                                    background: "rgba(255,255,255,0.15)",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    padding: "5px 8px",
-                                    cursor: "pointer",
-                                    color: "white",
-                                    fontSize: "11px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                }}
                             >
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                                </svg>
-                                Xoá
+                                Xóa lịch sử
                             </button>
                         </div>
 
-                        {/* ── Toggle chế độ ── */}
-                        <div style={{
-                            background: "rgba(255,255,255,0.15)",
-                            borderRadius: "10px",
-                            padding: "3px",
-                            display: "flex",
-                        }}>
-                            {(["agent", "ask"] as Mode[]).map((m) => (
-                                <button
-                                    key={m}
-                                    id={`chatbot-mode-${m}`}
-                                    onClick={() => setMode(m)}
-                                    style={{
-                                        flex: 1,
-                                        padding: "6px 0",
-                                        borderRadius: "8px",
-                                        border: "none",
-                                        cursor: "pointer",
-                                        fontSize: "12px",
-                                        fontWeight: mode === m ? 700 : 400,
-                                        background: mode === m ? "white" : "transparent",
-                                        color: mode === m ? "#034ea2" : "rgba(255,255,255,0.85)",
-                                        transition: "all 0.2s ease",
-                                    }}
-                                >
-                                    {m === "agent" ? "🎬 Hệ thống" : "🌐 Tự do"}
-                                </button>
-                            ))}
+                        <div className="gemini-chatbot__mode">
+                            <button
+                                type="button"
+                                className={mode === "agent" ? "active" : ""}
+                                onClick={() => setMode("agent")}
+                            >
+                                Trong hệ thống
+                            </button>
+                            <button
+                                type="button"
+                                className={mode === "ask" ? "active" : ""}
+                                onClick={() => setMode("ask")}
+                            >
+                                Ngoài hệ thống
+                            </button>
                         </div>
-                        <div style={{ color: "rgba(255,255,255,0.65)", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>
-                            {mode === "agent"
-                                ? "Hỏi về phim, lịch chiếu, rạp, giá vé..."
-                                : "Hỏi bất kỳ điều gì ngoài hệ thống"}
-                        </div>
-                    </div>
+                        <small>{modeDescription}</small>
+                    </header>
 
-                    {/* ── Messages ── */}
-                    <div
-                        id="chatbot-messages"
-                        style={{
-                            flex: 1,
-                            overflowY: "auto",
-                            padding: "16px 14px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "12px",
-                            background: "#f6f8fc",
-                        }}
-                    >
-                        {messages.map((msg) => (
-                            <MessageBubble key={msg.id} msg={msg} />
+                    <div className="gemini-chatbot__messages" id="gemini-chatbot-messages">
+                        {messages.map((message) => (
+                            <MessageItem key={message.id} message={message} />
                         ))}
 
-                        {/* Loading dots */}
-                        {loading && (
-                            <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
-                                <BotAvatar />
-                                <div style={{
-                                    background: "white",
-                                    borderRadius: "16px 16px 16px 4px",
-                                    padding: "12px 16px",
-                                    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                                    display: "flex",
-                                    gap: "5px",
-                                    alignItems: "center",
-                                }}>
-                                    {[0, 1, 2].map((i) => (
-                                        <span key={i} style={{
-                                            width: "7px",
-                                            height: "7px",
-                                            borderRadius: "50%",
-                                            background: "#034ea2",
-                                            display: "inline-block",
-                                            animation: `chatDot 1.2s ${i * 0.2}s infinite ease-in-out`,
-                                        }} />
-                                    ))}
-                                </div>
+                        {isSending ? (
+                            <div className="gemini-chatbot__typing">
+                                <span />
+                                <span />
+                                <span />
                             </div>
-                        )}
+                        ) : null}
+
                         <div ref={bottomRef} />
                     </div>
 
-                    {/* ── Input area ── */}
-                    <div style={{
-                        padding: "12px 14px",
-                        borderTop: "1px solid #e5eaf2",
-                        background: "white",
-                        flexShrink: 0,
-                    }}>
-                        <div style={{
-                            display: "flex",
-                            gap: "8px",
-                            alignItems: "flex-end",
-                            background: "#f1f5f9",
-                            borderRadius: "14px",
-                            padding: "8px 8px 8px 14px",
-                            border: "1.5px solid transparent",
-                            transition: "border-color 0.2s",
-                        }}
-                            onFocus={(e) => (e.currentTarget.style.borderColor = "#034ea2")}
-                            onBlur={(e) => (e.currentTarget.style.borderColor = "transparent")}
-                        >
+                    <footer className="gemini-chatbot__footer">
+                        <div className="gemini-chatbot__input-wrap">
                             <textarea
-                                ref={inputRef}
-                                id="chatbot-input"
+                                ref={textareaRef}
                                 value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder={mode === "agent" ? "Hỏi về phim, lịch chiếu..." : "Nhập câu hỏi của bạn..."}
                                 rows={1}
-                                disabled={loading}
-                                style={{
-                                    flex: 1,
-                                    border: "none",
-                                    background: "transparent",
-                                    resize: "none",
-                                    outline: "none",
-                                    fontSize: "14px",
-                                    lineHeight: "1.5",
-                                    maxHeight: "100px",
-                                    overflowY: "auto",
-                                    fontFamily: "inherit",
-                                    color: "#1f2937",
-                                }}
-                                onInput={(e) => {
-                                    const el = e.currentTarget;
-                                    el.style.height = "auto";
-                                    el.style.height = Math.min(el.scrollHeight, 100) + "px";
-                                }}
+                                maxLength={2000}
+                                disabled={isSending}
+                                placeholder="Nhập câu hỏi của bạn..."
+                                onChange={(event) => setInput(event.target.value)}
+                                onInput={handleInputResize}
+                                onKeyDown={handleTextareaKeyDown}
                             />
                             <button
-                                id="chatbot-send-btn"
-                                onClick={sendMessage}
-                                disabled={loading || !input.trim()}
-                                style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "10px",
-                                    border: "none",
-                                    background: loading || !input.trim()
-                                        ? "#cbd5e1"
-                                        : "linear-gradient(135deg, #034ea2, #0a6dd6)",
-                                    cursor: loading || !input.trim() ? "not-allowed" : "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    flexShrink: 0,
-                                    transition: "background 0.2s",
-                                }}
+                                type="button"
+                                onClick={() => void sendMessage()}
+                                disabled={isSending || !input.trim()}
                             >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13" />
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                                </svg>
+                                Gửi
                             </button>
                         </div>
-                        <div style={{ textAlign: "center", fontSize: "11px", color: "#94a3b8", marginTop: "6px" }}>
-                            Enter để gửi · Shift+Enter xuống dòng
-                        </div>
-                    </div>
-                </div>
+                        <small>Nhấn Enter để gửi, Shift + Enter để xuống dòng</small>
+                    </footer>
+                </section>
             )}
-
-            {/* ── CSS Animations ── */}
-            <style>{`
-                @keyframes chatSlideUp {
-                    from { opacity: 0; transform: translateY(20px) scale(0.95); }
-                    to   { opacity: 1; transform: translateY(0)   scale(1);    }
-                }
-                @keyframes chatDot {
-                    0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
-                    40%           { transform: scale(1);   opacity: 1;   }
-                }
-                #chatbot-messages::-webkit-scrollbar { width: 4px; }
-                #chatbot-messages::-webkit-scrollbar-track { background: transparent; }
-                #chatbot-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-            `}</style>
         </>
     );
 }
 
-/* ─────────────────────────── Sub-components ─────────────────── */
-function BotAvatar() {
-    return (
-        <div style={{
-            width: "30px",
-            height: "30px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #034ea2, #0a6dd6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            fontSize: "14px",
-        }}>
-            🤖
-        </div>
-    );
-}
-
-function MessageBubble({ msg }: { msg: Message }) {
-    const isUser = msg.role === "user";
-
-    if (isUser) {
-        return (
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", alignItems: "flex-end" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", maxWidth: "80%" }}>
-                    <div style={{
-                        background: "linear-gradient(135deg, #034ea2 0%, #0a6dd6 100%)",
-                        color: "white",
-                        borderRadius: "18px 18px 4px 18px",
-                        padding: "10px 14px",
-                        fontSize: "14px",
-                        lineHeight: "1.5",
-                        boxShadow: "0 1px 4px rgba(3,78,162,0.2)",
-                        wordBreak: "break-word",
-                    }}>
-                        {msg.text}
-                    </div>
-                    <span style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
-                        {formatTime(msg.timestamp)}
-                    </span>
-                </div>
-                {/* Avatar người dùng */}
-                <div style={{
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "50%",
-                    background: "#e2e8f0",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: "14px",
-                }}>
-                    👤
-                </div>
-            </div>
-        );
-    }
+function MessageItem({ message }: { message: ChatMessage }) {
+    const isUser = message.role === "user";
 
     return (
-        <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
-            <BotAvatar />
-            <div style={{ display: "flex", flexDirection: "column", maxWidth: "82%" }}>
-                <div style={{
-                    background: msg.isError ? "#fef2f2" : "white",
-                    color: msg.isError ? "#991b1b" : "#1f2937",
-                    borderRadius: "18px 18px 18px 4px",
-                    padding: "10px 14px",
-                    fontSize: "14px",
-                    lineHeight: "1.6",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                    border: msg.isError ? "1px solid #fecaca" : "1px solid #f1f5f9",
-                    wordBreak: "break-word",
-                }}>
-                    {renderMarkdown(msg.text)}
-                </div>
-                <span style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
-                    {formatTime(msg.timestamp)} ·{" "}
-                    <span style={{
-                        color: msg.mode === "agent" ? "#034ea2" : "#f58020",
-                        fontWeight: 600,
-                    }}>
-                        {msg.mode === "agent" ? "Hệ thống" : "Tự do"}
-                    </span>
-                </span>
-            </div>
-        </div>
+        <article
+            className={`gemini-chatbot__message ${
+                isUser ? "is-user" : "is-bot"
+            } ${message.isError ? "is-error" : ""}`}
+        >
+            <p>{message.content}</p>
+            <time>{`${formatTime(message.createdAt)}${
+                isUser ? "" : message.mode === "agent" ? " • Trong hệ thống" : " • Ngoài hệ thống"
+            }`}</time>
+        </article>
     );
 }

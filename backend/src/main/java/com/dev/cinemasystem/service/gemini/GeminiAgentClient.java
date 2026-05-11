@@ -17,6 +17,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -24,12 +25,17 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class GeminiAgentClient {
 
+    static final int MAX_RETRIES = 3;
+    static final Set<Integer> RETRYABLE_STATUS = Set.of(429, 500, 503);
+
     GeminiApiProperties properties;
     ObjectMapper objectMapper;
     HttpClient httpClient = HttpClient.newHttpClient();
 
     public GeminiGenerateResponse generate(List<Object> contents, List<Object> tools) {
         validateConfig();
+        String apiUrl = normalizeConfigValue(properties.getUrl());
+        String apiKey = normalizeConfigValue(properties.getKey());
 
         try {
             Map<String, Object> body = Map.of(
@@ -55,28 +61,43 @@ public class GeminiAgentClient {
             String json = objectMapper.writeValueAsString(body);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(properties.getUrl()))
+                    .uri(URI.create(apiUrl))
                     .header("Content-Type", "application/json")
-                    .header("x-goog-api-key", properties.getKey())
+                    .header("x-goog-api-key", apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+                log.info("=== GEMINI STATUS ===");
+                log.info(String.valueOf(response.statusCode()));
+                log.info("=== GEMINI RESPONSE BODY ===");
+                log.info(response.body());
 
-            log.info("=== GEMINI STATUS ===");
-            log.info(response.statusCode()+"");
+                int status = response.statusCode();
+                if (status >= 200 && status < 300) {
+                    return objectMapper.readValue(response.body(), GeminiGenerateResponse.class);
+                }
 
-            log.info("=== GEMINI RESPONSE BODY ===");
-            log.info(response.body());
+                if (RETRYABLE_STATUS.contains(status) && attempt < MAX_RETRIES) {
+                    long waitMs = attempt * 1200L;
+                    log.warn("Gemini unavailable (status={}), retry {}/{} in {}ms",
+                            status, attempt, MAX_RETRIES, waitMs);
+                    Thread.sleep(waitMs);
+                    continue;
+                }
 
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
             }
 
-            return objectMapper.readValue(response.body(), GeminiGenerateResponse.class);
+            throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
         } catch (AppException e) {
             throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Gemini retry interrupted", e);
+            throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
         } catch (Exception e) {
             log.error("Gemini API call failed", e);
             throw new AppException(ErrorCode.GEMINI_API_CALL_FAILED);
@@ -84,11 +105,28 @@ public class GeminiAgentClient {
     }
 
     private void validateConfig() {
-        if (properties.getKey() == null || properties.getKey().isBlank()) {
+        String key = normalizeConfigValue(properties.getKey());
+        String url = normalizeConfigValue(properties.getUrl());
+
+        if (key == null) {
             throw new AppException(ErrorCode.GEMINI_API_KEY_MISSING);
         }
-        if (properties.getUrl() == null || properties.getUrl().isBlank()) {
+        if (url == null) {
             throw new AppException(ErrorCode.GEMINI_API_URL_MISSING);
         }
+    }
+
+    private String normalizeConfigValue(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+        }
+
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

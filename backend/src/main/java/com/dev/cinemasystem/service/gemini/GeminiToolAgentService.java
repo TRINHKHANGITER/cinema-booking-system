@@ -2,8 +2,6 @@ package com.dev.cinemasystem.service.gemini;
 
 import com.dev.cinemasystem.dto.geminiDTO.ChatAgentResponse;
 import com.dev.cinemasystem.dto.geminiDTO.GeminiFunctionModels.*;
-import com.dev.cinemasystem.exception.AppException;
-import com.dev.cinemasystem.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,6 +34,11 @@ public class GeminiToolAgentService {
                     geminiAgentClient.generate(contents, toolDeclarationFactory.buildTools());
 
             Candidate candidate = firstCandidate(response);
+            if (candidate == null || candidate.getContent() == null) {
+                contents.add(userTextContent("Hãy trả lời bằng văn bản ngắn gọn cho câu hỏi trước đó."));
+                continue;
+            }
+
             Content content = candidate.getContent();
             List<Part> parts = content.getParts();
 
@@ -57,7 +60,8 @@ public class GeminiToolAgentService {
 
             String text = extractText(parts);
             if (text == null || text.isBlank()) {
-                throw new AppException(ErrorCode.GEMINI_EMPTY_RESPONSE);
+                contents.add(userTextContent("Hãy trả lời bằng văn bản ngắn gọn cho câu hỏi trước đó."));
+                continue;
             }
 
             finalReply = text;
@@ -77,7 +81,7 @@ public class GeminiToolAgentService {
 
     private Candidate firstCandidate(GeminiGenerateResponse response) {
         if (response == null || response.getCandidates() == null || response.getCandidates().isEmpty()) {
-            throw new AppException(ErrorCode.GEMINI_EMPTY_RESPONSE);
+            return null;
         }
         return response.getCandidates().get(0);
     }

@@ -39,7 +39,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -779,8 +778,7 @@ public class BookingService {
             return basePrice;
         }
 
-        // Bảng giá vé đôi đã là giá cho 1 cặp ghế, nên mỗi ghế trong cặp chỉ tính 1/2.
-        return basePrice.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+        return basePrice.multiply(BigDecimal.valueOf(1));
     }
 
     private boolean isCoupleSeat(Seat seat) {
