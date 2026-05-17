@@ -23,4 +23,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     List<Payment> findAllByOrder_OrderIdAndStatus(Integer orderId, PaymentStatus status);
 
     List<Payment> findAllByOrder_OrderIdOrderByPaymentIdDesc(Integer orderId);
+
+    java.util.Optional<Payment> findByTransactionId(String transactionId);
 }

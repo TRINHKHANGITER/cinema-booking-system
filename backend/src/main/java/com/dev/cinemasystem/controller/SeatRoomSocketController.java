@@ -7,36 +7,32 @@ import com.dev.cinemasystem.dto.showTimeSeatDTO.ReleaseSeatRequest;
 import com.dev.cinemasystem.dto.showTimeSeatDTO.ShowTimeSeatResponse;
 import com.dev.cinemasystem.service.SeatInventoryService;
 import com.dev.cinemasystem.service.SeatRoomBroadcastService;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.annotation.SendToUser;
+import org.springframework.stereotype.Controller;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/showtime-seat")
+@Controller
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ShowTimeSeatController {
+public class SeatRoomSocketController {
     SeatInventoryService seatInventoryService;
     SeatRoomBroadcastService seatRoomBroadcastService;
 
-    @GetMapping("/{showTimeId}")
-    public ApiResponse<List<ShowTimeSeatResponse>> getSeatMap(@PathVariable Integer showTimeId) {
-        return ApiResponse.<List<ShowTimeSeatResponse>>builder()
-                .result(seatInventoryService.getSeatMap(showTimeId))
-                .build();
+    @MessageMapping("/showtime/{showTimeId}/sync")
+    public void syncSeatMap(@DestinationVariable Integer showTimeId) {
+        List<ShowTimeSeatResponse> seatMap = seatInventoryService.getSeatMap(showTimeId);
+        seatRoomBroadcastService.broadcastSeatMap(showTimeId, "SYNC", seatMap);
     }
 
-    @PostMapping("/hold")
-    public ApiResponse<HoldSeatResponse> holdSeats(@RequestBody @Valid HoldSeatRequest request) {
+    @MessageMapping("/showtime/hold")
+    @SendToUser("/queue/seat-hold")
+    public ApiResponse<HoldSeatResponse> holdBySocket(HoldSeatRequest request) {
         HoldSeatResponse result = seatInventoryService.holdSeats(request);
         broadcastSeatMap(result.getShowTimeId(), "HELD");
         return ApiResponse.<HoldSeatResponse>builder()
@@ -44,8 +40,9 @@ public class ShowTimeSeatController {
                 .build();
     }
 
-    @PostMapping("/release")
-    public ApiResponse<HoldSeatResponse> releaseSeats(@RequestBody @Valid ReleaseSeatRequest request) {
+    @MessageMapping("/showtime/release")
+    @SendToUser("/queue/seat-hold")
+    public ApiResponse<HoldSeatResponse> releaseBySocket(ReleaseSeatRequest request) {
         HoldSeatResponse result = seatInventoryService.releaseSeats(request);
         broadcastSeatMap(result.getShowTimeId(), "RELEASED");
         return ApiResponse.<HoldSeatResponse>builder()

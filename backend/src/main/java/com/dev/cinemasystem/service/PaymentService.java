@@ -15,6 +15,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class PaymentService {
     PaymentMapper paymentMapper;
     OrderRepository orderRepository;
 
+    @Transactional
     public PaymentResponse createPayment(PaymentCreationRequest paymentCreationRequest) {
         Order order = orderRepository.findById(paymentCreationRequest.getOrderId())
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
@@ -48,6 +50,7 @@ public class PaymentService {
         return paymentMapper.toPaymentResponse(paymentRepository.save(payment));
     }
 
+    @Transactional
     public void updatePayment(int paymentId, PaymentUpdateRequest paymentUpdateRequest) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
@@ -56,8 +59,11 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
-    public List<PaymentResponse> getPayments() {
-        return paymentRepository.findAll().stream().map(paymentMapper::toPaymentResponse).toList();
+    public List<PaymentResponse> getPayments(PaymentStatus status) {
+        List<Payment> payments = status == null
+                ? paymentRepository.findAll()
+                : paymentRepository.findAllByStatus(status);
+        return payments.stream().map(paymentMapper::toPaymentResponse).toList();
     }
 
     public PaymentResponse getPaymentById(Integer paymentId) {
@@ -65,6 +71,7 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND)));
     }
 
+    @Transactional
     public void cancelPayment(Integer orderId, PaymentStatus paymentStatus) {
         List<Payment> pendingPayments = paymentRepository.findAllByOrder_OrderIdAndStatus(orderId, PaymentStatus.PENDING);
         if (pendingPayments.isEmpty()) {
@@ -78,6 +85,6 @@ public class PaymentService {
     }
 
     public static String buildTransferContent(int orderId) {
-        return "THANH TOÁN ĐH" + String.format("%04d", orderId);
+        return "THANH TOAN DH" + String.format("%04d", orderId);
     }
 }

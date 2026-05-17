@@ -38,6 +38,32 @@ public interface ShowTimeSeatRepository extends JpaRepository<ShowTimeSeat, Inte
     List<ShowTimeSeat> findAllByOrder_OrderId(Integer orderId);
 
     List<ShowTimeSeat> findAllByStatusAndHoldExpiresAtBefore(ShowTimeSeatStatus status, LocalDateTime holdExpiresAt);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select sts
+        from ShowTimeSeat sts
+        where sts.order.orderId = :orderId
+          and sts.status = :status
+    """)
+    List<ShowTimeSeat> findAllByOrderIdAndStatusForUpdate(
+            @Param("orderId") Integer orderId,
+            @Param("status") ShowTimeSeatStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select sts
+        from ShowTimeSeat sts
+        where sts.status = :status
+          and sts.holdExpiresAt is not null
+          and sts.holdExpiresAt < :expiredAt
+    """)
+    List<ShowTimeSeat> findAllExpiredForUpdate(
+            @Param("status") ShowTimeSeatStatus status,
+            @Param("expiredAt") LocalDateTime expiredAt
+    );
+
     boolean existsBySeat_SeatIdAndStatusAndHoldExpiresAtAfter(
             Integer seatId,
             ShowTimeSeatStatus status,

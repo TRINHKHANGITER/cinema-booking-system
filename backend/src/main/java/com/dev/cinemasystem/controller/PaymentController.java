@@ -4,6 +4,8 @@ package com.dev.cinemasystem.controller;
 import com.dev.cinemasystem.dto.apiDTO.ApiResponse;
 import com.dev.cinemasystem.dto.paymentDTO.PaymentCreationRequest;
 import com.dev.cinemasystem.dto.paymentDTO.PaymentResponse;
+import com.dev.cinemasystem.dto.paymentDTO.PaymentUpdateRequest;
+import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.service.PaymentService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,10 +28,21 @@ public class PaymentController {
                 .build();
     }
 
+    @PatchMapping("/{paymentId}")
+    public ApiResponse<Boolean> updatePayment(
+            @PathVariable Integer paymentId,
+            @RequestBody PaymentUpdateRequest request
+    ) {
+        paymentService.updatePayment(paymentId, request);
+        return ApiResponse.<Boolean>builder()
+                .result(true)
+                .build();
+    }
+
     @GetMapping
-    public ApiResponse<List<PaymentResponse>> getPayments() {
+    public ApiResponse<List<PaymentResponse>> getPayments(@RequestParam(required = false) PaymentStatus status) {
         return ApiResponse.<List<PaymentResponse>>builder()
-                .result(paymentService.getPayments())
+                .result(paymentService.getPayments(status))
                 .build();
     }
 
