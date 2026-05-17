@@ -4,7 +4,6 @@ import com.dev.cinemasystem.entity.*;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.repository.*;
 import com.nimbusds.jose.Payload;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -30,11 +29,10 @@ public class EmailService {
     String myEmail;
 
     final JavaMailSender javaMailSender;
-    final OrderRepository orderRepository;
-    final OrderComboRepository orderComboRepository;
-    final TicketRepository ticketRepository;
-    final UserRepository userRepository;
-    final PaymentRepository paymentRepository;
+    final OrderService orderService;
+    final OrderComboService orderComboService;
+    final TicketService ticketService;
+    final PaymentService paymentService;
 
     public void sendForgotPasswordOtp(String to, String otp, int otpExpireMinutes) {
         try {
@@ -347,20 +345,20 @@ public class EmailService {
     }
 
     public void sendTicketWithCombo(int orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = orderService.getOrderEntityById(orderId);
 
-        Payment payment = paymentRepository
-                .findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(orderId, PaymentStatus.SUCCESS)
-                .or(() -> paymentRepository.findTopByOrder_OrderIdOrderByPaymentIdDesc(orderId))
+        Payment payment = paymentService.findLatestSuccessPayment(orderId)
+                .or(() -> paymentService.findLatestPayment(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (order.getUser() == null || order.getUser().getUserId() == null) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
 
-        User user = userRepository.findById(order.getUser().getUserId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = order.getUser();
+        if (user == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
 
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -508,8 +506,8 @@ public class EmailService {
             throw new AppException(ErrorCode.ORDER_NOT_FOUND);
         }
 
-        List<OrderCombo> orderCombos = orderComboRepository.findAllByOrder_OrderId(order.getOrderId());
-        List<Ticket> tickets = ticketRepository.findAllByOrder_OrderId(order.getOrderId());
+        List<OrderCombo> orderCombos = orderComboService.findAllByOrderId(order.getOrderId());
+        List<Ticket> tickets = ticketService.findAllByOrderId(order.getOrderId());
 
         ShowTime showTime = tickets.get(0).getShow();
         Movie movie = showTime.getMovie();

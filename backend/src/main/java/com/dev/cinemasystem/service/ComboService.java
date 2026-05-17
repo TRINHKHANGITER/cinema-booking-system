@@ -10,7 +10,6 @@ import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.ComboMapper;
 import com.dev.cinemasystem.repository.ComboRepository;
-import com.dev.cinemasystem.repository.OrderComboRepository;
 import com.dev.cinemasystem.utils.FileStoreUtil;
 import com.dev.cinemasystem.utils.StoragePathResolver;
 import jakarta.persistence.criteria.Predicate;
@@ -40,12 +39,24 @@ import java.util.Locale;
 public class ComboService {
     ComboRepository comboRepository;
     ComboMapper comboMapper;
-    OrderComboRepository orderComboRepository;
+    OrderComboService orderComboService;
 
     @Value("${storage.image-combo-dir}")
     @NonFinal
     String imageComboDir;
 
+
+    public Combo getComboEntityById(Integer comboId) {
+        return comboRepository.findById(comboId)
+                .orElseThrow(() -> {
+                    log.error("Combo with id {} not found", comboId);
+                    return new AppException(ErrorCode.COMBO_NOT_FOUND);
+                });
+    }
+
+    public Long countCombos() {
+        return comboRepository.count();
+    }
     public ComboResponse getComboById(Integer comboId) {
         Combo combo = comboRepository.findById(comboId)
                 .orElseThrow(() -> {
@@ -175,7 +186,7 @@ public class ComboService {
                     return new AppException(ErrorCode.COMBO_NOT_FOUND);
                 });
 
-        if (orderComboRepository.existsByCombo_ComboId(comboId)) {
+        if (orderComboService.existsByComboId(comboId)) {
             throw new AppException(ErrorCode.COMBO_HAS_ACTIVE_ORDER_COMBOS);
         }
 
@@ -231,5 +242,6 @@ public class ComboService {
         return value.trim();
     }
 }
+
 
 

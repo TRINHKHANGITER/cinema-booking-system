@@ -2,42 +2,43 @@ package com.dev.cinemasystem.service;
 
 import com.dev.cinemasystem.configuration.booking.BookingProperties;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
+import com.dev.cinemasystem.dto.dashboardDTO.CinemaRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.ComboRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.MovieRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.MovieTypeRevenueResponse;
+import com.dev.cinemasystem.dto.dashboardDTO.OrderStatisticItemResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderComboDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderCreationRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderPaymentDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderSeatDetailResponse;
-import com.dev.cinemasystem.dto.orderDTO.OrderShowTimeDetailResponse;
 import com.dev.cinemasystem.dto.orderDTO.OrderStatusUpdateRequest;
 import com.dev.cinemasystem.dto.orderDTO.OrderUpdateRequest;
 import com.dev.cinemasystem.entity.Order;
-import com.dev.cinemasystem.entity.OrderCombo;
 import com.dev.cinemasystem.entity.Payment;
 import com.dev.cinemasystem.entity.PriceTicket;
 import com.dev.cinemasystem.entity.ShowTime;
 import com.dev.cinemasystem.entity.ShowTimeSeat;
 import com.dev.cinemasystem.entity.Ticket;
 import com.dev.cinemasystem.entity.User;
+import com.dev.cinemasystem.enums.ComboDetailStatus;
 import com.dev.cinemasystem.enums.OrderStatus;
+import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
+import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
+import com.dev.cinemasystem.mapper.OrderDetailMapper;
 import com.dev.cinemasystem.mapper.OrderMapper;
 import com.dev.cinemasystem.mapper.UserMapper;
-import com.dev.cinemasystem.repository.OrderComboRepository;
 import com.dev.cinemasystem.repository.OrderRepository;
-import com.dev.cinemasystem.repository.PaymentRepository;
-import com.dev.cinemasystem.repository.PriceTicketRepository;
-import com.dev.cinemasystem.repository.ShowTimeRepository;
-import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
-import com.dev.cinemasystem.repository.TicketRepository;
-import com.dev.cinemasystem.repository.UserRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,24 +53,25 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderService {
     OrderRepository orderRepository;
-    ShowTimeRepository showTimeRepository;
-    UserRepository userRepository;
-    ShowTimeSeatRepository showTimeSeatRepository;
-    TicketRepository ticketRepository;
-    OrderComboRepository orderComboRepository;
-    PaymentRepository paymentRepository;
-    PriceTicketRepository priceTicketRepository;
+    ShowTimeService showTimeService;
+    UserService userService;
+    ShowTimeSeatService showTimeSeatService;
+    TicketService ticketService;
+    OrderComboService orderComboService;
+    ObjectProvider<PaymentService> paymentServiceProvider;
+    PriceTicketService priceTicketService;
     OrderMapper orderMapper;
+    OrderDetailMapper orderDetailMapper;
     UserMapper userMapper;
     BookingProperties bookingProperties;
-    SeatInventoryService seatInventoryService;
+    ObjectProvider<SeatInventoryService> seatInventoryServiceProvider;
 
     @Transactional
     public OrderResponse createOrder(OrderCreationRequest request) {
@@ -77,13 +79,8 @@ public class OrderService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        ShowTime showTime = showTimeRepository.findById(request.getShowTimeId())
-                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
-        User user = null;
-        if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        }
+        ShowTime showTime = showTimeService.getShowTimeEntityById(request.getShowTimeId());
+        User user = request.getUserId() != null ? userService.getUserEntityById(request.getUserId()) : null;
 
         LocalDateTime now = LocalDateTime.now();
         Order order = Order.builder()
@@ -107,8 +104,7 @@ public class OrderService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Order order = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = getOrderEntityByIdForUpdate(orderId);
 
         if (request.getTicketTotal() != null) {
             order.setTicketTotal(request.getTicketTotal());
@@ -143,30 +139,25 @@ public class OrderService {
 
         OrderStatus targetStatus = request.getStatus();
         if (targetStatus == OrderStatus.CANCELLED) {
-            seatInventoryService.cancelOrder(orderId);
-            return orderMapper.toOrderResponse(seatInventoryService.getOrder(orderId));
+            seatInventoryServiceProvider.getObject().cancelOrder(orderId);
+            return orderMapper.toOrderResponse(seatInventoryServiceProvider.getObject().getOrder(orderId));
         }
         if (targetStatus == OrderStatus.PAID) {
-            seatInventoryService.confirmSold(orderId);
-            return orderMapper.toOrderResponse(seatInventoryService.getOrder(orderId));
+            seatInventoryServiceProvider.getObject().confirmSold(orderId);
+            return orderMapper.toOrderResponse(seatInventoryServiceProvider.getObject().getOrder(orderId));
         }
 
-        Order order = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = getOrderEntityByIdForUpdate(orderId);
         order.setStatus(targetStatus);
         return orderMapper.toOrderResponse(orderRepository.save(order));
     }
 
     public OrderResponse getOrderById(Integer orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        return orderMapper.toOrderResponse(order);
+        return orderMapper.toOrderResponse(getOrderEntityById(orderId));
     }
 
     public List<OrderResponse> getOrders(OrderStatus status) {
-        List<Order> orders = status == null
-                ? orderRepository.findAll()
-                : orderRepository.findAllByStatus(status);
+        List<Order> orders = status == null ? orderRepository.findAll() : orderRepository.findAllByStatus(status);
         return orders.stream()
                 .map(orderMapper::toOrderResponse)
                 .toList();
@@ -255,15 +246,14 @@ public class OrderService {
     }
 
     public OrderDetailResponse getOrderDetailById(Integer orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = getOrderEntityById(orderId);
 
         Map<Integer, Ticket> ticketBySeatId = new HashMap<>();
-        for (Ticket ticket : ticketRepository.findAllByOrder_OrderId(orderId)) {
+        for (Ticket ticket : ticketService.findAllByOrderId(orderId)) {
             ticketBySeatId.put(ticket.getSeat().getSeatId(), ticket);
         }
 
-        List<ShowTimeSeat> orderSeats = showTimeSeatRepository.findAllByOrder_OrderId(orderId).stream()
+        List<ShowTimeSeat> orderSeats = showTimeSeatService.findAllByOrderId(orderId).stream()
                 .filter(seat -> seat.getStatus() == ShowTimeSeatStatus.HELD || seat.getStatus() == ShowTimeSeatStatus.SOLD)
                 .sorted(Comparator
                         .comparing((ShowTimeSeat seat) -> seat.getSeat().getSeatRow())
@@ -271,19 +261,26 @@ public class OrderService {
                 .toList();
 
         List<OrderSeatDetailResponse> seatDetails = orderSeats.stream()
-                .map(seat -> toOrderSeatDetailResponse(order.getShowTime(), seat, ticketBySeatId.get(seat.getSeat().getSeatId())))
+                .map(seat -> {
+                    Ticket ticket = ticketBySeatId.get(seat.getSeat().getSeatId());
+                    BigDecimal seatPrice = ticket != null
+                            ? ticket.getUnitPrice()
+                            : resolveSeatPrice(order.getShowTime(), seat.getSeat().getSeatType().getSeatTypeId());
+                    return orderDetailMapper.mapSeatDetail(seat, ticket, seatPrice);
+                })
                 .toList();
 
-        List<OrderComboDetailResponse> comboDetails = orderComboRepository.findAllByOrder_OrderId(orderId).stream()
-                .map(this::toOrderComboDetailResponse)
+        List<OrderComboDetailResponse> comboDetails = orderComboService.findAllByOrderId(orderId).stream()
+                .map(orderDetailMapper::mapComboDetail)
                 .toList();
 
-        List<OrderPaymentDetailResponse> paymentDetails = paymentRepository.findAllByOrder_OrderIdOrderByPaymentIdDesc(orderId).stream()
-                .map(this::toOrderPaymentDetailResponse)
+        List<Payment> payments = paymentServiceProvider.getObject().getPaymentsByOrderIdDesc(orderId);
+        List<OrderPaymentDetailResponse> paymentDetails = payments.stream()
+                .map(orderDetailMapper::mapPaymentDetail)
                 .toList();
 
-        Payment latestSuccessPayment = paymentRepository.findAllByOrder_OrderIdOrderByPaymentIdDesc(orderId).stream()
-                .filter(payment -> payment.getStatus() == com.dev.cinemasystem.enums.PaymentStatus.SUCCESS)
+        Payment latestSuccessPayment = payments.stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
                 .findFirst()
                 .orElse(null);
 
@@ -300,7 +297,7 @@ public class OrderService {
                 .expiredAt(order.getExpiredAt())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
-                .showTime(toOrderShowTimeDetailResponse(order.getShowTime()))
+                .showTime(orderDetailMapper.mapShowTimeDetail(order.getShowTime()))
                 .seats(seatDetails)
                 .combos(comboDetails)
                 .payments(paymentDetails)
@@ -311,79 +308,97 @@ public class OrderService {
                 .build();
     }
 
-    private OrderShowTimeDetailResponse toOrderShowTimeDetailResponse(ShowTime showTime) {
-        return OrderShowTimeDetailResponse.builder()
-                .showTimeId(showTime.getShowTimeId())
-                .releaseDate(showTime.getReleaseDate())
-                .startTime(showTime.getStartTime())
-                .endTime(showTime.getEndTime())
-                .movieId(showTime.getMovie().getMovieId())
-                .movieName(showTime.getMovie().getMovieName())
-                .roomId(showTime.getRoom().getRoomId())
-                .roomName(showTime.getRoom().getRoomName())
-                .cinemaId(showTime.getRoom().getCinema().getCinemaId())
-                .cinemaName(showTime.getRoom().getCinema().getCinemaName())
-                .provinceId(showTime.getRoom().getCinema().getProvince().getProvinceId())
-                .provinceName(showTime.getRoom().getCinema().getProvince().getProvinceName())
-                .build();
+    public Order getOrderEntityById(Integer orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
     }
 
-    private OrderSeatDetailResponse toOrderSeatDetailResponse(ShowTime showTime, ShowTimeSeat seat, Ticket ticket) {
-        BigDecimal seatPrice = ticket != null ? ticket.getUnitPrice() : resolveSeatPrice(showTime, seat.getSeat().getSeatType().getSeatTypeId());
-        String seatLabel = seat.getSeat().getSeatRow() + seat.getSeat().getSeatColumn();
+    public Order getOrderEntityByIdForUpdate(Integer orderId) {
+        return orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
 
-        return OrderSeatDetailResponse.builder()
-                .ticketId(ticket != null ? ticket.getTicketId() : null)
-                .seatId(seat.getSeat().getSeatId())
-                .seatRow(seat.getSeat().getSeatRow())
-                .seatColumn(seat.getSeat().getSeatColumn())
-                .seatLabel(seatLabel)
-                .seatTypeId(seat.getSeat().getSeatType().getSeatTypeId())
-                .seatTypeName(seat.getSeat().getSeatType().getSeatTypeName())
-                .showTimeSeatStatus(seat.getStatus())
-                .unitPrice(seatPrice)
-                .ticketStatus(ticket != null ? ticket.getStatus() : null)
-                .build();
+    public Order saveOrder(Order order) {
+        return orderRepository.save(order);
+    }
+
+    public Optional<Order> findLatestPayingOrder(Integer userId, Integer showTimeId) {
+        return orderRepository.findTopByUser_UserIdAndShowTime_ShowTimeIdAndStatusOrderByOrderIdDesc(
+                userId,
+                showTimeId,
+                OrderStatus.PAYING
+        );
+    }
+
+    public BigDecimal sumPaidTotalAmountByCreatedAtRange(OrderStatus status, LocalDateTime startAt, LocalDateTime endAt) {
+        return orderRepository.sumPaidTotalAmountByCreatedAtRange(status, startAt, endAt);
+    }
+
+    public Long countOrdersByCreatedAtRange(LocalDateTime startAt, LocalDateTime endAt) {
+        return orderRepository.countOrdersByCreatedAtRange(startAt, endAt);
+    }
+
+    public List<CinemaRevenueResponse> findRevenueByCinema(
+            OrderStatus status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer provinceId,
+            Integer cinemaId
+    ) {
+        return orderRepository.findRevenueByCinema(status, startAt, endAt, provinceId, cinemaId);
+    }
+
+    public List<MovieRevenueResponse> findRevenueByMovie(
+            OrderStatus status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer movieId
+    ) {
+        return orderRepository.findRevenueByMovie(status, startAt, endAt, movieId);
+    }
+
+    public List<MovieTypeRevenueResponse> findRevenueByMovieType(
+            OrderStatus status,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer categoryId
+    ) {
+        return orderRepository.findRevenueByMovieType(status, startAt, endAt, categoryId);
+    }
+
+    public List<ComboRevenueResponse> findRevenueByCombo(
+            OrderStatus orderStatus,
+            ComboDetailStatus comboDetailStatus,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            Integer comboId
+    ) {
+        return orderRepository.findRevenueByCombo(orderStatus, comboDetailStatus, startAt, endAt, comboId);
+    }
+
+    public Page<OrderStatisticItemResponse> findOrderStatistics(
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            OrderStatus status,
+            TicketStatus ticketStatus,
+            Pageable pageable
+    ) {
+        return orderRepository.findOrderStatistics(startAt, endAt, status, ticketStatus, pageable);
+    }
+
+    public BigDecimal sumTotalAmountByCreatedAtRangeAndStatus(
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            OrderStatus status
+    ) {
+        return orderRepository.sumTotalAmountByCreatedAtRangeAndStatus(startAt, endAt, status);
     }
 
     private BigDecimal resolveSeatPrice(ShowTime showTime, Integer seatTypeId) {
-        PriceTicket priceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
+        PriceTicket priceTicket = priceTicketService.findByRoomTypeIdAndSeatTypeId(
                 showTime.getRoom().getRoomType().getRoomTypeId(),
                 seatTypeId
         );
         return priceTicket != null ? priceTicket.getPrice() : null;
-    }
-
-    private OrderComboDetailResponse toOrderComboDetailResponse(OrderCombo combo) {
-        BigDecimal lineTotal = combo.getUnitPrice() != null
-                ? combo.getUnitPrice().multiply(BigDecimal.valueOf(combo.getQuantity()))
-                : combo.getNetAmount();
-
-        return OrderComboDetailResponse.builder()
-                .orderComboId(combo.getOrderComboId())
-                .comboId(combo.getCombo().getComboId())
-                .comboName(combo.getCombo().getComboName())
-                .comboImage(combo.getCombo().getImage())
-                .quantity(combo.getQuantity())
-                .unitPrice(combo.getUnitPrice())
-                .lineTotal(lineTotal)
-                .status(combo.getStatus())
-                .build();
-    }
-
-    private OrderPaymentDetailResponse toOrderPaymentDetailResponse(Payment payment) {
-        return OrderPaymentDetailResponse.builder()
-                .paymentId(payment.getPaymentId())
-                .amount(payment.getAmount())
-                .method(payment.getMethod())
-                .bankCode(payment.getBankCode())
-                .bankTransactionNo(payment.getBankTransactionNo())
-                .transactionId(payment.getTransactionId())
-                .infoTransaction(payment.getInfoTransaction())
-                .paidAt(payment.getPaidAt())
-                .createdAt(payment.getCreatedAt())
-                .updatedAt(payment.getUpdatedAt())
-                .status(payment.getStatus())
-                .build();
     }
 }

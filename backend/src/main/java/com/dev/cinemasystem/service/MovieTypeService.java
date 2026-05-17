@@ -38,6 +38,11 @@ public class MovieTypeService {
     MovieTypeRepository movieTypeRepository;
     MovieRepository movieRepository;
 
+    public MovieType getMovieTypeEntityById(Integer movieTypeId) {
+        return movieTypeRepository.findById(movieTypeId)
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND));
+    }
+
     public MovieTypeResponse getMovieTypeById(Integer movieTypeId) {
         MovieType movieType = movieTypeRepository.findById(movieTypeId)
                 .orElseThrow(() -> {
@@ -147,10 +152,7 @@ public class MovieTypeService {
                     return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
                 });
 
-        boolean hasActiveMovies = movieRepository.existsByMovieType_MovieTypeIdAndStatus(
-                movieTypeId,
-                MovieStatus.ACTIVE
-        );
+        boolean hasActiveMovies = movieRepository.existsByMovieType_MovieTypeIdAndStatus(movieTypeId, MovieStatus.ACTIVE);
         if (hasActiveMovies) {
             throw new AppException(ErrorCode.MOVIE_TYPE_HAS_ACTIVE_MOVIES);
         }
@@ -192,6 +194,3 @@ public class MovieTypeService {
         }
     }
 }
-
-
-

@@ -11,8 +11,6 @@ import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.MovieMapper;
 import com.dev.cinemasystem.repository.MovieRepository;
-import com.dev.cinemasystem.repository.MovieTypeRepository;
-import com.dev.cinemasystem.repository.ShowTimeRepository;
 import com.dev.cinemasystem.utils.FileStoreUtil;
 import com.dev.cinemasystem.utils.StoragePathResolver;
 import jakarta.persistence.criteria.Predicate;
@@ -50,8 +48,8 @@ public class MovieService {
 
     MovieRepository movieRepository;
     MovieMapper movieMapper;
-    MovieTypeRepository movieTypeRepository;
-    ShowTimeRepository showTimeRepository;
+    MovieTypeService movieTypeService;
+    ShowTimeService showTimeService;
 
     @Value("${storage.image-movie-imageLandscape-dir}")
     @NonFinal
@@ -61,6 +59,22 @@ public class MovieService {
     @NonFinal
     String imageMoviePortraitDir;
 
+
+    public Movie getMovieEntityById(Integer movieId) {
+        return movieRepository.findById(movieId)
+                .orElseThrow(() -> {
+                    log.error("Movie with id {} not found", movieId);
+                    return new AppException(ErrorCode.MOVIE_NOT_FOUND);
+                });
+    }
+
+    public boolean existsActiveMovieByMovieTypeId(Integer movieTypeId) {
+        return movieRepository.existsByMovieType_MovieTypeIdAndStatus(movieTypeId, MovieStatus.ACTIVE);
+    }
+
+    public Long countMovies() {
+        return movieRepository.count();
+    }
     public MovieResponse getMovieById(Integer movieId, MovieStatus status) {
         Movie movie = status == null
                 ? movieRepository.findById(movieId)
@@ -98,8 +112,7 @@ public class MovieService {
             throw new AppException(ErrorCode.MOVIE_NAME_EXISTS);
         }
 
-        var movieType = movieTypeRepository.findById(request.getMovieTypeId())
-                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND));
+        var movieType = movieTypeService.getMovieTypeEntityById(request.getMovieTypeId());
 
         var movie = movieMapper.toMovieFromMovieCreationRequest(request);
         movie.setMovieType(movieType);
@@ -222,10 +235,7 @@ public class MovieService {
         movieMapper.updateMovieInfo(movie, request);
 
         if (request.getMovieTypeId() != null) {
-            var movieType = movieTypeRepository.findById(request.getMovieTypeId()).orElseThrow(() -> {
-                log.error("Movie type with id {} not found", request.getMovieTypeId());
-                return new AppException(ErrorCode.MOVIE_TYPE_NOT_FOUND);
-            });
+            var movieType = movieTypeService.getMovieTypeEntityById(request.getMovieTypeId());
             movie.setMovieType(movieType);
         }
 
@@ -250,7 +260,7 @@ public class MovieService {
                     return new AppException(ErrorCode.MOVIE_NOT_FOUND);
                 });
 
-        boolean hasActiveShowTimes = showTimeRepository.existsByMovie_MovieIdAndStatusIn(
+        boolean hasActiveShowTimes = showTimeService.existsByMovieIdAndStatuses(
                 movieId,
                 ACTIVE_SHOWTIME_STATUSES
         );
@@ -375,6 +385,7 @@ public class MovieService {
         }
     }
 }
+
 
 
 

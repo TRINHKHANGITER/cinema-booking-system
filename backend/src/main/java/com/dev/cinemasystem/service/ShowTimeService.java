@@ -18,7 +18,7 @@ import com.dev.cinemasystem.enums.ShowTimeStatus;
 import com.dev.cinemasystem.enums.SortDirection;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.mapper.MovieMapper;
+import com.dev.cinemasystem.mapper.FullShowtimeMovieMapper;
 import com.dev.cinemasystem.mapper.ShowTimeMapper;
 import com.dev.cinemasystem.repository.MovieRepository;
 import com.dev.cinemasystem.repository.RoomRepository;
@@ -58,8 +58,33 @@ public class ShowTimeService {
     ShowTimeSeatRepository showTimeSeatRepository;
     TicketRepository ticketRepository;
     ShowTimeMapper showTimeMapper;
-    MovieMapper movieMapper;
+    FullShowtimeMovieMapper fullShowtimeMovieMapper;
 
+
+    public ShowTime getShowTimeEntityById(Integer showTimeId) {
+        return showTimeRepository.findById(showTimeId)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+    }
+
+    public boolean existsShowTimeById(Integer showTimeId) {
+        return showTimeId != null && showTimeRepository.existsById(showTimeId);
+    }
+
+    public List<ShowTime> getShowTimesByRoomId(Integer roomId) {
+        return showTimeRepository.findAllByRoom_RoomId(roomId);
+    }
+
+    public List<ShowTime> getShowTimesByMovieIdOrdered(Integer movieId) {
+        return showTimeRepository.findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(movieId);
+    }
+
+    public List<ShowTime> getRoomShowTimesNotCancelled(Integer roomId) {
+        return showTimeRepository.findAllByRoom_RoomIdAndStatusNot(roomId, ShowTimeStatus.CANCELLED);
+    }
+
+    public boolean existsByMovieIdAndStatuses(Integer movieId, java.util.Collection<ShowTimeStatus> statuses) {
+        return showTimeRepository.existsByMovie_MovieIdAndStatusIn(movieId, statuses);
+    }
     private void validateShowTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime == null || endTime == null || !endTime.isAfter(startTime)) {
             throw new AppException(ErrorCode.INVALID_SHOWTIME_RANGE);
@@ -193,7 +218,7 @@ public class ShowTimeService {
         List<ShowTime> movieShowTimes = showTimeRepository
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(showTime.getMovie().getMovieId());
         log.info("Retrieving showTime with id: {}", showTimeId);
-        return toShowtimeMovieResponse(showTime.getMovie(), movieShowTimes);
+        return fullShowtimeMovieMapper.mapMovieWithShowTimes(showTime.getMovie(), movieShowTimes);
     }
 
     public ShowTimeResponse getShowTimeById_tdv(Integer showTimeId) {
@@ -213,7 +238,6 @@ public class ShowTimeService {
             log.error("Room id {} not found", request.getRoomId());
             return new AppException(ErrorCode.ROOM_NOT_FOUND);
         });
-
         var movie = movieRepository.findById(request.getMovieId()).orElseThrow(() -> {
             log.error("Movie id {} not found", request.getMovieId());
             return new AppException(ErrorCode.MOVIE_NOT_FOUND);
@@ -241,7 +265,7 @@ public class ShowTimeService {
         initializeSeatInventoryForShowTime(savedShowTime);
         List<ShowTime> movieShowTimes = showTimeRepository
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
-        return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
+        return fullShowtimeMovieMapper.mapMovieWithShowTimes(savedShowTime.getMovie(), movieShowTimes);
     }
 
     public FullShowtimeMovieResponse updateShowTime(Integer showTimeId, ShowTimeUpdateResquest request) {
@@ -297,7 +321,7 @@ public class ShowTimeService {
         }
         List<ShowTime> movieShowTimes = showTimeRepository
                 .findAllByMovie_MovieIdOrderByReleaseDateAscStartTimeAscShowTimeIdAsc(savedShowTime.getMovie().getMovieId());
-        return toShowtimeMovieResponse(savedShowTime.getMovie(), movieShowTimes);
+        return fullShowtimeMovieMapper.mapMovieWithShowTimes(savedShowTime.getMovie(), movieShowTimes);
     }
 
     public boolean deleteShowTime(Integer showTimeId) {
@@ -616,7 +640,7 @@ public class ShowTimeService {
                         List.of(representativeShowTime)
                 );
 
-                return toShowtimeMovieResponse(
+                return fullShowtimeMovieMapper.mapMovieWithShowTimes(
                         representativeShowTime.getMovie(),
                         movieShowTimes
                 );
@@ -631,16 +655,6 @@ public class ShowTimeService {
             .totalPages(uniqueMoviePage.getTotalPages())
             .build();
 }
-   private FullShowtimeMovieResponse toShowtimeMovieResponse(Movie movie, List<ShowTime> showTimes) {
-        List<ShowTimeResponse> showTimeResponses = showTimes.stream()
-                .map(showTimeMapper::toShowTimeResponse)
-                .toList();
-
-        return FullShowtimeMovieResponse.builder()
-                .movie(movieMapper.toMovieResponse(movie))
-                .showTimes(showTimeResponses)
-                .build();
-    }
 
     private String normalizeReleaseDateCondition(String releaseDateCondition) {
         if (releaseDateCondition == null || releaseDateCondition.isBlank()) {
@@ -677,6 +691,7 @@ public class ShowTimeService {
                 .build();
     }
 }
+
 
 
 

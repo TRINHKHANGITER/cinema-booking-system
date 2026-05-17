@@ -8,12 +8,7 @@ import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.SeatMapper;
-import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
-import com.dev.cinemasystem.repository.ShowTimeRepository;
-import com.dev.cinemasystem.repository.TicketRepository;
-import com.dev.cinemasystem.repository.RoomRepository;
 import com.dev.cinemasystem.repository.SeatRepository;
-import com.dev.cinemasystem.repository.SeatTypeRepository;
 import com.dev.cinemasystem.dto.apiDTO.PagingDto;
 import com.dev.cinemasystem.dto.seatDTO.SeatCreationResquest;
 import com.dev.cinemasystem.dto.seatDTO.SeatResponse;
@@ -44,15 +39,28 @@ public class SeatService {
 
     SeatRepository seatRepository;
     SeatMapper seatMapper;
-    RoomRepository roomRepository;
-    SeatTypeRepository seatTypeRepository;
-    TicketRepository ticketRepository;
-    ShowTimeSeatRepository showTimeSeatRepository;
-    ShowTimeRepository showTimeRepository;
+    RoomService roomService;
+    SeatTypeService seatTypeService;
+    TicketService ticketService;
+    ShowTimeSeatService showTimeSeatService;
+    ShowTimeService showTimeService;
 
 
 
 
+
+    public Seat getSeatEntityById(Integer seatId) {
+        return seatRepository.findById(seatId)
+                .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
+    }
+
+    public List<Seat> getSeatEntitiesByRoomId(Integer roomId) {
+        return seatRepository.findAllByRoom_RoomId(roomId);
+    }
+
+    public boolean existsActiveSeatByRoomId(Integer roomId) {
+        return seatRepository.existsByRoom_RoomIdAndStatus(roomId, SeatStatus.ACTIVE);
+    }
     public SeatResponse getSeatById(Integer seatId){
         var seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> {
@@ -72,14 +80,8 @@ public class SeatService {
         String normalizedSeatRow = normalizeSeatRow(request.getSeatRow());
         Integer seatColumn = request.getSeatColumn();
 
-        var room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> {
-            log.error("Room with id {} not found", request.getRoomId());
-            return new AppException(ErrorCode.ROOM_NOT_FOUND);
-        });
-        var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
-            log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
-        });
+        var room = roomService.getRoomEntityById(request.getRoomId());
+        var seatType = seatTypeService.getSeatTypeEntityById(request.getSeatTypeId());
 
         var existingSeat = seatRepository.findBySeatRowAndSeatColumnAndRoom_RoomId(
                 normalizedSeatRow,
@@ -122,10 +124,7 @@ public class SeatService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        roomRepository.findById(roomId).orElseThrow(() -> {
-            log.error("Room with id {} not found", roomId);
-            return new AppException(ErrorCode.ROOM_NOT_FOUND);
-        });
+        roomService.getRoomEntityById(roomId);
 
         List<Seat> seats = status == null
                 ? seatRepository.findAllByRoom_RoomIdOrderBySeatRowAscSeatColumnAsc(roomId)
@@ -177,14 +176,8 @@ public class SeatService {
                     log.error("Seat with id {} not found", seatId);
                     return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
-        var room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> {
-            log.error("Room with id {} not found", request.getRoomId());
-            return new AppException(ErrorCode.ROOM_NOT_FOUND);
-        });
-        var seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow(() -> {
-            log.error("Seat type with id {} not found", request.getSeatTypeId());
-            return new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
-        });
+        var room = roomService.getRoomEntityById(request.getRoomId());
+        var seatType = seatTypeService.getSeatTypeEntityById(request.getSeatTypeId());
 
         var existingSeat = seatRepository.findBySeatRowAndSeatColumnAndRoom_RoomId(
                 normalizedSeatRow, request.getSeatColumn(), request.getRoomId());
@@ -210,8 +203,8 @@ public class SeatService {
                     return new AppException(ErrorCode.SEAT_NOT_FOUND);
                 });
 
-        boolean hasActiveTickets = ticketRepository.existsBySeat_SeatId(seatId);
-        boolean hasActiveHolds = showTimeSeatRepository.existsBySeat_SeatIdAndStatusAndHoldExpiresAtAfter(
+        boolean hasActiveTickets = ticketService.existsBySeatId(seatId);
+        boolean hasActiveHolds = showTimeSeatService.existsBySeatIdAndStatusAndHoldExpiresAtAfter(
                 seatId,
                 ShowTimeSeatStatus.HELD,
                 LocalDateTime.now()
@@ -245,13 +238,13 @@ public class SeatService {
         Integer seatId = seat.getSeatId();
         ShowTimeSeatStatus targetStatus = toShowTimeSeatStatus(seat.getStatus());
 
-        List<ShowTime> showTimes = showTimeRepository.findAllByRoom_RoomId(roomId);
+        List<ShowTime> showTimes = showTimeService.getShowTimesByRoomId(roomId);
         if (showTimes.isEmpty()) {
             return;
         }
 
-        Map<Integer, ShowTimeSeat> existingByShowTimeId = showTimeSeatRepository
-                .findAllBySeat_SeatIdAndShowTime_Room_RoomId(seatId, roomId)
+        Map<Integer, ShowTimeSeat> existingByShowTimeId = showTimeSeatService
+                .findAllBySeatIdAndRoomId(seatId, roomId)
                 .stream()
                 .collect(Collectors.toMap(
                         item -> item.getShowTime().getShowTimeId(),
@@ -288,7 +281,7 @@ public class SeatService {
         }
 
         if (!changedSeats.isEmpty()) {
-            showTimeSeatRepository.saveAll(changedSeats);
+            showTimeSeatService.saveAll(changedSeats);
         }
     }
 
@@ -300,4 +293,5 @@ public class SeatService {
 
 
 }
+
 

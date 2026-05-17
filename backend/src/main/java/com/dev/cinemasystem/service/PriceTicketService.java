@@ -12,9 +12,6 @@ import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PriceTicketMapper;
 import com.dev.cinemasystem.repository.PriceTicketRepository;
-import com.dev.cinemasystem.repository.RoomTypeRepository;
-import com.dev.cinemasystem.repository.SeatTypeRepository;
-import com.dev.cinemasystem.repository.TicketRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +36,15 @@ import java.util.Locale;
 public class PriceTicketService {
 
     PriceTicketRepository priceTicketRepository;
-    RoomTypeRepository roomTypeRepository;
-    SeatTypeRepository seatTypeRepository;
-    TicketRepository ticketRepository;
+    RoomTypeService roomTypeService;
+    SeatTypeService seatTypeService;
+    TicketService ticketService;
     PriceTicketMapper priceTicketMapper;
 
+
+    public PriceTicket findByRoomTypeIdAndSeatTypeId(Integer roomTypeId, Integer seatTypeId) {
+        return priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(roomTypeId, seatTypeId);
+    }
     public PriceTicketResponse getPriceTicketById(Integer priceTicketId) {
         PriceTicket priceTicket = priceTicketRepository.findById(priceTicketId)
                 .orElseThrow(() -> {
@@ -59,11 +60,8 @@ public class PriceTicketService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        var roomType = roomTypeRepository.findById(request.getRoomTypeId())
-                .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
-
-        var seatType = seatTypeRepository.findById(request.getSeatTypeId())
-                .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+        var roomType = roomTypeService.getRoomTypeEntityById(request.getRoomTypeId());
+        var seatType = seatTypeService.getSeatTypeEntityById(request.getSeatTypeId());
 
         if (priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
                 request.getRoomTypeId(),
@@ -161,14 +159,12 @@ public class PriceTicketService {
         }
 
         if (request.getRoomTypeId() != null) {
-            var roomType = roomTypeRepository.findById(request.getRoomTypeId())
-                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+            var roomType = roomTypeService.getRoomTypeEntityById(request.getRoomTypeId());
             priceTicket.setRoomType(roomType);
         }
 
         if (request.getSeatTypeId() != null) {
-            var seatType = seatTypeRepository.findById(request.getSeatTypeId())
-                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+            var seatType = seatTypeService.getSeatTypeEntityById(request.getSeatTypeId());
             priceTicket.setSeatType(seatType);
         }
 
@@ -185,7 +181,7 @@ public class PriceTicketService {
                     return new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
                 });
 
-        if (ticketRepository.existsByPriceTicket_PriceTicketId(priceTicketId)) {
+        if (ticketService.existsByPriceTicketId(priceTicketId)) {
             throw new AppException(ErrorCode.PRICE_TICKET_HAS_ACTIVE_TICKETS);
         }
 
@@ -235,6 +231,7 @@ public class PriceTicketService {
                 priceTicketMapper::toPriceTicketResponse).toList();
     }
 }
+
 
 
 

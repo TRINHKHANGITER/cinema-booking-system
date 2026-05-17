@@ -10,7 +10,6 @@ import com.dev.cinemasystem.enums.ProvinceStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.ProvinceMapper;
-import com.dev.cinemasystem.repository.CinemaRepository;
 import com.dev.cinemasystem.repository.ProvinceRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
@@ -36,8 +35,13 @@ import java.util.Locale;
 public class ProvinceService {
     ProvinceRepository provinceRepository;
     ProvinceMapper provinceMapper;
-    CinemaRepository cinemaRepository;
+    CinemaService cinemaService;
 
+
+    public Province getProvinceEntityById(Integer provinceId) {
+        return provinceRepository.findById(provinceId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROVINCE_NOT_FOUND));
+    }
     public List<ProvinceResponse> getProvinces(ProvinceStatus status) {
         List<Province> provinces = status == null
                 ? provinceRepository.findAll()
@@ -144,10 +148,7 @@ public class ProvinceService {
         Province province = provinceRepository.findById(provinceId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROVINCE_NOT_FOUND));
 
-        boolean hasActiveCinemas = cinemaRepository.existsByProvince_ProvinceIdAndStatus(
-                provinceId,
-                CinemaStatus.ACTIVE
-        );
+        boolean hasActiveCinemas = cinemaService.existsActiveCinemaByProvinceId(provinceId);
         if (hasActiveCinemas) {
             throw new AppException(ErrorCode.PROVINCE_HAS_ACTIVE_CINEMAS);
         }
@@ -181,6 +182,7 @@ public class ProvinceService {
         }
     }
 }
+
 
 
 

@@ -12,9 +12,6 @@ import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.OrderMapper;
-import com.dev.cinemasystem.repository.ComboRepository;
-import com.dev.cinemasystem.repository.OrderComboRepository;
-import com.dev.cinemasystem.repository.OrderRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,9 +31,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BookingService {
-    OrderRepository orderRepository;
-    OrderComboRepository orderComboRepository;
-    ComboRepository comboRepository;
+    OrderService orderService;
+    OrderComboService orderComboService;
+    ComboService comboService;
     OrderMapper orderMapper;
     SeatInventoryService seatInventoryService;
 
@@ -46,11 +43,10 @@ public class BookingService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Order order = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = orderService.getOrderEntityByIdForUpdate(orderId);
         ensurePayingAndNotExpired(order);
 
-        List<OrderCombo> existing = orderComboRepository.findAllByOrder_OrderId(orderId);
+        List<OrderCombo> existing = orderComboService.findAllByOrderId(orderId);
         Map<Integer, OrderCombo> existingByComboId = new HashMap<>();
         for (OrderCombo orderCombo : existing) {
             existingByComboId.put(orderCombo.getCombo().getComboId(), orderCombo);
@@ -60,8 +56,7 @@ public class BookingService {
         List<OrderCombo> changed = new ArrayList<>();
 
         for (OrderComboItemRequest item : request.getCombos()) {
-            Combo combo = comboRepository.findById(item.getComboId())
-                    .orElseThrow(() -> new AppException(ErrorCode.COMBO_NOT_FOUND));
+            Combo combo = comboService.getComboEntityById(item.getComboId());
 
             if (item.getQuantity() > 0 && combo.getStatus() != ComboStatus.AVAILABLE) {
                 throw new AppException(ErrorCode.COMBO_NOT_FOUND);
@@ -106,7 +101,7 @@ public class BookingService {
         }
 
         if (!changed.isEmpty()) {
-            orderComboRepository.saveAll(changed);
+            orderComboService.saveAll(changed);
         }
 
         Order updatedOrder = seatInventoryService.recalculateOrderTotals(orderId);

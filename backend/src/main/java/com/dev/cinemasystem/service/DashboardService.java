@@ -14,10 +14,6 @@ import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.repository.CinemaRepository;
-import com.dev.cinemasystem.repository.MovieRepository;
-import com.dev.cinemasystem.repository.OrderRepository;
-import com.dev.cinemasystem.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,10 +37,10 @@ public class DashboardService {
     static final String SORT_ASC = "ASC";
     static final String SORT_DESC = "DESC";
 
-    OrderRepository orderRepository;
-    UserRepository userRepository;
-    MovieRepository movieRepository;
-    CinemaRepository cinemaRepository;
+    OrderService orderService;
+    UserService userService;
+    MovieService movieService;
+    CinemaService cinemaService;
 
     @Transactional(readOnly = true)
     public DashboardOverviewResponse getOverview(LocalDate startDate, LocalDate endDate) {
@@ -52,37 +48,37 @@ public class DashboardService {
         LocalDateTime startAt = startDate.atStartOfDay();
         LocalDateTime endAt = toEndOfDay(endDate);
 
-        BigDecimal totalRevenue = orderRepository.sumPaidTotalAmountByCreatedAtRange(
+        BigDecimal totalRevenue = orderService.sumPaidTotalAmountByCreatedAtRange(
                 OrderStatus.PAID,
                 startAt,
                 endAt
         );
-        Long totalOrderCount = orderRepository.countOrdersByCreatedAtRange(startAt, endAt);
+        Long totalOrderCount = orderService.countOrdersByCreatedAtRange(startAt, endAt);
 
         return DashboardOverviewResponse.builder()
                 .startDate(startDate)
                 .endDate(endDate)
                 .totalRevenue(totalRevenue == null ? BigDecimal.ZERO : totalRevenue)
                 .totalOrderCount(totalOrderCount == null ? 0L : totalOrderCount)
-                .customerCount(userRepository.count())
-                .movieCount(movieRepository.count())
-                .cinemaCount(cinemaRepository.count())
+                .customerCount(userService.countUsers())
+                .movieCount(movieService.countMovies())
+                .cinemaCount(cinemaService.countCinemas())
                 .build();
     }
 
     @Transactional(readOnly = true)
     public Long getCustomerCount() {
-        return userRepository.count();
+        return userService.countUsers();
     }
 
     @Transactional(readOnly = true)
     public Long getMovieCount() {
-        return movieRepository.count();
+        return movieService.countMovies();
     }
 
     @Transactional(readOnly = true)
     public Long getCinemaCount() {
-        return cinemaRepository.count();
+        return cinemaService.countCinemas();
     }
 
     @Transactional(readOnly = true)
@@ -103,7 +99,7 @@ public class DashboardService {
         String normalizedSortDirection = normalizeSortDirection(sortDirection);
         validatePageAndSize(page, size);
 
-        List<CinemaRevenueResponse> rows = orderRepository.findRevenueByCinema(
+        List<CinemaRevenueResponse> rows = orderService.findRevenueByCinema(
                 OrderStatus.PAID,
                 startDate.atStartOfDay(),
                 toEndOfDay(endDate),
@@ -130,7 +126,7 @@ public class DashboardService {
         String normalizedSortDirection = normalizeSortDirection(sortDirection);
         validatePageAndSize(page, size);
 
-        List<MovieRevenueResponse> rows = orderRepository.findRevenueByMovie(
+        List<MovieRevenueResponse> rows = orderService.findRevenueByMovie(
                 OrderStatus.PAID,
                 startDate.atStartOfDay(),
                 toEndOfDay(endDate),
@@ -156,7 +152,7 @@ public class DashboardService {
         String normalizedSortDirection = normalizeSortDirection(sortDirection);
         validatePageAndSize(page, size);
 
-        List<MovieTypeRevenueResponse> rows = orderRepository.findRevenueByMovieType(
+        List<MovieTypeRevenueResponse> rows = orderService.findRevenueByMovieType(
                 OrderStatus.PAID,
                 startDate.atStartOfDay(),
                 toEndOfDay(endDate),
@@ -182,7 +178,7 @@ public class DashboardService {
         String normalizedSortDirection = normalizeSortDirection(sortDirection);
         validatePageAndSize(page, size);
 
-        List<ComboRevenueResponse> rows = orderRepository.findRevenueByCombo(
+        List<ComboRevenueResponse> rows = orderService.findRevenueByCombo(
                 OrderStatus.PAID,
                 ComboDetailStatus.ACTIVE,
                 startDate.atStartOfDay(),
@@ -209,7 +205,7 @@ public class DashboardService {
         LocalDateTime endAt = toEndOfDay(toDate);
 
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<OrderStatisticItemResponse> orderPage = orderRepository.findOrderStatistics(
+        Page<OrderStatisticItemResponse> orderPage = orderService.findOrderStatistics(
                 startAt,
                 endAt,
                 parsedStatus,
@@ -217,7 +213,7 @@ public class DashboardService {
                 pageable
         );
 
-        BigDecimal totalAmount = orderRepository.sumTotalAmountByCreatedAtRangeAndStatus(
+        BigDecimal totalAmount = orderService.sumTotalAmountByCreatedAtRangeAndStatus(
                 startAt,
                 endAt,
                 parsedStatus

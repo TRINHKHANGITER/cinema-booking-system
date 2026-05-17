@@ -9,15 +9,18 @@ import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.PaymentMapper;
-import com.dev.cinemasystem.repository.OrderRepository;
 import com.dev.cinemasystem.repository.PaymentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +28,12 @@ import java.util.List;
 public class PaymentService {
     PaymentRepository paymentRepository;
     PaymentMapper paymentMapper;
-    OrderRepository orderRepository;
+    @Lazy
+    OrderService orderService;
 
     @Transactional
     public PaymentResponse createPayment(PaymentCreationRequest paymentCreationRequest) {
-        Order order = orderRepository.findById(paymentCreationRequest.getOrderId())
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = orderService.getOrderEntityById(paymentCreationRequest.getOrderId());
 
         Payment payment = paymentRepository.findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(
                         order.getOrderId(),
@@ -69,6 +72,80 @@ public class PaymentService {
     public PaymentResponse getPaymentById(Integer paymentId) {
         return paymentMapper.toPaymentResponse(paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND)));
+    }
+
+    public List<Payment> getPaymentsByOrderIdDesc(Integer orderId) {
+        return paymentRepository.findAllByOrder_OrderIdOrderByPaymentIdDesc(orderId);
+    }
+
+    public Optional<Payment> findByTransactionId(String transactionId) {
+        return paymentRepository.findByTransactionId(transactionId);
+    }
+
+    public Optional<Payment> findLatestPendingPayment(Integer orderId) {
+        return paymentRepository.findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(orderId, PaymentStatus.PENDING);
+    }
+
+    public Optional<Payment> findLatestPayment(Integer orderId) {
+        return paymentRepository.findTopByOrder_OrderIdOrderByPaymentIdDesc(orderId);
+    }
+
+    public Optional<Payment> findLatestSuccessPayment(Integer orderId) {
+        return paymentRepository.findAllByOrder_OrderIdOrderByPaymentIdDesc(orderId).stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
+                .findFirst();
+    }
+
+    @Transactional
+    public Payment savePayment(Payment payment) {
+        return paymentRepository.save(payment);
+    }
+
+    @Transactional
+    public Payment resolvePaymentForCallback(
+            Integer orderId,
+            String transactionRef,
+            BigDecimal callbackAmount,
+            String cardType,
+            String bankCode,
+            String bankTransactionNo,
+            String infoTransaction
+    ) {
+        Order order = orderService.getOrderEntityByIdForUpdate(orderId);
+
+        Payment payment = findByTransactionId(transactionRef)
+                .or(() -> findLatestPendingPayment(orderId))
+                .or(() -> findLatestPayment(orderId))
+                .orElseGet(Payment::new);
+
+        payment.setOrder(order);
+        if (callbackAmount != null) {
+            payment.setAmount(callbackAmount);
+        } else if (payment.getAmount() == null) {
+            payment.setAmount(order.getNetAmount() != null ? order.getNetAmount() : BigDecimal.ZERO);
+        }
+
+        payment.setMethod(cardType != null && !cardType.isBlank() ? "VNPAY-" + cardType : "VNPAY");
+        payment.setBankCode(bankCode);
+        payment.setBankTransactionNo(bankTransactionNo);
+        payment.setTransactionId(transactionRef);
+        payment.setInfoTransaction(infoTransaction);
+        return payment;
+    }
+
+    @Transactional
+    public void markPaymentSuccess(Payment payment) {
+        payment.setStatus(PaymentStatus.SUCCESS);
+        if (payment.getPaidAt() == null) {
+            payment.setPaidAt(LocalDateTime.now());
+        }
+        paymentRepository.save(payment);
+    }
+
+    @Transactional
+    public void markPaymentStatus(Payment payment, PaymentStatus status) {
+        payment.setStatus(status);
+        paymentRepository.save(payment);
     }
 
     @Transactional

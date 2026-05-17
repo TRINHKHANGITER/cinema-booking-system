@@ -19,13 +19,7 @@ import com.dev.cinemasystem.enums.ShowTimeSeatStatus;
 import com.dev.cinemasystem.enums.TicketStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.repository.OrderComboRepository;
-import com.dev.cinemasystem.repository.OrderRepository;
-import com.dev.cinemasystem.repository.PriceTicketRepository;
-import com.dev.cinemasystem.repository.ShowTimeRepository;
-import com.dev.cinemasystem.repository.ShowTimeSeatRepository;
-import com.dev.cinemasystem.repository.TicketRepository;
-import com.dev.cinemasystem.repository.UserRepository;
+import com.dev.cinemasystem.mapper.ShowTimeSeatMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -47,20 +41,21 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SeatInventoryService {
-    ShowTimeSeatRepository showTimeSeatRepository;
-    ShowTimeRepository showTimeRepository;
-    OrderRepository orderRepository;
-    UserRepository userRepository;
-    TicketRepository ticketRepository;
-    PriceTicketRepository priceTicketRepository;
-    OrderComboRepository orderComboRepository;
+    ShowTimeSeatService showTimeSeatService;
+    ShowTimeService showTimeService;
+    OrderService orderService;
+    UserService userService;
+    TicketService ticketService;
+    PriceTicketService priceTicketService;
+    OrderComboService orderComboService;
     BookingProperties bookingProperties;
     PaymentService paymentService;
+    ShowTimeSeatMapper showTimeSeatMapper;
 
     public List<ShowTimeSeatResponse> getSeatMap(Integer showTimeId) {
         ensureShowTimeExists(showTimeId);
-        return showTimeSeatRepository.findSeatMapByShowTimeId(showTimeId).stream()
-                .map(this::toSeatResponse)
+        return showTimeSeatService.findSeatMapByShowTimeId(showTimeId).stream()
+                .map(showTimeSeatMapper::mapSeatResponse)
                 .toList();
     }
 
@@ -71,14 +66,13 @@ public class SeatInventoryService {
         }
 
         List<Integer> seatIds = normalizeSeatIds(request.getSeatIds());
-        ShowTime showTime = showTimeRepository.findById(request.getShowTimeId())
-                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+        ShowTime showTime = showTimeService.getShowTimeEntityById(request.getShowTimeId());
 
         LocalDateTime now = LocalDateTime.now();
         Order order = resolveOrderForHolding(request, showTime, now);
         assertPayingAndNotExpired(order, now);
 
-        List<ShowTimeSeat> lockedSeats = showTimeSeatRepository.findAllForUpdate(showTime.getShowTimeId(), seatIds);
+        List<ShowTimeSeat> lockedSeats = showTimeSeatService.findAllForUpdate(showTime.getShowTimeId(), seatIds);
         if (lockedSeats.size() != seatIds.size()) {
             throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
         }
@@ -105,8 +99,8 @@ public class SeatInventoryService {
 
         order.setStatus(OrderStatus.PAYING);
         order.setExpiredAt(nextExpiredAt);
-        showTimeSeatRepository.saveAll(lockedSeats);
-        orderRepository.save(order);
+        showTimeSeatService.saveAll(lockedSeats);
+        orderService.saveOrder(order);
 
         extendCurrentHeldSeatsExpiry(order.getOrderId(), nextExpiredAt, seatIds);
         recalculateOrderTotalsInternal(order);
@@ -125,7 +119,7 @@ public class SeatInventoryService {
         assertPayingAndNotExpired(order, now);
 
         Integer showTimeId = order.getShowTime().getShowTimeId();
-        List<ShowTimeSeat> lockedSeats = showTimeSeatRepository.findAllForUpdate(showTimeId, seatIds);
+        List<ShowTimeSeat> lockedSeats = showTimeSeatService.findAllForUpdate(showTimeId, seatIds);
         if (lockedSeats.size() != seatIds.size()) {
             throw new AppException(ErrorCode.INVALID_SEAT_SELECTION);
         }
@@ -143,7 +137,7 @@ public class SeatInventoryService {
             seat.setHoldExpiresAt(null);
         }
 
-        showTimeSeatRepository.saveAll(lockedSeats);
+        showTimeSeatService.saveAll(lockedSeats);
         recalculateOrderTotalsInternal(order);
         return buildHoldSeatResponse(order);
     }
@@ -164,7 +158,7 @@ public class SeatInventoryService {
             throw new AppException(ErrorCode.ORDER_EXPIRED);
         }
 
-        List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrderIdAndStatusForUpdate(
+        List<ShowTimeSeat> heldSeats = showTimeSeatService.findAllByOrderIdAndStatusForUpdate(
                 orderId,
                 ShowTimeSeatStatus.HELD
         );
@@ -174,12 +168,12 @@ public class SeatInventoryService {
             seat.setHoldExpiresAt(null);
         }
         if (!heldSeats.isEmpty()) {
-            showTimeSeatRepository.saveAll(heldSeats);
+            showTimeSeatService.saveAll(heldSeats);
         }
 
         createMissingTickets(order, heldSeats);
         order.setStatus(OrderStatus.PAID);
-        orderRepository.save(order);
+        orderService.saveOrder(order);
         return order.getShowTime().getShowTimeId();
     }
 
@@ -204,7 +198,7 @@ public class SeatInventoryService {
         order.setDiscountAmount(BigDecimal.ZERO);
         order.setExpiredAt(now);
         order.setStatus(OrderStatus.CANCELLED);
-        orderRepository.save(order);
+        orderService.saveOrder(order);
         paymentService.cancelPayment(orderId, PaymentStatus.CANCELLED);
         return order.getShowTime().getShowTimeId();
     }
@@ -220,7 +214,7 @@ public class SeatInventoryService {
         releaseHeldSeatsOfOrder(orderId);
         order.setStatus(paymentStatus == PaymentStatus.EXPIRED ? OrderStatus.EXPIRED : OrderStatus.CANCELLED);
         order.setExpiredAt(now);
-        orderRepository.save(order);
+        orderService.saveOrder(order);
         paymentService.cancelPayment(orderId, paymentStatus);
         return order.getShowTime().getShowTimeId();
     }
@@ -228,7 +222,7 @@ public class SeatInventoryService {
     @Transactional
     public List<Integer> expireHolds() {
         LocalDateTime now = LocalDateTime.now();
-        List<ShowTimeSeat> expiredSeats = showTimeSeatRepository.findAllExpiredForUpdate(
+        List<ShowTimeSeat> expiredSeats = showTimeSeatService.findAllExpiredForUpdate(
                 ShowTimeSeatStatus.HELD,
                 now
         );
@@ -249,14 +243,14 @@ public class SeatInventoryService {
             seat.setOrder(null);
             seat.setHoldExpiresAt(null);
         }
-        showTimeSeatRepository.saveAll(expiredSeats);
+        showTimeSeatService.saveAll(expiredSeats);
 
         for (Integer orderId : affectedOrderIds) {
             Order order = findOrderForUpdate(orderId);
             if (order.getStatus() == OrderStatus.PAYING && isOrderExpired(order, now)) {
                 order.setStatus(OrderStatus.EXPIRED);
                 order.setExpiredAt(now);
-                orderRepository.save(order);
+                orderService.saveOrder(order);
                 paymentService.cancelPayment(orderId, PaymentStatus.EXPIRED);
             }
         }
@@ -274,18 +268,17 @@ public class SeatInventoryService {
 
     @Transactional
     public Order getOrder(Integer orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        return orderService.getOrderEntityById(orderId);
     }
 
     private HoldSeatResponse buildHoldSeatResponse(Order order) {
-        List<ShowTimeSeatResponse> heldSeats = showTimeSeatRepository
-                .findAllByOrder_OrderIdAndStatus(order.getOrderId(), ShowTimeSeatStatus.HELD)
+        List<ShowTimeSeatResponse> heldSeats = showTimeSeatService
+                .findAllByOrderIdAndStatus(order.getOrderId(), ShowTimeSeatStatus.HELD)
                 .stream()
                 .sorted(Comparator
                         .comparing((ShowTimeSeat seat) -> seat.getSeat().getSeatRow())
                         .thenComparing(seat -> seat.getSeat().getSeatColumn()))
-                .map(this::toSeatResponse)
+                .map(showTimeSeatMapper::mapSeatResponse)
                 .toList();
 
         return HoldSeatResponse.builder()
@@ -301,23 +294,8 @@ public class SeatInventoryService {
                 .build();
     }
 
-    private ShowTimeSeatResponse toSeatResponse(ShowTimeSeat seat) {
-        return ShowTimeSeatResponse.builder()
-                .showTimeSeatId(seat.getShowTimeSeatId())
-                .showTimeId(seat.getShowTime().getShowTimeId())
-                .seatId(seat.getSeat().getSeatId())
-                .seatRow(seat.getSeat().getSeatRow())
-                .seatColumn(seat.getSeat().getSeatColumn())
-                .seatTypeId(seat.getSeat().getSeatType().getSeatTypeId())
-                .seatTypeName(seat.getSeat().getSeatType().getSeatTypeName())
-                .status(seat.getStatus())
-                .holdExpiresAt(seat.getHoldExpiresAt())
-                .orderId(seat.getOrder() != null ? seat.getOrder().getOrderId() : null)
-                .build();
-    }
-
     private void ensureShowTimeExists(Integer showTimeId) {
-        if (showTimeId == null || !showTimeRepository.existsById(showTimeId)) {
+        if (!showTimeService.existsShowTimeById(showTimeId)) {
             throw new AppException(ErrorCode.SHOWTIME_NOT_FOUND);
         }
     }
@@ -350,11 +328,7 @@ public class SeatInventoryService {
 
         Order order = null;
         if (request.getUserId() != null) {
-            order = orderRepository.findTopByUser_UserIdAndShowTime_ShowTimeIdAndStatusOrderByOrderIdDesc(
-                            request.getUserId(),
-                            showTime.getShowTimeId(),
-                            OrderStatus.PAYING
-                    )
+            order = orderService.findLatestPayingOrder(request.getUserId(), showTime.getShowTimeId())
                     .map(existing -> findOrderForUpdate(existing.getOrderId()))
                     .orElse(null);
         }
@@ -374,11 +348,10 @@ public class SeatInventoryService {
     private Order createNewPayingOrder(ShowTime showTime, Integer userId, LocalDateTime now) {
         User user = null;
         if (userId != null) {
-            user = userRepository.findById(userId)
-                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            user = userService.getUserEntityById(userId);
         }
 
-        return orderRepository.save(Order.builder()
+        return orderService.saveOrder(Order.builder()
                 .user(user)
                 .showTime(showTime)
                 .ticketTotal(BigDecimal.ZERO)
@@ -406,13 +379,12 @@ public class SeatInventoryService {
     }
 
     private Order findOrderForUpdate(Integer orderId) {
-        return orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        return orderService.getOrderEntityByIdForUpdate(orderId);
     }
 
     private void extendCurrentHeldSeatsExpiry(Integer orderId, LocalDateTime expiresAt, List<Integer> latestHeldSeatIds) {
         Set<Integer> latestIds = new LinkedHashSet<>(latestHeldSeatIds);
-        List<ShowTimeSeat> currentHeldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
+        List<ShowTimeSeat> currentHeldSeats = showTimeSeatService.findAllByOrderIdAndStatus(
                 orderId,
                 ShowTimeSeatStatus.HELD
         );
@@ -425,12 +397,12 @@ public class SeatInventoryService {
         }
 
         if (!currentHeldSeats.isEmpty()) {
-            showTimeSeatRepository.saveAll(currentHeldSeats);
+            showTimeSeatService.saveAll(currentHeldSeats);
         }
     }
 
     private Order recalculateOrderTotalsInternal(Order order) {
-        List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrder_OrderIdAndStatus(
+        List<ShowTimeSeat> heldSeats = showTimeSeatService.findAllByOrderIdAndStatus(
                 order.getOrderId(),
                 ShowTimeSeatStatus.HELD
         );
@@ -448,7 +420,7 @@ public class SeatInventoryService {
         order.setTotalAmount(total);
         order.setDiscountAmount(discount);
         order.setNetAmount(net);
-        return orderRepository.save(order);
+        return orderService.saveOrder(order);
     }
 
     private BigDecimal calculateTicketTotal(Order order, List<ShowTimeSeat> heldSeats) {
@@ -461,7 +433,7 @@ public class SeatInventoryService {
     }
 
     private BigDecimal calculateComboTotal(Integer orderId) {
-        return orderComboRepository.findAllByOrder_OrderIdAndStatus(orderId, ComboDetailStatus.ACTIVE)
+        return orderComboService.findAllByOrderIdAndStatus(orderId, ComboDetailStatus.ACTIVE)
                 .stream()
                 .map(OrderCombo::getNetAmount)
                 .filter(Objects::nonNull)
@@ -470,10 +442,7 @@ public class SeatInventoryService {
 
     private PriceTicket getPriceTicket(ShowTime showTime, Integer seatTypeId) {
         Integer roomTypeId = showTime.getRoom().getRoomType().getRoomTypeId();
-        PriceTicket priceTicket = priceTicketRepository.findByRoomType_RoomTypeIdAndSeatType_SeatTypeId(
-                roomTypeId,
-                seatTypeId
-        );
+        PriceTicket priceTicket = priceTicketService.findByRoomTypeIdAndSeatTypeId(roomTypeId, seatTypeId);
         if (priceTicket == null) {
             throw new AppException(ErrorCode.PRICE_TICKET_NOT_FOUND);
         }
@@ -485,7 +454,7 @@ public class SeatInventoryService {
             return;
         }
 
-        Map<Integer, Ticket> existingBySeatId = ticketRepository.findAllByOrder_OrderId(order.getOrderId())
+        Map<Integer, Ticket> existingBySeatId = ticketService.findAllByOrderId(order.getOrderId())
                 .stream()
                 .collect(Collectors.toMap(ticket -> ticket.getSeat().getSeatId(), ticket -> ticket, (first, second) -> first));
 
@@ -513,12 +482,12 @@ public class SeatInventoryService {
         }
 
         if (!newTickets.isEmpty()) {
-            ticketRepository.saveAll(newTickets);
+            ticketService.saveAll(newTickets);
         }
     }
 
     private void releaseHeldSeatsOfOrder(Integer orderId) {
-        List<ShowTimeSeat> heldSeats = showTimeSeatRepository.findAllByOrderIdAndStatusForUpdate(
+        List<ShowTimeSeat> heldSeats = showTimeSeatService.findAllByOrderIdAndStatusForUpdate(
                 orderId,
                 ShowTimeSeatStatus.HELD
         );
@@ -531,11 +500,11 @@ public class SeatInventoryService {
             seat.setOrder(null);
             seat.setHoldExpiresAt(null);
         }
-        showTimeSeatRepository.saveAll(heldSeats);
+        showTimeSeatService.saveAll(heldSeats);
     }
 
     private void cancelAllOrderCombos(Integer orderId) {
-        List<OrderCombo> combos = orderComboRepository.findAllByOrder_OrderId(orderId);
+        List<OrderCombo> combos = orderComboService.findAllByOrderId(orderId);
         if (combos.isEmpty()) {
             return;
         }
@@ -545,14 +514,14 @@ public class SeatInventoryService {
             combo.setQuantity(0);
             combo.setNetAmount(BigDecimal.ZERO);
         }
-        orderComboRepository.saveAll(combos);
+        orderComboService.saveAll(combos);
     }
 
     private void expireOrderInternal(Order order, LocalDateTime now) {
         releaseHeldSeatsOfOrder(order.getOrderId());
         order.setStatus(OrderStatus.EXPIRED);
         order.setExpiredAt(now);
-        orderRepository.save(order);
+        orderService.saveOrder(order);
         paymentService.cancelPayment(order.getOrderId(), PaymentStatus.EXPIRED);
     }
 }

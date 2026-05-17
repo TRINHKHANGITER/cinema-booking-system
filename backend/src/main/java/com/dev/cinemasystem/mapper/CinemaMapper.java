@@ -1,6 +1,7 @@
 package com.dev.cinemasystem.mapper;
 
 import com.dev.cinemasystem.entity.Cinema;
+import com.dev.cinemasystem.dto.cinemaDTO.CinemaCreationRequest;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaResponse;
 import com.dev.cinemasystem.dto.cinemaDTO.CinemaUpdateRequest;
 import org.mapstruct.*;
@@ -13,11 +14,15 @@ public interface CinemaMapper {
     @Mapping(target = "provinceId", source = "province.provinceId")
     @Mapping(target = "provinceName", source = "province.provinceName")
     @Mapping(target = "addressText", source = "addressText")
-    CinemaResponse toResponse(Cinema c);
+    CinemaResponse mapCinemaResponse(Cinema c);
+
+    @Mapping(target = "cinemaId", ignore = true)
+    @Mapping(target = "province", ignore = true)
+    Cinema mapCinemaEntity(CinemaCreationRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "province", ignore = true)
     void updateEntityFromRequest(@MappingTarget Cinema cinema, CinemaUpdateRequest request);
 
-    List<CinemaResponse> toResponseList(List<Cinema> cinemas);
+    List<CinemaResponse> mapCinemaResponses(List<Cinema> cinemas);
 }

@@ -29,6 +29,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,9 +60,31 @@ public class UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     OtpTokenRepository otpTokenRepository;
-    EmailService emailService;
-    AuthenticationService authenticationService;
+    ObjectProvider<EmailService> emailServiceProvider;
+    ObjectProvider<AuthenticationService> authenticationServiceProvider;
 
+
+    public User getUserEntityById(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public User getUserEntityByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        return userRepository.existsByPhoneNumber(phoneNumber);
+    }
+
+    public Long countUsers() {
+        return userRepository.count();
+    }
     public UserResponse createUser(UserCreationRequest request) {
         ensureEmailAndPhoneAvailable(request.getEmail(), request.getPhoneNumber(), null);
 
@@ -104,7 +127,7 @@ public class UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        authenticationService.resendVerifyEmailOtp(
+        authenticationServiceProvider.getObject().resendVerifyEmailOtp(
                 ResendVerifyEmailRequest.builder()
                         .email(savedUser.getEmail())
                         .build()
@@ -130,7 +153,7 @@ public class UserService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        authenticationService.resendVerifyEmailOtp(
+        authenticationServiceProvider.getObject().resendVerifyEmailOtp(
                 ResendVerifyEmailRequest.builder()
                         .email(email)
                         .build()
@@ -153,7 +176,7 @@ public class UserService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        authenticationService.verifyEmail(
+        authenticationServiceProvider.getObject().verifyEmail(
                 VerifyEmailRequest.builder()
                         .email(email)
                         .otp(request.getOtp())
@@ -395,7 +418,7 @@ public class UserService {
         otpToken.setUsed(true);
         otpTokenRepository.save(otpToken);
 
-        return authenticationService.buildLoginResponse(savedUser);
+        return authenticationServiceProvider.getObject().buildLoginResponse(savedUser);
     }
 
     @Transactional
@@ -512,7 +535,7 @@ public class UserService {
                 .build();
 
         otpTokenRepository.save(otpToken);
-        emailService.sendChangeEmailOtp(newEmail, otp, changeEmailOtpExpireMinutes);
+        emailServiceProvider.getObject().sendChangeEmailOtp(newEmail, otp, changeEmailOtpExpireMinutes);
     }
 
     private String normalizeEmail(String email) {
@@ -598,5 +621,6 @@ public class UserService {
                 .build();
     }
 }
+
 
 

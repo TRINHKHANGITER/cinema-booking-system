@@ -46,6 +46,15 @@ public class RoomService {
 
 
 
+
+    public Room getRoomEntityById(Integer roomId) {
+        return roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+    }
+
+    public boolean existsActiveRoomByCinemaId(Integer cinemaId) {
+        return roomRepository.existsByCinema_CinemaIdAndStatus(cinemaId, RoomStatus.ACTIVE);
+    }
     public RoomResponse getRoomById(Integer roomId) {
         var room = roomRepository.findById(roomId)
                 .orElseThrow(() -> {
@@ -239,6 +248,7 @@ public class RoomService {
     }
 
 }
+
 
 
 

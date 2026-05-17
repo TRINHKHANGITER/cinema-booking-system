@@ -14,7 +14,6 @@ import com.dev.cinemasystem.exception.ErrorCode;
 import com.dev.cinemasystem.mapper.CinemaMapper;
 import com.dev.cinemasystem.repository.CinemaRepository;
 import com.dev.cinemasystem.repository.ProvinceRepository;
-import com.dev.cinemasystem.repository.RoomRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -40,13 +39,26 @@ public class CinemaService {
     CinemaRepository cinemaRepository;
     ProvinceRepository provinceRepository;
     CinemaMapper cinemaMapper;
-    RoomRepository roomRepository;
+    RoomService roomService;
 
+
+    public Cinema getCinemaEntityById(Integer cinemaId) {
+        return cinemaRepository.findById(cinemaId)
+                .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
+    }
+
+    public boolean existsActiveCinemaByProvinceId(Integer provinceId) {
+        return cinemaRepository.existsByProvince_ProvinceIdAndStatus(provinceId, CinemaStatus.ACTIVE);
+    }
+
+    public Long countCinemas() {
+        return cinemaRepository.count();
+    }
     public CinemaResponse getCinemaById(Integer cinemaId) {
         Cinema cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
 
-        return cinemaMapper.toResponse(cinema);
+        return cinemaMapper.mapCinemaResponse(cinema);
     }
 
     public PagingDto<CinemaResponse> getAllCinemas(
@@ -97,7 +109,7 @@ public class CinemaService {
         };
 
         Page<Cinema> cinemaPage = cinemaRepository.findAll(specification, pageable);
-        List<CinemaResponse> cinemaResponses = cinemaMapper.toResponseList(cinemaPage.getContent());
+        List<CinemaResponse> cinemaResponses = cinemaMapper.mapCinemaResponses(cinemaPage.getContent());
 
         return PagingDto.<CinemaResponse>builder()
                 .items(cinemaResponses)
@@ -119,7 +131,7 @@ public class CinemaService {
         } else {
             cinemas = cinemaRepository.findAllByFilters(provinceId, status);
         }
-        return cinemaMapper.toResponseList(cinemas);
+        return cinemaMapper.mapCinemaResponses(cinemas);
     }
 
     public CinemaResponse createCinema(CinemaCreationRequest request) {
@@ -135,16 +147,15 @@ public class CinemaService {
         Province province = provinceRepository.findById(request.getProvinceId())
                 .orElseThrow(() -> new AppException(ErrorCode.PROVINCE_NOT_FOUND));
 
-        Cinema cinema = Cinema.builder()
-                .cinemaName(normalizedName)
-                .province(province)
-                .addressText(normalizeAddress(request.getAddressText()))
-                .description(normalizeOptionalText(request.getDescription()))
-                .status(request.getStatus() != null ? request.getStatus() : CinemaStatus.ACTIVE)
-                .build();
+        Cinema cinema = cinemaMapper.mapCinemaEntity(request);
+        cinema.setCinemaName(normalizedName);
+        cinema.setProvince(province);
+        cinema.setAddressText(normalizeAddress(request.getAddressText()));
+        cinema.setDescription(normalizeOptionalText(request.getDescription()));
+        cinema.setStatus(request.getStatus() != null ? request.getStatus() : CinemaStatus.ACTIVE);
 
         Cinema savedCinema = cinemaRepository.save(cinema);
-        return cinemaMapper.toResponse(savedCinema);
+        return cinemaMapper.mapCinemaResponse(savedCinema);
     }
 
     @Transactional
@@ -181,14 +192,14 @@ public class CinemaService {
         }
 
         Cinema savedCinema = cinemaRepository.save(existingCinema);
-        return cinemaMapper.toResponse(savedCinema);
+        return cinemaMapper.mapCinemaResponse(savedCinema);
     }
 
     public boolean deleteCinemaById(Integer cinemaId) {
         Cinema cinema = cinemaRepository.findById(cinemaId)
                 .orElseThrow(() -> new AppException(ErrorCode.CINEMA_NOT_FOUND));
 
-        boolean hasActiveRooms = roomRepository.existsByCinema_CinemaIdAndStatus(cinemaId, RoomStatus.ACTIVE);
+        boolean hasActiveRooms = roomService.existsActiveRoomByCinemaId(cinemaId);
         if (hasActiveRooms) {
             throw new AppException(ErrorCode.CINEMA_HAS_ACTIVE_ROOMS);
         }
@@ -243,6 +254,7 @@ public class CinemaService {
         return normalized.isBlank() ? null : normalized;
     }
 }
+
 
 
 

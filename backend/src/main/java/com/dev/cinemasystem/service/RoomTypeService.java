@@ -42,6 +42,15 @@ public class RoomTypeService {
     RoomRepository roomRepository;
     CinemaRepository cinemaRepository;
 
+
+    public RoomType getRoomTypeEntityById(Integer roomTypeId) {
+        return roomTypeRepository.findById(roomTypeId)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+    }
+
+    public boolean existsActiveRoomByRoomTypeId(Integer roomTypeId) {
+        return roomRepository.existsByRoomType_RoomTypeIdAndStatus(roomTypeId, RoomStatus.ACTIVE);
+    }
     public RoomTypeResponse getRoomTypeById(Integer roomTypeId) {
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> {
@@ -203,6 +212,7 @@ public class RoomTypeService {
         }
     }
 }
+
 
 
 

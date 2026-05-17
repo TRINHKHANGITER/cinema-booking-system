@@ -13,8 +13,6 @@ import com.dev.cinemasystem.enums.OrderStatus;
 import com.dev.cinemasystem.enums.PaymentStatus;
 import com.dev.cinemasystem.exception.AppException;
 import com.dev.cinemasystem.exception.ErrorCode;
-import com.dev.cinemasystem.repository.OrderRepository;
-import com.dev.cinemasystem.repository.PaymentRepository;
 import com.dev.cinemasystem.utils.VnPayUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +34,7 @@ public class CheckoutService {
     static final String RESPONSE_CODE_SUCCESS = "00";
     static final String RESPONSE_CODE_CANCELLED = "24";
 
-    OrderRepository orderRepository;
-    PaymentRepository paymentRepository;
+    OrderService orderService;
     PaymentService paymentService;
     VnpayService vnpayService;
     VnPayConfig vnPayConfig;
@@ -50,8 +47,7 @@ public class CheckoutService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Order order = orderRepository.findByIdForUpdate(request.getOrderId())
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = orderService.getOrderEntityByIdForUpdate(request.getOrderId());
 
         if (order.getStatus() != OrderStatus.PAYING) {
             throw new AppException(ErrorCode.ORDER_STATUS_INVALID);
@@ -136,53 +132,33 @@ public class CheckoutService {
 
     private void markPaymentSuccess(Integer orderId, Map<String, String> params) {
         Payment payment = resolvePaymentForCallback(orderId, params);
-        payment.setStatus(PaymentStatus.SUCCESS);
-        if (payment.getPaidAt() == null) {
-            payment.setPaidAt(LocalDateTime.now());
-        }
-        paymentRepository.save(payment);
+        paymentService.markPaymentSuccess(payment);
     }
 
     private void markPaymentFailure(Integer orderId, Map<String, String> params, String responseCode) {
         Payment payment = resolvePaymentForCallback(orderId, params);
-        payment.setStatus(RESPONSE_CODE_CANCELLED.equals(responseCode)
+        PaymentStatus status = RESPONSE_CODE_CANCELLED.equals(responseCode)
                 ? PaymentStatus.CANCELLED
-                : PaymentStatus.FAILED);
-        paymentRepository.save(payment);
+                : PaymentStatus.FAILED;
+        paymentService.markPaymentStatus(payment, status);
     }
 
     private void markPaymentExpired(Integer orderId, Map<String, String> params) {
         Payment payment = resolvePaymentForCallback(orderId, params);
-        payment.setStatus(PaymentStatus.EXPIRED);
-        paymentRepository.save(payment);
+        paymentService.markPaymentStatus(payment, PaymentStatus.EXPIRED);
     }
 
     private Payment resolvePaymentForCallback(Integer orderId, Map<String, String> params) {
         String transactionRef = params.get(VnpayParamsResponse.TRANSACTION_REFERENCE);
-        Order order = orderRepository.findByIdForUpdate(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-        Payment payment = paymentRepository.findByTransactionId(transactionRef)
-                .or(() -> paymentRepository.findTopByOrder_OrderIdAndStatusOrderByPaymentIdDesc(orderId, PaymentStatus.PENDING))
-                .or(() -> paymentRepository.findTopByOrder_OrderIdOrderByPaymentIdDesc(orderId))
-                .orElseGet(Payment::new);
-
-        payment.setOrder(order);
-
-        BigDecimal callbackAmount = parseCallbackAmount(params.get(VnpayParamsResponse.AMOUNT));
-        if (callbackAmount != null) {
-            payment.setAmount(callbackAmount);
-        } else if (payment.getAmount() == null) {
-            payment.setAmount(order.getNetAmount() != null ? order.getNetAmount() : BigDecimal.ZERO);
-        }
-
-        String cardType = params.get(VnpayParamsResponse.CARD_TYPE);
-        payment.setMethod(cardType != null && !cardType.isBlank() ? "VNPAY-" + cardType : "VNPAY");
-        payment.setBankCode(params.get(VnpayParamsResponse.BANK_CODE));
-        payment.setBankTransactionNo(params.get(VnpayParamsResponse.BANK_TRANSACTION_NO));
-        payment.setTransactionId(transactionRef);
-        payment.setInfoTransaction(params.get(VnpayParamsResponse.ORDER_INFO));
-        return payment;
+        return paymentService.resolvePaymentForCallback(
+                orderId,
+                transactionRef,
+                parseCallbackAmount(params.get(VnpayParamsResponse.AMOUNT)),
+                params.get(VnpayParamsResponse.CARD_TYPE),
+                params.get(VnpayParamsResponse.BANK_CODE),
+                params.get(VnpayParamsResponse.BANK_TRANSACTION_NO),
+                params.get(VnpayParamsResponse.ORDER_INFO)
+        );
     }
 
     private BigDecimal parseCallbackAmount(String rawAmount) {

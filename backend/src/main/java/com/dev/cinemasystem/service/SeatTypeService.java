@@ -39,6 +39,11 @@ public class SeatTypeService {
     SeatTypeRepository seatTypeRepository;
     SeatRepository seatRepository;
 
+
+    public SeatType getSeatTypeEntityById(Integer seatTypeId) {
+        return seatTypeRepository.findById(seatTypeId)
+                .orElseThrow(() -> new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND));
+    }
     public SeatTypeResponse getSeatTypeById(Integer seatTypeId) {
         SeatType seatType = seatTypeRepository.findById(seatTypeId)
                 .orElseThrow(() -> {
@@ -180,6 +185,7 @@ public class SeatTypeService {
         }
     }
 }
+
 
 
 
