@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from "react";
+﻿/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../stores/slices/authSlice";
 

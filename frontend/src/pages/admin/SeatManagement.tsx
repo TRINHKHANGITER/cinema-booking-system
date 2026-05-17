@@ -1,4 +1,4 @@
-﻿function SeatManagement(roomId: number) {
+﻿function SeatManagement() {
     return ( 
         <div> trang ghế</div>
      );

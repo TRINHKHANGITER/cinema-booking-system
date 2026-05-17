@@ -9,10 +9,10 @@ const steps = [
 ];
 
 const QuickBooking = () => {
-  const [movie, setMovie] = useState("");
-  const [cinema, setCinema] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [, setMovie] = useState("");
+  const [, setCinema] = useState("");
+  const [, setDate] = useState("");
+  const [, setTime] = useState("");
 
   return (
     <div className="w-full bg-black/70 backdrop-blur-md p-6 rounded-2xl">

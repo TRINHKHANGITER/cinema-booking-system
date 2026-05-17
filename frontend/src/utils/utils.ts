@@ -5,9 +5,6 @@ import type { Seat } from "../types/seat";
 import type { Showtime, ShowTimeResponse } from "../types/showtime";
 import type { PriceTicket } from "../types/price-ticket";
 
-const DEFAULT_SEAT_PRICE = 75000;
-const VIP_SEAT_PRICE = 90000;
-const COUPLE_SEAT_PRICE = 160000;
 const DEFAULT_MOVIE_TEXT_FALLBACK = "Đang cập nhật";
 const DEFAULT_MOVIE_PORTRAIT_FALLBACK = "/images/movies/posters/tho-oi.jpg";
 const DEFAULT_MOVIE_LANDSCAPE_FALLBACK = "/images/movies/whoever-steals-this-book.jpg";

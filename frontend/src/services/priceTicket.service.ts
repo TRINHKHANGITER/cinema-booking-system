@@ -4,7 +4,6 @@ import type {
     PriceTicketCreationRequest,
     PriceTicketFilterParams,
     PriceTicketResponse,
-    PriceTicketResquest,
     PriceTicketStatus,
     PriceTicketUpdateRequest,
 } from "../types/price-ticket";

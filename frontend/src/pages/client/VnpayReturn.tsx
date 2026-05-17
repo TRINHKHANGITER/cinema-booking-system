@@ -67,7 +67,9 @@ export default function VnpayReturn() {
         const syncReturnThenPoll = async () => {
             try {
                 await checkoutService.handleReturn(location.search);
-            } catch {}
+            } catch {
+                // Return endpoint may already be processed by IPN, continue polling order state.
+            }
 
             if (cancelledByUser) {
                 try {

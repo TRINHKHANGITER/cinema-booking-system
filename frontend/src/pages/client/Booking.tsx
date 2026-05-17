@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import ChoiceFood from "../../components/ui/ChoiceFood";
@@ -102,7 +101,7 @@ const Booking = () => {
     const [orderId, setOrderId] = useState<number | null>(null);
     const [orderExpiredAt, setOrderExpiredAt] = useState<string | null>(null);
     const [holdRemainingSeconds, setHoldRemainingSeconds] = useState<number | null>(null);
-    const [resumeOrderDetail, setResumeOrderDetail] = useState<OrderDetail | null>(null);
+    const [, setResumeOrderDetail] = useState<OrderDetail | null>(null);
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isConfirmingBooking, setIsConfirmingBooking] = useState(false);
@@ -340,7 +339,9 @@ const Booking = () => {
                 setResumeOrderDetail(nextDetail);
                 setSelectedSeats(toSelectedSeatsFromOrderDetail(nextDetail));
                 setSelectedCombos(toSelectedCombosFromOrderDetail(nextDetail));
-            } catch {}
+            } catch {
+                // Ignore refresh failure and keep current booking state.
+            }
         };
 
         void fetchOrderDetail();

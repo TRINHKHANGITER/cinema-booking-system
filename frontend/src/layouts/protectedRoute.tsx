@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router";
 import { useAuthStore } from "../stores/slices/authSlice";

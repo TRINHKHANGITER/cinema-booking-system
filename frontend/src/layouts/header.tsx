@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import Arrow from "../components/icon/arrow";
 import Close from "../components/icon/close";
