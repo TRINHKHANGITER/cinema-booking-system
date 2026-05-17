@@ -7,6 +7,7 @@ import { movieTypeService } from "../../services/movieType.service";
 import { provinceService } from "../../services/province.service";
 import { roomService } from "../../services/room.service";
 import { showTimeSeatService } from "../../services/showtimeSeat.service";
+import { showTimeSeatSocketService } from "../../services/showtimeSeatSocket.service";
 import { showTimeService } from "../../services/showtimeService";
 import type { CinemaResponse } from "../../types/cinema";
 import type { Movie, MovieStatus } from "../../types/movie";
@@ -756,6 +757,7 @@ const ShowtimeManagement = () => {
         if (!isSeatMapOpen || !seatMapTarget) return;
 
         let isCancelled = false;
+        let unsubscribe: (() => void) | null = null;
 
         const fetchSeatMap = async () => {
             try {
@@ -781,10 +783,26 @@ const ShowtimeManagement = () => {
             }
         };
 
-        void fetchSeatMap();
+        const setupRealtimeSeatMap = async () => {
+            await fetchSeatMap();
+            try {
+                unsubscribe = await showTimeSeatSocketService.subscribeShowtime(
+                    seatMapTarget.showTimeId,
+                    (event) => {
+                        if (isCancelled) return;
+                        setSeatMapItems(event.seats ?? []);
+                    }
+                );
+            } catch {
+                // Keep polling fallback from manual refresh only.
+            }
+        };
+
+        void setupRealtimeSeatMap();
 
         return () => {
             isCancelled = true;
+            unsubscribe?.();
         };
     }, [isSeatMapOpen, seatMapTarget]);
 

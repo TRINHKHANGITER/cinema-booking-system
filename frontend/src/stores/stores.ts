@@ -5,6 +5,7 @@ import movieReducer from "./slices/movieSlice";
 import provinceReducer from "./slices/provinceSlice";
 import seatReducer from "./slices/seatSlice";
 import showtimeReducer from "./slices/showtimeSlice";
+import showtimeSeatReducer from "./slices/showtimeSeatSlice";
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
         movie: movieReducer,
         seat: seatReducer,
         showtime: showtimeReducer,
+        showtimeSeat: showtimeSeatReducer,
     },
 });
 

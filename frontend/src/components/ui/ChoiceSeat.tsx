@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { showTimeSeatService } from "../../services/showtimeSeat.service";
-import type { ShowTimeSeat } from "../../types/showtime-seat";
-import type { Seat } from "../../types/seat";
-import { formatTime } from "../../utils/utils";
-import { toast } from "sonner";
 import axios from "axios";
+import { toast } from "sonner";
+import { showTimeSeatService } from "../../services/showtimeSeat.service";
+import { showTimeSeatSocketService } from "../../services/showtimeSeatSocket.service";
+import { useAppDispatch, useAppSelector } from "../../stores/hooks";
+import {
+    applySeatRoomEvent,
+    fetchShowTimeSeatMapThunk,
+    setSeatSocketConnected,
+} from "../../stores/slices/showtimeSeatSlice";
+import type { Seat } from "../../types/seat";
+import type { ShowTimeSeat } from "../../types/showtime-seat";
+import { formatTime } from "../../utils/utils";
 
 type Props = {
     startTime: string;
@@ -18,6 +25,12 @@ type Props = {
     onOrderExpired: () => void;
 };
 
+const sortSeatsByLabel = (items: ShowTimeSeat[]) =>
+    [...items].sort((first, second) => {
+        if (first.seatRow === second.seatRow) return first.seatColumn - second.seatColumn;
+        return first.seatRow.localeCompare(second.seatRow);
+    });
+
 const ChoiceSeat = ({
     startTime,
     showTimeId,
@@ -29,10 +42,19 @@ const ChoiceSeat = ({
     onOrderChange,
     onOrderExpired,
 }: Props) => {
-    const [seatMap, setSeatMap] = useState<ShowTimeSeat[]>([]);
-    const [loading, setLoading] = useState(false);
+    const dispatch = useAppDispatch();
+    const seatMap = useAppSelector(
+        (store) => store.showtimeSeat.seatMapByShowTimeId[showTimeId] ?? []
+    );
+    const loadingFromStore = useAppSelector(
+        (store) => store.showtimeSeat.loadingByShowTimeId[showTimeId] ?? false
+    );
+    const isSocketConnected = useAppSelector(
+        (store) => store.showtimeSeat.socketConnectedByShowTimeId[showTimeId] ?? false
+    );
+    const [isUpdatingSeats, setIsUpdatingSeats] = useState(false);
 
-    const selectedIds = useMemo(() => new Set(selectedSeats.map((s) => s.seatId)), [selectedSeats]);
+    const selectedIds = useMemo(() => new Set(selectedSeats.map((seat) => seat.seatId)), [selectedSeats]);
 
     const toSeat = useCallback((item: ShowTimeSeat): Seat => {
         const isPrimary = item.seatTypeId === 3 ? item.seatColumn % 2 !== 0 : true;
@@ -47,64 +69,77 @@ const ChoiceSeat = ({
     }, []);
 
     const fetchSeatMap = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await showTimeSeatService.getSeatMap(showTimeId);
-            const data = response.result ?? [];
-            setSeatMap(data);
-
-            if (orderId) {
-                const heldByCurrentOrder = data.filter(
-                    (item) => item.status === "HELD" && item.orderId === orderId
-                );
-                if (heldByCurrentOrder.length > 0) {
-                    const mapped = heldByCurrentOrder
-                        .sort((a, b) => {
-                            if (a.seatRow === b.seatRow) return a.seatColumn - b.seatColumn;
-                            return a.seatRow.localeCompare(b.seatRow);
-                        })
-                        .map((item) => toSeat(item));
-                    onSelectedSeatsChange(mapped);
-                } else {
-                    onSelectedSeatsChange([]);
-                }
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, [onSelectedSeatsChange, orderId, showTimeId, toSeat]);
+        await dispatch(fetchShowTimeSeatMapThunk(showTimeId));
+    }, [dispatch, showTimeId]);
 
     useEffect(() => {
-        fetchSeatMap();
+        void fetchSeatMap();
     }, [fetchSeatMap]);
 
+    useEffect(() => {
+        let isCancelled = false;
+        let unsubscribe: (() => void) | null = null;
+
+        const subscribeRoom = async () => {
+            try {
+                unsubscribe = await showTimeSeatSocketService.subscribeShowtime(showTimeId, (event) => {
+                    dispatch(applySeatRoomEvent(event));
+                });
+                if (!isCancelled) {
+                    dispatch(setSeatSocketConnected({ showTimeId, connected: true }));
+                }
+            } catch {
+                if (!isCancelled) {
+                    dispatch(setSeatSocketConnected({ showTimeId, connected: false }));
+                }
+            }
+        };
+
+        void subscribeRoom();
+
+        return () => {
+            isCancelled = true;
+            unsubscribe?.();
+            dispatch(setSeatSocketConnected({ showTimeId, connected: false }));
+        };
+    }, [dispatch, showTimeId]);
+
+    useEffect(() => {
+        if (!orderId || seatMap.length === 0) return;
+
+        const heldByCurrentOrder = sortSeatsByLabel(
+            seatMap.filter((item) => item.status === "HELD" && item.orderId === orderId)
+        );
+        if (heldByCurrentOrder.length === 0) {
+            onSelectedSeatsChange([]);
+            return;
+        }
+
+        onSelectedSeatsChange(heldByCurrentOrder.map((item) => toSeat(item)));
+    }, [orderId, onSelectedSeatsChange, seatMap, toSeat]);
+
     const grouped = useMemo(() => {
-        return seatMap.reduce<Record<string, ShowTimeSeat[]>>((acc, seat) => {
-            if (!acc[seat.seatRow]) acc[seat.seatRow] = [];
-            acc[seat.seatRow].push(seat);
-            return acc;
+        return seatMap.reduce<Record<string, ShowTimeSeat[]>>((accumulator, seat) => {
+            if (!accumulator[seat.seatRow]) {
+                accumulator[seat.seatRow] = [];
+            }
+            accumulator[seat.seatRow].push(seat);
+            return accumulator;
         }, {});
     }, [seatMap]);
 
     const applyHoldResponse = useCallback(
         (orderResult: { orderId: number; expiredAt: string; heldSeats: ShowTimeSeat[] }) => {
             onOrderChange(orderResult.orderId, orderResult.expiredAt);
-
-            const normalized = [...(orderResult.heldSeats ?? [])].sort((a, b) => {
-                if (a.seatRow === b.seatRow) return a.seatColumn - b.seatColumn;
-                return a.seatRow.localeCompare(b.seatRow);
-            });
-
-            const mapped = normalized.map((item) => toSeat(item));
+            const mapped = sortSeatsByLabel(orderResult.heldSeats ?? []).map((item) => toSeat(item));
             onSelectedSeatsChange(mapped);
         },
         [onOrderChange, onSelectedSeatsChange, toSeat]
     );
 
     const toggle = async (seatIds: number[]) => {
-        const isAllSelected = seatIds.every((id) => selectedIds.has(id));
-        const isExpiredNow =
-            !!orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now();
+        const isAllSelected = seatIds.every((seatId) => selectedIds.has(seatId));
+        const isExpiredNow = !!orderExpiredAt && new Date(orderExpiredAt).getTime() <= Date.now();
 
         if (isExpiredNow) {
             toast.error("Đơn giữ ghế đã hết hạn, vui lòng chọn lại ghế.");
@@ -112,6 +147,7 @@ const ChoiceSeat = ({
             return;
         }
 
+        setIsUpdatingSeats(true);
         try {
             if (isAllSelected) {
                 if (!orderId) return;
@@ -130,7 +166,6 @@ const ChoiceSeat = ({
                 orderId,
                 seatIds,
             });
-
             if (response.result) {
                 applyHoldResponse(response.result);
             }
@@ -151,9 +186,14 @@ const ChoiceSeat = ({
                 toast.error(data?.message || "Không thể cập nhật ghế. Vui lòng thử lại.");
                 return;
             }
+
             toast.error("Không thể cập nhật ghế. Vui lòng thử lại.");
+        } finally {
+            setIsUpdatingSeats(false);
         }
     };
+
+    const loading = loadingFromStore || isUpdatingSeats;
 
     return (
         <div>
@@ -163,6 +203,13 @@ const ChoiceSeat = ({
                     <button className="py-2 px-4 border border-gray-300 rounded text-sm bg-[#034ea2] text-white">
                         {formatTime(startTime)}
                     </button>
+                    <span
+                        className={`text-xs font-medium ${
+                            isSocketConnected ? "text-emerald-600" : "text-slate-400"
+                        }`}
+                    >
+                        {isSocketConnected ? "Realtime: Connected" : "Realtime: Reconnecting"}
+                    </span>
                 </div>
             </div>
 
@@ -178,12 +225,14 @@ const ChoiceSeat = ({
 
                 <div className="flex flex-col items-center gap-1.5 overflow-auto">
                     {Object.entries(grouped)
-                        .sort(([a], [b]) => a.localeCompare(b))
+                        .sort(([first], [second]) => first.localeCompare(second))
                         .map(([row, rowSeats]) => {
-                            const sorted = [...rowSeats].sort((a, b) => a.seatColumn - b.seatColumn);
-                            const typeId = sorted[0]?.seatTypeId;
-                            const isCouple = typeId === 3;
-                            const mid = Math.floor(sorted.length / 2);
+                            const sortedSeats = [...rowSeats].sort(
+                                (first, second) => first.seatColumn - second.seatColumn
+                            );
+                            const seatTypeId = sortedSeats[0]?.seatTypeId;
+                            const isCouple = seatTypeId === 3;
+                            const middleIndex = Math.floor(sortedSeats.length / 2);
 
                             return (
                                 <div key={row} className="flex items-center gap-1">
@@ -192,19 +241,19 @@ const ChoiceSeat = ({
                                     </span>
 
                                     <div className="flex gap-1 items-center">
-                                        {sorted.map((seat, i) => {
-                                            if (isCouple && i % 2 !== 0) return null;
+                                        {sortedSeats.map((seat, index) => {
+                                            if (isCouple && index % 2 !== 0) return null;
 
-                                            const next = isCouple ? sorted[i + 1] : null;
-                                            const ids = isCouple
-                                                ? ([seat.seatId, next?.seatId].filter(Boolean) as number[])
+                                            const nextSeat = isCouple ? sortedSeats[index + 1] : null;
+                                            const seatIds = isCouple
+                                                ? ([seat.seatId, nextSeat?.seatId].filter(Boolean) as number[])
                                                 : [seat.seatId];
 
                                             const isHeldByOther =
                                                 seat.status === "HELD" &&
-                                                orderId !== null &&
-                                                !!seat.orderId &&
-                                                seat.orderId !== orderId;
+                                                (orderId == null ||
+                                                    seat.orderId == null ||
+                                                    seat.orderId !== orderId);
                                             const isBlocked =
                                                 seat.status === "SOLD" ||
                                                 seat.status === "BLOCKED" ||
@@ -214,28 +263,32 @@ const ChoiceSeat = ({
                                             const seatClass = isBlocked
                                                 ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed"
                                                 : isSelected
-                                                    ? seat.seatTypeId === 2
-                                                        ? "bg-[#BA7517] border-[#854F0B] text-[#FAEEDA] scale-110"
-                                                        : seat.seatTypeId === 3
-                                                            ? "bg-[#D4537E] border-[#993556] text-[#FBEAF0] scale-105"
-                                                            : "bg-[#034ea2] border-[#023a7a] text-white scale-110"
-                                                    : seat.seatTypeId === 2
-                                                        ? "bg-[#FAEEDA] border-[#EF9F27] text-[#854F0B] hover:bg-[#FAC775]"
-                                                        : seat.seatTypeId === 3
-                                                            ? "bg-[#FBEAF0] border-[#ED93B1] text-[#72243E] hover:bg-[#F4C0D1]"
-                                                            : "bg-white border-gray-300 text-gray-600 hover:border-[#034ea2] hover:text-[#034ea2]";
+                                                  ? seat.seatTypeId === 2
+                                                      ? "bg-[#BA7517] border-[#854F0B] text-[#FAEEDA] scale-110"
+                                                      : seat.seatTypeId === 3
+                                                        ? "bg-[#D4537E] border-[#993556] text-[#FBEAF0] scale-105"
+                                                        : "bg-[#034ea2] border-[#023a7a] text-white scale-110"
+                                                  : seat.seatTypeId === 2
+                                                    ? "bg-[#FAEEDA] border-[#EF9F27] text-[#854F0B] hover:bg-[#FAC775]"
+                                                    : seat.seatTypeId === 3
+                                                      ? "bg-[#FBEAF0] border-[#ED93B1] text-[#72243E] hover:bg-[#F4C0D1]"
+                                                      : "bg-white border-gray-300 text-gray-600 hover:border-[#034ea2] hover:text-[#034ea2]";
 
                                             return (
-                                                <div key={seat.seatId}>
-                                                    {i === mid && <div className="w-3 flex-shrink-0" />}
+                                                <div key={seat.showTimeSeatId}>
+                                                    {index === middleIndex && (
+                                                        <div className="w-3 flex-shrink-0" />
+                                                    )}
                                                     <button
                                                         disabled={isBlocked}
-                                                        onClick={() => toggle(ids)}
+                                                        onClick={() => void toggle(seatIds)}
                                                         title={`${seat.seatRow}${seat.seatColumn}`}
-                                                        className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium transition-all duration-150 flex-shrink-0 ${isCouple ? "w-16" : "w-7"} ${seatClass}`}
+                                                        className={`h-7 rounded-t-md rounded-b-sm border-[1.5px] text-[10px] font-medium transition-all duration-150 flex-shrink-0 ${
+                                                            isCouple ? "w-16" : "w-7"
+                                                        } ${seatClass}`}
                                                     >
                                                         {isCouple
-                                                            ? `${seat.seatRow}${seat.seatColumn}-${next?.seatRow ?? ""}${next?.seatColumn ?? ""}`
+                                                            ? `${seat.seatRow}${seat.seatColumn}-${nextSeat?.seatRow ?? ""}${nextSeat?.seatColumn ?? ""}`
                                                             : `${seat.seatRow}${seat.seatColumn}`}
                                                     </button>
                                                 </div>

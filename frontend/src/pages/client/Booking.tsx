@@ -8,6 +8,7 @@ import type { SelectedCombo } from "../../types/combo";
 import type { Seat } from "../../types/seat";
 import { useAppDispatch, useAppSelector } from "../../stores/hooks";
 import { clearCurrentShowtime, fetchShowTimeByIdThunk } from "../../stores/slices/showtimeSlice";
+import { clearShowTimeSeatState } from "../../stores/slices/showtimeSeatSlice";
 import {
     calculateTotalPrice,
     formatTime,
@@ -305,6 +306,9 @@ const Booking = () => {
 
         return () => {
             isCancelled = true;
+            if (showTimeId) {
+                dispatch(clearShowTimeSeatState({ showTimeId }));
+            }
             dispatch(clearCurrentShowtime());
         };
     }, [

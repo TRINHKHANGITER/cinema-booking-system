@@ -1,4 +1,5 @@
 export type ShowTimeSeatStatus = "AVAILABLE" | "HELD" | "SOLD" | "BLOCKED";
+export type SeatRoomEventType = "SYNC" | "HELD" | "RELEASED" | "SOLD" | "EXPIRED";
 
 export type ShowTimeSeat = {
     showTimeSeatId: number;
@@ -35,4 +36,11 @@ export type HoldSeatResponse = {
     totalAmount: number;
     netAmount: number;
     heldSeats: ShowTimeSeat[];
+};
+
+export type SeatRoomEvent = {
+    type: SeatRoomEventType | string;
+    showTimeId: number;
+    happenedAt: string;
+    seats: ShowTimeSeat[];
 };
