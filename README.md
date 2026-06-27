@@ -31,6 +31,12 @@
 - [12. Hướng dẫn đóng góp](#12-hướng-dẫn-đóng-góp)
 - [13. License](#13-license)
 
+## 0. Video demo tổng quan
+
+<video src="https://drive.google.com/file/d/17mjifx1C0SN6hnJeCvt21EVWhAYWj4Ib/view?usp=sharing" controls width="100%"></video>
+
+Nếu GitHub không hiển thị video trực tiếp, có thể mở tại: [https://drive.google.com/file/d/17mjifx1C0SN6hnJeCvt21EVWhAYWj4Ib/view?usp=sharing](https://drive.google.com/file/d/17mjifx1C0SN6hnJeCvt21EVWhAYWj4Ib/view?usp=sharing)
+
 ## 1. Giới thiệu về project
 
 `Cinema Booking System` là một project full-stack mô phỏng quy trình đặt vé rạp chiếu phim khá đầy đủ, từ khâu khám phá phim cho tới thanh toán và quản trị vận hành. Ở góc độ nghiệp vụ, hệ thống tập trung vào 2 nhóm người dùng chính:
